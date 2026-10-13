@@ -19,7 +19,16 @@ import androidx.compose.ui.text.withStyle
 object Markdown {
     private val inline = Regex("""\*\*(.+?)\*\*|`([^`]+)`|(https?://[^\s)>\]]+)""")
 
-    fun render(text: String, codeBg: Color, link: Color): AnnotatedString = buildAnnotatedString {
+    /** Rendered messages, newest use last: bubbles scrolling back into view aren't parsed again. */
+    private val cache = object : LinkedHashMap<Triple<String, Color, Color>, AnnotatedString>(64, 0.75f, true) {
+        override fun removeEldestEntry(e: MutableMap.MutableEntry<Triple<String, Color, Color>, AnnotatedString>) = size > 400
+    }
+
+    fun render(text: String, codeBg: Color, link: Color): AnnotatedString = synchronized(cache) {
+        cache.getOrPut(Triple(text, codeBg, link)) { build(text, codeBg, link) }
+    }
+
+    private fun build(text: String, codeBg: Color, link: Color): AnnotatedString = buildAnnotatedString {
         val lines = squeeze(text).lines()
         var inCode = false
         lines.forEachIndexed { i, raw ->
@@ -27,7 +36,7 @@ object Markdown {
             if (inCode) {
                 withStyle(SpanStyle(fontFamily = FontFamily.Monospace, background = codeBg)) { append(raw) }
             } else {
-                val bullet = Regex("^\\s*[-*]\\s+").find(raw)
+                val bullet = bulletRe.find(raw)
                 if (bullet != null) { append("•  "); inlines(raw.substring(bullet.range.last + 1), codeBg, link) }
                 else inlines(raw, codeBg, link)
             }
@@ -39,10 +48,12 @@ object Markdown {
     fun squeeze(text: String): String {
         val out = mutableListOf<String>()
         val ls = text.trim().lines()
+        var nextAt = 0   // index of the next non-blank line, found once per run of blank lines
         for ((i, l) in ls.withIndex()) {
             if (l.isBlank()) {
                 val prev = out.lastOrNull() ?: continue
-                val next = ls.drop(i + 1).firstOrNull { it.isNotBlank() } ?: continue
+                if (nextAt <= i) { nextAt = i + 1; while (nextAt < ls.size && ls[nextAt].isBlank()) nextAt++ }
+                val next = ls.getOrNull(nextAt) ?: continue
                 val bullets = isBullet(prev) && isBullet(next)
                 if (!bullets && out.last().isNotBlank()) out += ""
             } else out += l
@@ -50,7 +61,8 @@ object Markdown {
         return out.joinToString("\n")
     }
 
-    private fun isBullet(l: String) = Regex("^\\s*[-*]\\s+").containsMatchIn(l)
+    private val bulletRe = Regex("^\\s*[-*]\\s+")
+    private fun isBullet(l: String) = bulletRe.containsMatchIn(l)
 
     private fun AnnotatedString.Builder.inlines(s: String, codeBg: Color, link: Color) {
         var at = 0
