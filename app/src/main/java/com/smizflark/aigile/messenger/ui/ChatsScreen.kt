@@ -27,6 +27,14 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.Badge
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.graphics.Color
+import com.smizflark.aigile.messenger.data.SwipeAction
+import com.smizflark.aigile.messenger.data.swipeAction
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -84,7 +92,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     var seen by remember { mutableStateOf(repo.store.seen()) }
     fun counts() = chats.associate { it.key to News.unread(it, seen[it.key], repo.store.cachedConversation(it.key)) }
     var unread by remember { mutableStateOf(counts()) }
-    val muted = remember { repo.store.muted() }
+    var muted by remember { mutableStateOf(repo.store.muted()) }
     var outbox by remember { mutableStateOf(repo.store.outbox()) }
     var error by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
@@ -177,6 +185,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 items(pinFirst(shown, pinned), key = { it.key }) { c ->
                     ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, unsent[c.key].orEmpty(),
                         onRead = { markRead(listOf(c)) },
+                        onMute = { on -> repo.store.setMuted(c.key, on); muted = repo.store.muted() },
                         onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned }) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
@@ -190,10 +199,33 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>,
-                    onRead: () -> Unit, onPin: () -> Unit, onClick: () -> Unit) {
+                    onRead: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
+    // Swipe right = mark read, left = mute/unmute (AII-61). The row always springs back.
+    val mutedNow by rememberUpdatedState(muted)
+    val box = rememberSwipeToDismissBoxState(confirmValueChange = { v ->
+        when (swipeAction(when (v) { SwipeToDismissBoxValue.StartToEnd -> true; SwipeToDismissBoxValue.EndToStart -> false; else -> null }, mutedNow)) {
+            SwipeAction.READ -> onRead()
+            SwipeAction.MUTE -> onMute(true)
+            SwipeAction.UNMUTE -> onMute(false)
+            null -> {}
+        }
+        false
+    })
+    SwipeToDismissBox(box, modifier = Modifier.testTag("swipe:${c.key}"), backgroundContent = {
+        val toRead = box.dismissDirection == SwipeToDismissBoxValue.StartToEnd
+        val idle = box.dismissDirection == SwipeToDismissBoxValue.Settled
+        Box(Modifier.fillMaxSize().background(when {
+            idle -> Color.Transparent
+            toRead -> MaterialTheme.colorScheme.primaryContainer
+            else -> MaterialTheme.colorScheme.secondaryContainer
+        }).padding(horizontal = 24.dp), contentAlignment = if (toRead) Alignment.CenterStart else Alignment.CenterEnd) {
+            if (!idle) Icon(if (toRead) Icons.Default.DoneAll else if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff,
+                if (toRead) "Mark as read" else if (muted) "Unmute" else "Mute")
+        }
+    }) {
     Row(
-        Modifier.fillMaxWidth().combinedClickable(onClickLabel = "Open chat", role = Role.Button, onClick = onClick,
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).combinedClickable(onClickLabel = "Open chat", role = Role.Button, onClick = onClick,
             onLongClick = { menu = true }, onLongClickLabel = "Options")
             .padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
         verticalAlignment = Alignment.CenterVertically,
@@ -240,6 +272,7 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
                     .semantics { contentDescription = "New messages" })
             }
         }
+    }
     }
 }
 
