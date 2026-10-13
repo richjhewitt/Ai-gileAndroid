@@ -2,7 +2,9 @@ package com.smizflark.aigile.messenger.screens
 
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.smizflark.aigile.messenger.data.ChatRef
@@ -16,6 +18,7 @@ import com.smizflark.aigile.messenger.ui.Look
 import com.smizflark.aigile.messenger.ui.TextSize
 import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.EmptyState
+import com.smizflark.aigile.messenger.ui.LockedScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -69,6 +72,16 @@ class ScreenshotTest {
     @Test fun emptySearchDark() = shot("empty_search", true) { EmptyState("No results for “zebra”", button = "Clear search") }
     @Test fun settingsLight() = shot("settings", false) { SettingsScreen(repo, {}, {}) }
     @Test fun settingsDark() = shot("settings", true) { SettingsScreen(repo, {}, {}) }
+
+    /** AII-63: the lock switch in Settings, and the screen that covers the app until unlocked. */
+    @Test fun lockedDark() = shot("locked", true) { LockedScreen {} }
+    @Test fun settingsLockLight() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { SettingsScreen(repo, {}, {}) } }
+        rule.onNodeWithText("New message alerts").performScrollTo()
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("../docs/shots/settings_lock_light.png")
+    }
 
     /** AII-69: the pure black (OLED) look, so every screen can be checked for grey panels. */
     private fun black(name: String, content: @androidx.compose.runtime.Composable () -> Unit) {
