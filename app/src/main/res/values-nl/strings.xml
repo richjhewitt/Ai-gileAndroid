@@ -66,7 +66,7 @@
     <string name="pause_alerts">Meldingen pauzeren</string>
     <string name="pause_1h">1 uur</string>
     <string name="pause_4h">4 uur</string>
-    <string name="pause_tomorrow">Tot morgen</string>
+    <string name="pause_tomorrow">Tot 8 uur \'s ochtends</string>
     <string name="paused_until">Meldingen gepauzeerd tot %1$s</string>
     <string name="resume">Hervatten</string>
     <string name="mark_read">Als gelezen markeren</string>

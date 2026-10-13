@@ -27,7 +27,8 @@ class PauseTest {
     @Test fun tomorrowIsEightLocal() {
         val want = at("2026-03-11T08:00:00+01:00[Europe/Amsterdam]")
         assertEquals(want, Pause.untilTomorrow(at("2026-03-10T15:30:00+01:00[Europe/Amsterdam]"), zone))
-        assertEquals(want, Pause.untilTomorrow(at("2026-03-10T00:05:00+01:00[Europe/Amsterdam]"), zone))
+        assertEquals(want, Pause.untilTomorrow(at("2026-03-11T00:05:00+01:00[Europe/Amsterdam]"), zone))   // small hours: this morning
+        assertEquals(want, Pause.untilTomorrow(at("2026-03-10T08:00:00+01:00[Europe/Amsterdam]"), zone))
     }
 
     @Test fun tomorrowAcrossSummerTime() {

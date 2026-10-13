@@ -14,8 +14,10 @@ object Pause {
     fun oneHour(now: Long): Long = now + HOUR
     fun fourHours(now: Long): Long = now + 4 * HOUR
 
-    /** Tomorrow at 08:00 in the given zone. */
-    fun untilTomorrow(now: Long, zone: ZoneId = ZoneId.systemDefault()): Long =
-        Instant.ofEpochMilli(now).atZone(zone).toLocalDate().plusDays(1)
-            .atTime(LocalTime.of(8, 0)).atZone(zone).toInstant().toEpochMilli()
+    /** The next 08:00 in the given zone: this morning when pressed in the small hours, else tomorrow. */
+    fun untilTomorrow(now: Long, zone: ZoneId = ZoneId.systemDefault()): Long {
+        val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate().atTime(LocalTime.of(8, 0)).atZone(zone).toInstant().toEpochMilli()
+        return if (today > now) today
+            else Instant.ofEpochMilli(now).atZone(zone).toLocalDate().plusDays(1).atTime(LocalTime.of(8, 0)).atZone(zone).toInstant().toEpochMilli()
+    }
 }

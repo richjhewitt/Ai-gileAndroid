@@ -23,6 +23,7 @@ import com.smizflark.aigile.messenger.MainActivity
 import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.News
+import com.smizflark.aigile.messenger.data.Pause
 import com.smizflark.aigile.messenger.data.QuickReply
 import androidx.core.app.RemoteInput
 import java.time.LocalTime
@@ -85,7 +86,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             val news = News.audible(all, store.muted())
             store.setTold(nextTold)
             val quiet = (store.quietOn && News.quiet(LocalTime.now().hour, store.quietFrom, store.quietTo)) ||
-                com.smizflark.aigile.messenger.data.Pause.paused(System.currentTimeMillis(), store.pausedUntil)
+                Pause.paused(System.currentTimeMillis(), store.pausedUntil)
             if (news.isNotEmpty() && store.alerts && !quiet && !App.inForeground) notify(context, news)
         }
 
