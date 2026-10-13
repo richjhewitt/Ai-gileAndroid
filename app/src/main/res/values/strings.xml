@@ -63,6 +63,12 @@
     <string name="chats_title_demo">Messages · demo</string>
     <string name="chats_offline">%1$s\nShowing chats from %2$s.</string>
     <string name="mark_all_read">Mark all as read</string>
+    <string name="pause_alerts">Pause alerts</string>
+    <string name="pause_1h">1 hour</string>
+    <string name="pause_4h">4 hours</string>
+    <string name="pause_tomorrow">Until 8 in the morning</string>
+    <string name="paused_until">Alerts paused until %1$s</string>
+    <string name="resume">Resume</string>
     <string name="mark_read">Mark as read</string>
     <string name="mute">Mute</string>
     <string name="open_chat">Open chat</string>

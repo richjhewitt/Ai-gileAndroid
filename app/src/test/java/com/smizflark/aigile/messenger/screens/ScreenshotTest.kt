@@ -59,6 +59,11 @@ class ScreenshotTest {
     @Test fun connectLight() = shot("connect", false) { ConnectScreen(repo, null) {} }
     @Test fun connectDark() = shot("connect", true) { ConnectScreen(repo, null) {} }
     @Test fun chatsLight() = shot("chats", false) { ChatsScreen(repo, {}, {}, {}) }
+    @Test fun pausedLight() {
+        repo.store.pausedUntil = java.time.LocalDate.now().plusDays(1).atTime(8, 0).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        shot("chats_paused", false) { ChatsScreen(repo, {}, {}, {}) }
+        repo.store.pausedUntil = 0L
+    }
     @Test fun chatsDark() = shot("chats", true) { ChatsScreen(repo, {}, {}, {}) }
     @Test fun chatLight() { prime(lead()); shot("chat", false) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead(), onBack = {}) } }

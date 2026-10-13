@@ -91,6 +91,11 @@ class Store(context: Context) {
         get() = prefs.getInt("quietTo", 7)
         set(v) = prefs.edit().putInt("quietTo", v).apply()
 
+    /** Alerts paused until this time, epoch millis; 0 = not paused (AII-77). */
+    var pausedUntil: Long
+        get() = prefs.getLong("pausedUntil", 0L)
+        set(v) = prefs.edit().putLong("pausedUntil", v).apply()
+
     var quietOn: Boolean
         get() = prefs.getBoolean("quietOn", true)
         set(v) = prefs.edit().putBoolean("quietOn", v).apply()

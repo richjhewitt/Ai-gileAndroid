@@ -3,6 +3,7 @@ package com.smizflark.aigile.messenger.ui
 import androidx.compose.ui.res.stringResource
 
 import com.smizflark.aigile.messenger.R
+import com.smizflark.aigile.messenger.data.Pause
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -104,6 +105,8 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     var filter by rememberSaveable { mutableStateOf(ChatFilter.ALL) }
     val scope = rememberCoroutineScope()
 
+    var pausedUntil by remember { mutableStateOf(repo.store.pausedUntil) }
+    var pauseMenu by remember { mutableStateOf(false) }
     val pace = remember { Pace(fast = 10_000, slow = 60_000) }
 
     /** Fetches the list; true when a chat changed. */
@@ -141,6 +144,15 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     IconButton(onClick = onSearch, modifier = Modifier.testTag("open-search")) { Icon(Icons.Default.Search, stringResource(R.string.search)) }
                     if (chats.any { News.fresh(it, seen[it.key]) })
                         IconButton(onClick = { markRead(chats) }, Modifier.testTag("readAll")) { Icon(Icons.Default.DoneAll, stringResource(R.string.mark_all_read)) }
+                    Box {
+                        IconButton(onClick = { pauseMenu = true }, modifier = Modifier.testTag("pause")) { Icon(Icons.Default.NotificationsOff, stringResource(R.string.pause_alerts)) }
+                        DropdownMenu(expanded = pauseMenu, onDismissRequest = { pauseMenu = false }) {
+                            val now = System.currentTimeMillis()
+                            listOf(R.string.pause_1h to Pause.oneHour(now), R.string.pause_4h to Pause.fourHours(now), R.string.pause_tomorrow to Pause.untilTomorrow(now)).forEach { (label, end) ->
+                                DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = { pauseMenu = false; pausedUntil = end; repo.store.pausedUntil = end })
+                            }
+                        }
+                    }
                     IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, stringResource(R.string.settings)) }
                 },
             )
@@ -156,6 +168,16 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
             modifier = Modifier.fillMaxSize().padding(pad),
         ) {
             LazyColumn(Modifier.fillMaxSize()) {
+                if (Pause.paused(System.currentTimeMillis(), pausedUntil)) item {
+                    val at = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
+                        .format(java.time.Instant.ofEpochMilli(pausedUntil).atZone(java.time.ZoneId.systemDefault()))
+                    Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer).padding(start = 16.dp, end = 8.dp).testTag("pausedBanner"),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.paused_until, at), Modifier.weight(1f), color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            style = MaterialTheme.typography.bodyMedium)
+                        androidx.compose.material3.TextButton(onClick = { pausedUntil = 0L; repo.store.pausedUntil = 0L }, modifier = Modifier.testTag("resume")) { Text(stringResource(R.string.resume)) }
+                    }
+                }
                 error?.let { e ->
                     item {
                         Text(
