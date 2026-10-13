@@ -90,7 +90,7 @@ object Mapper {
 
     /** A message's files as paths on the board (the demo keeps file:// addresses as they are). */
     fun pics(base: String, files: List<Attachment>) = files.filter { it.id.isNotBlank() }.map {
-        Pic(if (it.id.startsWith("file:")) it.id else base + it.id.replace(" ", "%20"), it.name, it.type)
+        Pic(if (it.id.startsWith("file:") || it.id.startsWith("android.resource:")) it.id else base + it.id.replace(" ", "%20"), it.name, it.type)
     }
 
     /** "💬 can you check..." -> "can you check...": card titles read better without the leading emoji. */
