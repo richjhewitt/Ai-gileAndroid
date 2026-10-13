@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
@@ -83,9 +84,9 @@ private sealed interface Row {
 }
 
 /** Bubbles, pending messages, day lines and card headers, oldest first. */
-private fun rows(c: Conversation?, pending: List<Pending>, owner: String): List<Row> {
+private fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus: String? = null): List<Row> {
     val out = mutableListOf<Row>()
-    val bubbles = c?.bubbles.orEmpty()
+    val bubbles = c?.bubbles.orEmpty().filter { focus == null || it.card == focus }
     // Answer buttons only under the newest message of a card still waiting on you.
     val optionsAt = bubbles.withIndex().filter { it.value.options.isNotEmpty() && it.value.waiting }
         .groupBy { it.value.card }.mapNotNull { (_, l) -> l.maxOf { it.index } }.toSet()
@@ -100,7 +101,7 @@ private fun rows(c: Conversation?, pending: List<Pending>, owner: String): List<
         card = b.card
         out += Row.Msg(b.key, b, showOptions = i in optionsAt)
     }
-    pending.forEach { p ->
+    pending.filter { focus == null || it.target == focus }.forEach { p ->
         out += Row.Msg("p:${p.id}", Bubble("p:${p.id}", owner, p.text, p.at, true, p.target,
             state = if (p.failed) SendState.FAILED else SendState.SENDING,
             pics = p.files.map { Pic(File(it).toURI().toString(), File(it).name, "image/") }), p)
@@ -108,13 +109,16 @@ private fun rows(c: Conversation?, pending: List<Pending>, owner: String): List<
     return out
 }
 
-/** Journey 3: read a chat and reply. Replies go to the question waiting on you, a card you pick, or a new 💬. */
+/**
+ * Journey 3: read a chat and reply. Replies go to the question waiting on you, a card you pick, or a new 💬.
+ * With [focus] (AII-28) it shows one card of the chat: only its messages, and replies go to that card.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
+fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}) {
     var convo by remember { mutableStateOf(repo.store.cachedConversation(ref.key)) }
     var pending by remember { mutableStateOf(repo.pendingFor(ref.key)) }
-    var target by rememberSaveable { mutableStateOf(convo?.defaultTarget) }
+    var target by rememberSaveable { mutableStateOf(focus ?: convo?.defaultTarget) }
     var picked by rememberSaveable { mutableStateOf(false) }
     var text by rememberSaveable { mutableStateOf("") }
     var pics by rememberSaveable { mutableStateOf(listOf<String>()) }
@@ -132,7 +136,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
             val c = repo.conversation(ref)
             val changed = c.bubbles != convo?.bubbles
             convo = c; error = null
-            if (!picked) target = c.defaultTarget
+            if (!picked && focus == null) target = c.defaultTarget
             repo.store.markSeen(ref.key, c.bubbles.lastOrNull()?.at)
             return changed
         } catch (e: Exception) { error = e.message; return false }
@@ -144,7 +148,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
             val r = repo.deliver(ref, p)
             r.onSuccess { card ->
                 // A new 💬 carries on in its own card, like the board's page (AIG-757).
-                if (ref.kind == Kind.LEAD && p.target == null && card != null) { target = card; picked = true }
+                if (ref.kind == Kind.LEAD && p.target == null && card != null && focus == null) { target = card; picked = true }
                 load(); pace.poke()   // a reply is likely soon: look quickly for a while
             }.onFailure { error = it.message }
             pending = repo.pendingFor(ref.key)
@@ -178,8 +182,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
         }
     }
 
-    val items = remember(convo, pending, owner) { rows(convo, pending, owner).asReversed() }
-    val targets = convo?.targets.orEmpty()
+    val items = remember(convo, pending, owner, focus) { rows(convo, pending, owner, focus).asReversed() }
+    val targets = if (focus != null) emptyList() else convo?.targets.orEmpty()
+    // Card ids in messages open that card, when it is one of this chat's (AII-28).
+    val known = convo?.bubbles.orEmpty().mapNotNull { it.card }.toSet()
+    val focusBubble = focus?.let { f -> convo?.bubbles?.lastOrNull { it.card == f } }
 
     Scaffold(
         topBar = {
@@ -190,8 +197,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
                         Avatar(ref, repo, 36.dp)
                         Spacer(Modifier.size(10.dp))
                         Column {
-                            Text(ref.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(ref.subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            Text(if (focus != null) "$focus ${Mapper.clean(focusBubble?.cardTitle ?: "")}" else ref.name,
+                                style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(if (focus == null) ref.subtitle else ref.name + if (focusBubble?.waiting == true) " · ⏳ waiting on you" else "", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
@@ -211,10 +219,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
                     when (r) {
                         is Row.Day -> Text(r.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                        is Row.Card -> CardHeader(r, chosen = target == r.card) {
+                        is Row.Card -> CardHeader(r, chosen = target == r.card && focus == null,
+                            onOpen = if (focus == null && ref.kind == Kind.LEAD) { { onOpenCard(r.card) } } else null) {
                             if (targets.any { it.id == r.card }) { target = r.card; picked = true }
                         }
-                        is Row.Msg -> MessageBubble(r, ref, repo,
+                        is Row.Msg -> MessageBubble(r, ref, repo, if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onOpenCard,
                             onOption = { send(it, r.b.card) },
                             onRetry = { p -> deliver(p) },
                             onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) })
@@ -230,15 +239,16 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
                 onAttach = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 onRemovePic = { f -> pics = pics - f; File(f).delete() },
             ) {
-                send(text, if (ref.kind == Kind.LEAD) target else null, pics); text = ""; pics = emptyList(); picNote = null
+                send(text, if (ref.kind == Kind.LEAD) focus ?: target else null, pics); text = ""; pics = emptyList(); picNote = null
             }
         }
     }
 }
 
 @Composable
-private fun CardHeader(r: Row.Card, chosen: Boolean, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.Center) {
+private fun CardHeader(r: Row.Card, chosen: Boolean, onOpen: (() -> Unit)?, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically) {
         Surface(
             onClick = onClick, shape = RoundedCornerShape(50),
             color = if (r.waiting) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceVariant,
@@ -246,15 +256,18 @@ private fun CardHeader(r: Row.Card, chosen: Boolean, onClick: () -> Unit) {
             Text(
                 (if (r.waiting) "⏳ " else "") + "${r.card}  ${r.title}" + if (chosen) "  ✓" else "",
                 style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp).widthIn(max = 300.dp),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp).widthIn(max = 260.dp),
             )
+        }
+        if (onOpen != null) IconButton(onClick = onOpen, modifier = Modifier.size(40.dp).testTag("open:${r.card}")) {
+            Icon(Icons.AutoMirrored.Filled.OpenInNew, "Open ${r.card}", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
+private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -274,7 +287,7 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onOption: (Strin
                     Text(b.author, style = MaterialTheme.typography.labelMedium, color = cs.primary)
                 }
                 if (b.pics.isNotEmpty()) MessagePictures(b.pics, repo)
-                if (b.text.isNotEmpty()) Text(Markdown.render(b.text, cs.surfaceVariant, cs.primary), style = MaterialTheme.typography.bodyLarge, color = fg)
+                if (b.text.isNotEmpty()) Text(Markdown.render(b.text, cs.surfaceVariant, cs.primary, cards, onCard), style = MaterialTheme.typography.bodyLarge, color = fg)
                 Text(
                     when (b.state) {
                         SendState.SENDING -> "Sending…"

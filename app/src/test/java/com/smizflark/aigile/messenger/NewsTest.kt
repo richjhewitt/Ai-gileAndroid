@@ -93,6 +93,13 @@ class NewsTest {
         assertEquals("A and 2 more", News.summary(listOf(i("A"), i("B"), i("C"))))
     }
 
+    @Test fun onlyThisChatsCardIdsBecomeLinks() {   // AII-28
+        val refs = Markdown.cardRefs("See AIG-464 and AII-12, not XAIG-4640 or AIG-9", setOf("AIG-464", "AII-12"))
+        assertEquals(listOf("AIG-464", "AII-12"), refs.map { it.second })
+        assertEquals(4..10, refs[0].first)
+        assertTrue(Markdown.cardRefs("AIG-464", emptySet()).isEmpty())
+    }
+
     @Test fun bulletsLoseTheirBlankLines() {
         assertEquals("- one\n- two\n\nAfter", Markdown.squeeze("- one\n\n- two\n\n\n\nAfter\n"))
     }
