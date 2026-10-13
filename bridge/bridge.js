@@ -24,6 +24,7 @@ const ROUTES = [
   ['POST', `/api/dms/contacts/${SEG}/messages`],
   ['POST', `/api/projects/${SEG}/cards`],
   ['POST', `/api/projects/${SEG}/cards/${SEG}/comments`],
+  ['GET', `/api/projects/${SEG}/cards/${SEG}`],   // one card for the card view (AII-45)
   ['GET', `/api/avatars/(badge(/${SEG})+|[A-Za-z0-9_.-]+)`],
   ['GET', `/api/projects/${SEG}/logo`],
   // Pictures in chats (AII-27): upload before a message, then read them back
