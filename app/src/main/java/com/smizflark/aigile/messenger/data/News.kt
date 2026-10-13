@@ -47,6 +47,15 @@ object News {
     /** Up to where "mark as read" reads a chat: its newest message, saved or listed. */
     fun readUpTo(c: ChatRef, saved: Conversation?): String? =
         listOfNotNull(c.last, c.lastIn, saved?.bubbles?.lastOrNull()?.at).maxOrNull()
+    /**
+     * Mark as unread (AII-119): a read mark just before the newest message from them, so it counts as new again.
+     * Null for the Lead Scrum Master (the board's own count) and for a chat with nothing from them.
+     */
+    fun unreadMark(c: ChatRef, saved: Conversation?): String? {
+        if (c.kind == Kind.WATCHMAN) return null
+        val at = saved?.lastFromThem ?: c.lastIn ?: c.last ?: return null
+        return runCatching { java.time.Instant.parse(at).minusMillis(1).toString() }.getOrNull()
+    }
     /** Drops muted chats from an alert (AII-48). */
     fun audible(news: List<Item>, muted: Set<String>): List<Item> = news.filter { it.chat !in muted }
 

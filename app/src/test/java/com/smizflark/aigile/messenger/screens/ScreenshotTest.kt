@@ -104,6 +104,20 @@ class ScreenshotTest {
         rule.onNodeWithTag("menu-mute").performClick()
         org.junit.Assert.assertFalse(c.key in repo.store.muted())
     }
+    /** AII-119: hold a read chat: Mark as unread brings its badge back. */
+    @Test fun markUnreadLight() {
+        val c = lead(); prime(c); runBlocking { repo.markRead(c) }
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        rule.waitForIdle()
+        org.junit.Assert.assertTrue(rule.onAllNodesWithTag("unread:${c.key}", useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
+        rule.onNodeWithTag("chat:${c.key}").performTouchInput { longClick() }
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_unread_menu_light.png")
+        rule.onNodeWithTag("menu-unread").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("unread:${c.key}", useUnmergedTree = true).assertExists()
+    }
     @Test fun chatsDark() = shot("chats", true) { ChatsScreen(repo, {}, {}, {}) }
     @Test fun chatLight() { prime(lead()); shot("chat", false) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead(), onBack = {}) } }
