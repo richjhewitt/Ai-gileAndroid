@@ -19,6 +19,18 @@ object Quote {
     /** The message to send: the quote, a blank line, then the reply. */
     fun with(quote: String?, reply: String) = if (quote.isNullOrBlank()) reply else "$quote\n\n$reply"
 
+    /**
+     * Where a quote came from (AII-99): the index of the newest message older than [from] that quotes as [quoted].
+     * [msgs] is newest first, null for rows that are not messages; [owner] names your own messages.
+     * Falls back to the line alone, in case the name was written differently.
+     */
+    fun source(quoted: String, from: Int, msgs: List<Bubble?>, owner: String): Int? {
+        fun line(q: String) = q.replace(Regex("^\\*\\*[^*]*:\\*\\* "), "")
+        val older = msgs.indices.filter { it > from && msgs[it] != null }
+        val quotes = older.associateWith { i -> msgs[i]!!.let { of(if (it.mine) owner else it.author, it.text, it.pics.size).removePrefix("> ") } }
+        return older.firstOrNull { quotes[it] == quoted } ?: older.firstOrNull { line(quotes[it]!!) == line(quoted) }
+    }
+
     /** A message as quote (the leading "> " lines, without the marks) and the rest; quote is null when there is none. */
     fun split(text: String): Pair<String?, String> {
         val lines = text.lines()
