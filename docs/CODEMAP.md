@@ -59,6 +59,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 ## work/ (background)
 - work/ChatNotifier.kt: builds and shows message alerts.
 - work/CheckWorker.kt: looks for new messages about every 15 minutes.
+- work/ReadReceiver.kt: the Mark as read button on an alert.
 - work/ReplyReceiver.kt: the Reply button on an alert.
 - work/SendWorker.kt: sends queued messages from the outbox.
 

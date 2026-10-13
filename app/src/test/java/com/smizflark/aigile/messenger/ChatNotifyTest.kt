@@ -8,6 +8,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.QuickReply
 import com.smizflark.aigile.messenger.work.ChatNotifier
+import com.smizflark.aigile.messenger.work.CheckWorker
+import com.smizflark.aigile.messenger.work.ReadReceiver
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -58,6 +60,22 @@ class ChatNotifyTest {
         assertEquals(listOf(QuickReply.notificationId("lead:b")), chats().map { it.id })
         assertNull(nm.activeNotifications.firstOrNull { it.id == ChatNotifier.SUMMARY })
         ChatNotifier.clear(context, "lead:b")
+        assertEquals(0, nm.activeNotifications.size)
+    }
+
+    // AII-116
+    @Test fun anAlertHasReplyAndMarkAsRead() {
+        ChatNotifier.post(context, item("lead:a", "AI-gile", "hi"))
+        val n = nm.activeNotifications.first { it.id == QuickReply.notificationId("lead:a") }.notification
+        assertEquals(listOf("Reply", "Mark as read"), n.actions.map { it.title.toString() })
+        assertEquals(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ, NotificationCompat.getAction(n, 1)!!.semanticAction)
+    }
+
+    @Test fun markAsReadTakesTheAlertAway() {
+        ChatNotifier.post(context, item("lead:a", "AI-gile", "hi"))
+        context.sendBroadcast(android.content.Intent(context, ReadReceiver::class.java)
+            .setAction(ReadReceiver.ACTION).putExtra(CheckWorker.EXTRA_CHAT, "lead:a"))
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
         assertEquals(0, nm.activeNotifications.size)
     }
 
