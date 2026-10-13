@@ -1,5 +1,9 @@
 package com.smizflark.aigile.messenger.ui
 
+import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -144,6 +148,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
     val shown = Markdown.render(b.text, cs.surfaceVariant, cs.primary, cards, onCard, copy)
     // AII-43: long-press a bubble to copy what it shows (without the ** marks).
     var menu by remember { mutableStateOf(false) }
+    var selecting by remember { mutableStateOf(false) }   // AII-127: pick part of a message to copy
     var showTime by remember { mutableStateOf(false) }   // AII-51: tap a bubble for its exact time
     val clipboard = LocalClipboardManager.current
     val ctx = LocalContext.current
@@ -199,6 +204,8 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     // Android 13+ shows its own "copied" note; a toast as well would say it twice.
                     if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
                 })
+                if (shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.select_text)) }, modifier = Modifier.testTag("select"),
+                    onClick = { menu = false; selecting = true })
                 // AII-121: out to another app (email, notes...) through the phone's share menu.
                 if (shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, modifier = Modifier.testTag("share"), onClick = {
                     menu = false
@@ -232,6 +239,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             }
         }
         }
+        if (selecting) SelectText(shown.text) { selecting = false }
         if (showTime && b.at.isNotBlank()) Text(fullTime(b.at), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).testTag("fulltime"))
         if (r.showOptions) FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -240,6 +248,19 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
     }
     }
 }
+
+/** The message on its own, so you can drag the handles over just the part you want and copy it (AII-127). */
+@Composable
+private fun SelectText(text: String, onClose: () -> Unit) = AlertDialog(
+    onDismissRequest = onClose,
+    title = { Text(stringResource(R.string.select_text)) },
+    text = {
+        SelectionContainer(Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
+            Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.testTag("select-text"))
+        }
+    },
+    confirmButton = { TextButton(onClick = onClose) { Text(stringResource(R.string.done)) } },
+)
 
 private val SWIPE_REPLY = 72.dp
 

@@ -5,6 +5,8 @@
     <string name="widget_connect">Open de app om verbinding met je bord te maken</string>
     <string name="widget_no_chats">Nog geen chats</string>
     <string name="copy">Kopiëren</string>
+    <string name="select_text">Tekst selecteren</string>
+    <string name="done">Klaar</string>
     <string name="reply">Antwoorden</string>
     <string name="show_quoted">Toon het geciteerde bericht</string>
     <string name="forward">Doorsturen</string>
