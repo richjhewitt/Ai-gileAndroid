@@ -6,5 +6,8 @@
     <string name="widget_no_chats">No chats yet</string>
     <string name="copy">Copy</string>
     <string name="reply">Reply</string>
+    <string name="forward">Forward</string>
+    <string name="forward_to">Forward to…</string>
+    <string name="forward_search">Search chats</string>
     <string name="copied">Copied</string>
 </resources>

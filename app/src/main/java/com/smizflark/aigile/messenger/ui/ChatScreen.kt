@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -84,6 +85,7 @@ import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
+import com.smizflark.aigile.messenger.data.Forward
 import com.smizflark.aigile.messenger.data.Quote
 import com.smizflark.aigile.messenger.data.Pic
 import com.smizflark.aigile.messenger.data.Repo
@@ -162,6 +164,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var detail by remember { mutableStateOf<CardDetail?>(null) }
     if (focus != null && ref.kind == Kind.LEAD) LaunchedEffect(focus) { detail = repo.card(ref, focus) }
     var quoting by rememberSaveable { mutableStateOf<String?>(null) }   // AII-60: the quoted line of the message being answered
+    var forwarding by remember { mutableStateOf<String?>(null) }   // AII-71: the text of the message being forwarded
     var error by remember { mutableStateOf<String?>(null) }
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     val scope = rememberCoroutineScope()
@@ -231,6 +234,21 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         scope.launch {
             val kept = withContext(Dispatchers.IO) { repo.keepPicture(uri) }
             if (kept == null) picNote = "Couldn't read the copied picture." else { pics = (pics + kept).take(MAX_PICS); picNote = null }
+        }
+    }
+
+    forwarding?.let { body ->
+        val ctx = LocalContext.current
+        ForwardDialog(repo, onDismiss = { forwarding = null }) { to ->
+            forwarding = null
+            // The normal send path: queued first, so it waits and retries if the phone is offline.
+            val p = repo.queue(to, Forward.text(body), null)
+            if (to.key == ref.key) pending = repo.pendingFor(ref.key)
+            scope.launch {
+                val r = repo.deliver(to, p)
+                if (to.key == ref.key) { load(); pending = repo.pendingFor(ref.key) }
+                Toast.makeText(ctx, if (r.isSuccess) "Forwarded to ${to.name}" else "Forward queued for ${to.name}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -307,7 +325,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 quoting = Quote.of(if (q.mine) owner else q.author, q.text, q.pics.size)
                                 // A reply to a team message goes to its card, like answering it on the board.
                                 if (ref.kind == Kind.LEAD && focus == null && q.card != null && targets.any { it.id == q.card }) { target = q.card; picked = true }
-                            }, if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onOpenCard,
+                            }, onForward = { forwarding = it.text }, cards = if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onCard = onOpenCard,
                                 onOption = { send(it, r.b.card) },
                                 onRetry = { p -> deliver(p) },
                                 onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) })
@@ -368,7 +386,7 @@ private fun CardHeader(r: Row.Card, chosen: Boolean, onOpen: (() -> Unit)?, onCl
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
+private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -393,6 +411,8 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                 if (b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(R.string.reply)) }, modifier = Modifier.testTag("reply"),
                     onClick = { menu = false; onReply(b) })
+                if (b.state == SendState.SENT && !b.unverified && b.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.forward)) }, modifier = Modifier.testTag("forward"),
+                    onClick = { menu = false; onForward(b) })
                 DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
                     menu = false
                     clipboard.setText(AnnotatedString(shown.text))
@@ -405,10 +425,12 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble
                     Text(b.author, style = MaterialTheme.typography.labelMedium, color = cs.primary)
                 }
                 if (b.pics.isNotEmpty()) MessagePictures(b.pics, repo)
-                val (quoted, rest) = Quote.split(b.text)
+                val (forwarded, body) = Forward.split(b.text)
+                if (forwarded) Text("↪ Forwarded", style = MaterialTheme.typography.labelSmall, color = fg.copy(alpha = 0.6f), modifier = Modifier.testTag("forwarded"))
+                val (quoted, rest) = Quote.split(body)
                 if (quoted != null) QuoteBar(Markdown.render(quoted, cs.surfaceVariant, cs.primary), fg)
                 if (quoted != null && rest.isNotEmpty()) Text(Markdown.render(rest, cs.surfaceVariant, cs.primary, cards, onCard), style = MaterialTheme.typography.bodyLarge, color = fg)
-                else if (quoted == null && b.text.isNotEmpty()) Text(shown, style = MaterialTheme.typography.bodyLarge, color = fg)
+                else if (quoted == null && body.isNotEmpty()) Text(if (forwarded) Markdown.render(body, cs.surfaceVariant, cs.primary, cards, onCard) else shown, style = MaterialTheme.typography.bodyLarge, color = fg)
                 Text(
                     when (b.state) {
                         SendState.SENDING -> "Sending…"
@@ -503,4 +525,36 @@ private fun QuoteBar(text: AnnotatedString, fg: androidx.compose.ui.graphics.Col
         Text(text, style = MaterialTheme.typography.bodyMedium, color = fg.copy(alpha = 0.75f), maxLines = 3,
             overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp))
     }
+}
+
+/** Pick the chat to forward to (AII-71): the chats list with a search box. */
+@Composable
+private fun ForwardDialog(repo: Repo, onDismiss: () -> Unit, onPick: (ChatRef) -> Unit) {
+    var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
+    var query by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) { runCatching { chats = repo.chats() } }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.forward_to)) },
+        text = {
+            Column {
+                OutlinedTextField(query, { query = it }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("forward-search"),
+                    placeholder = { Text(stringResource(R.string.forward_search)) })
+                LazyColumn(Modifier.heightIn(max = 360.dp)) {
+                    items(Forward.pickable(chats, query), key = { it.key }) { c ->
+                        Row(Modifier.fillMaxWidth().clickable { onPick(c) }.padding(vertical = 8.dp).testTag("fwd:${c.key}"), verticalAlignment = Alignment.CenterVertically) {
+                            Avatar(c, repo, 36.dp)
+                            Spacer(Modifier.size(10.dp))
+                            Column {
+                                Text(c.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(c.subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
