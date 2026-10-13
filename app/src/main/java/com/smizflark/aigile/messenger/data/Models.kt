@@ -31,7 +31,12 @@ data class WireMsg(
     val at: String = "",
     val mine: Boolean = false,
     val options: List<String> = emptyList(),
+    val attachments: List<Attachment> = emptyList(),
 )
+
+/** A file on a message: board comments give id, name, type and size; friend DMs give id, name and type. */
+@Serializable
+data class Attachment(val id: String = "", val name: String = "", val type: String = "", val size: Long = 0)
 
 @Serializable
 data class OpenCard(val id: String, val title: String = "")
@@ -77,6 +82,7 @@ data class FriendMsg(
     val text: String? = null,
     val at: String = "",
     val verified: Boolean = true,
+    val attachments: List<Attachment> = emptyList(),
 )
 
 @Serializable
@@ -123,7 +129,15 @@ data class Bubble(
     val unverified: Boolean = false,
     /** This card is still waiting on you (an open question). */
     val waiting: Boolean = false,
+    val pics: List<Pic> = emptyList(),
 )
+
+/** A picture or file on a message: a board path (/api/...) or, before it is sent or in the demo, a file:// address. */
+@Serializable
+data class Pic(val path: String, val name: String = "", val type: String = "") {
+    val local get() = path.startsWith("file:") || path.startsWith("content:")
+    val image get() = type.startsWith("image/") || Regex("(?i)\\.(png|jpe?g|gif|webp|bmp|heic)$").containsMatchIn(name.ifEmpty { path })
+}
 
 /** Where a reply goes: an existing card, or (id = null) a new 💬 message. */
 @Serializable
@@ -148,4 +162,6 @@ data class Pending(
     val target: String?,
     val at: String,
     val failed: Boolean = false,
+    /** Pictures waiting to go with it, copied into the app so nothing is lost offline. */
+    val files: List<String> = emptyList(),
 )

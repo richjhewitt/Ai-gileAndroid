@@ -64,18 +64,23 @@ class DemoSource : ChatSource {
         else Mapper.conversation(ref, threads.getValue(ref.id))
     }
 
-    override suspend fun send(ref: ChatRef, text: String, target: String?): String? {
+    override suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload>): String? {
         delay(300)
         val now = Instant.now().toString()
+        // No board here: the demo keeps sent pictures as files on the phone so they still show.
+        val att = files.map { f ->
+            val out = java.io.File.createTempFile("demo-", "-" + f.name).apply { writeBytes(f.bytes) }
+            Attachment(out.toURI().toString(), f.name, f.type, f.bytes.size.toLong())
+        }
         if (ref.kind == Kind.FRIEND) {
-            friends.getValue(ref.id) += FriendMsg("o$now", "out", text, now)
+            friends.getValue(ref.id) += FriendMsg("o$now", "out", text, now, attachments = att)
             return null
         }
         val t = threads.getValue(ref.id)
         val card = target ?: "${t.slug.take(3).uppercase()}-${(100..999).random()}"
         val title = t.cards[card]?.title ?: Mapper.quickTitle(text)
         val msgs = t.messages.toMutableList()
-        msgs += WireMsg(card, title, "Rich", text, now, mine = true)
+        msgs += WireMsg(card, title, "Rich", text, now, mine = true, attachments = att)
         // The demo lead answers at once, so you can see a reply arrive.
         msgs += WireMsg(card, title, t.lead ?: "🧭 Lead Scrum Master", if (ref.kind == Kind.WATCHMAN) "- Passed on to the AI-gile team" else "- Got it: on it now", Instant.now().plusSeconds(1).toString())
         threads[ref.id] = t.copy(
@@ -86,6 +91,6 @@ class DemoSource : ChatSource {
         return card
     }
 
-    override suspend fun newMessage(slug: String, text: String) =
-        send(ChatRef(Kind.LEAD, slug, slug, "", ""), text, null)
+    override suspend fun newMessage(slug: String, text: String, files: List<Upload>) =
+        send(ChatRef(Kind.LEAD, slug, slug, "", ""), text, null, files)
 }

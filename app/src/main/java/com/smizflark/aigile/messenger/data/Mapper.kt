@@ -41,8 +41,9 @@ object Mapper {
                 cardTitle = m.title ?: t.cards[m.card]?.title,
                 options = m.options,
                 waiting = m.card in waitingIds,
+                pics = pics("/api/projects/${t.slug}/attachments/", m.attachments),
             )
-        }.filter { it.text.isNotEmpty() }
+        }.filter { it.text.isNotEmpty() || it.pics.isNotEmpty() }
         val lastFromThem = bubbles.lastOrNull { !it.mine }?.at
         if (ref.kind == Kind.WATCHMAN) return Conversation(ref, bubbles, lastFromThem = lastFromThem)
 
@@ -69,9 +70,21 @@ object Mapper {
                 author = if (mine) owner else ref.name,
                 text = if (m.verified) (m.text ?: "") else "⚠️ Not verified: this message could not be checked",
                 at = m.at, mine = mine, unverified = !m.verified,
+                pics = if (m.verified) pics("/api/dms/contacts/${ref.id}/files/", m.attachments) else emptyList(),
             )
-        }.filter { it.text.isNotEmpty() }
+        }.filter { it.text.isNotEmpty() || it.pics.isNotEmpty() }
         return Conversation(ref, bubbles, lastFromThem = bubbles.lastOrNull { !it.mine }?.at)
+    }
+
+    fun mimeOf(name: String): String = when (name.substringAfterLast('.', "").lowercase()) {
+        "jpg", "jpeg" -> "image/jpeg"; "png" -> "image/png"; "gif" -> "image/gif"; "webp" -> "image/webp"
+        "heic" -> "image/heic"; "bmp" -> "image/bmp"; "pdf" -> "application/pdf"; "txt" -> "text/plain"
+        else -> "application/octet-stream"
+    }
+
+    /** A message's files as paths on the board (the demo keeps file:// addresses as they are). */
+    fun pics(base: String, files: List<Attachment>) = files.filter { it.id.isNotBlank() }.map {
+        Pic(if (it.id.startsWith("file:")) it.id else base + it.id.replace(" ", "%20"), it.name, it.type)
     }
 
     /** "💬 can you check..." -> "can you check...": card titles read better without the leading emoji. */
