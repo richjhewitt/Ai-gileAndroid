@@ -40,6 +40,9 @@ import com.journeyapps.barcodescanner.ScanOptions
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Repo
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.smizflark.aigile.messenger.R
+import androidx.compose.ui.platform.LocalContext
 
 /** Journey 1: connect the phone to your board, or try the demo. */
 @Composable
@@ -49,13 +52,14 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
     var busy by rememberSaveable { mutableStateOf(false) }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
 
     fun connect() {
-        if (url.isBlank()) { error = "Type your board's address first."; return }
+        if (url.isBlank()) { error = ctx.getString(R.string.connect_need_address); return }
         busy = true; error = null
         scope.launch {
             try { repo.connect(url, key); onDone() }
-            catch (e: Exception) { error = e.message ?: "Couldn't connect." }
+            catch (e: Exception) { error = e.message ?: ctx.getString(R.string.connect_failed) }
             busy = false
         }
     }
@@ -63,7 +67,7 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
     val scan = androidx.activity.compose.rememberLauncherForActivityResult(ScanContract()) { r ->
         val text = r.contents ?: return@rememberLauncherForActivityResult
         val pair = Mapper.parsePairing(text)
-        if (pair == null) error = "That QR code isn't a board pairing code."
+        if (pair == null) error = ctx.getString(R.string.connect_bad_qr)
         else { url = pair.first; key = pair.second; connect() }
     }
 
@@ -74,40 +78,40 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
         Spacer(Modifier.height(24.dp))
         Text("💬", style = MaterialTheme.typography.displayMedium)
         Text("AI-gile Messenger", style = MaterialTheme.typography.headlineMedium)
-        Text("Your team leads and friends, from your board at home.", style = MaterialTheme.typography.bodyLarge,
+        Text(stringResource(R.string.connect_tagline), style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
 
         Button(
-            onClick = { scan.launch(ScanOptions().setPrompt("Scan the QR code in the board's Setup > Phones").setBeepEnabled(false).setOrientationLocked(false)) },
+            onClick = { scan.launch(ScanOptions().setPrompt(ctx.getString(R.string.scan_prompt)).setBeepEnabled(false).setOrientationLocked(false)) },
             modifier = Modifier.fillMaxWidth().height(52.dp), enabled = !busy,
         ) {
-            Icon(Icons.Default.QrCodeScanner, null); Spacer(Modifier.size(8.dp)); Text("Scan QR code")
+            Icon(Icons.Default.QrCodeScanner, null); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.scan_qr))
         }
-        Text("Or type it in:", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.or_type), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         OutlinedTextField(
             value = url, onValueChange = { url = it; error = null },
-            label = { Text("Board address") }, placeholder = { Text("my-pc.tail1234.ts.net") },
+            label = { Text(stringResource(R.string.board_address)) }, placeholder = { Text("my-pc.tail1234.ts.net") },
             singleLine = true, modifier = Modifier.fillMaxWidth().testTag("url"),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
         )
         OutlinedTextField(
             value = key, onValueChange = { key = it; error = null },
-            label = { Text("Phone key") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("key"),
+            label = { Text(stringResource(R.string.phone_key)) }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("key"),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Go),
         )
         if (Mapper.insecure(Mapper.normaliseUrl(url))) Text(
-            "⚠️ Plain http outside Tailscale sends your key unprotected. Use https or your Tailscale address.",
+            stringResource(R.string.http_warning),
             color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
         )
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("error")) }
         OutlinedButton(onClick = ::connect, enabled = !busy, modifier = Modifier.fillMaxWidth().height(52.dp)) {
-            if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Text("Connect")
+            if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.connect))
         }
         Spacer(Modifier.height(8.dp))
         TextButton(onClick = { repo.startDemo(); onDone() }, modifier = Modifier.fillMaxWidth()) {
-            Text("Try the demo (no board needed)")
+            Text(stringResource(R.string.try_demo))
         }
     }
 }

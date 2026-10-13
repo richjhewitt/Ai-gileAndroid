@@ -25,6 +25,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import com.smizflark.aigile.messenger.R
 
 /** "#16a34a" -> Color, or null. */
 fun parseColor(hex: String?): Color? = runCatching {
@@ -55,6 +56,15 @@ fun Avatar(ref: ChatRef, repo: Repo, size: Dp = 48.dp) {
     )
 }
 
+/** Time words in the phone's language: filled from strings.xml when the app starts (App.onCreate). */
+object Words {
+    var now = "now"; var minutes = "%1\$dm"; var today = "Today"; var yesterday = "Yesterday"
+    fun load(ctx: android.content.Context) {
+        now = ctx.getString(R.string.time_now); minutes = ctx.getString(R.string.time_minutes)
+        today = ctx.getString(R.string.today); yesterday = ctx.getString(R.string.yesterday)
+    }
+}
+
 private val hm = DateTimeFormatter.ofPattern("HH:mm")
 private val dayMonth = DateTimeFormatter.ofPattern("d MMM")
 
@@ -68,10 +78,10 @@ fun shortTime(iso: String?, now: Instant = Instant.now()): String {
     val day = t.atZone(zone).toLocalDate()
     val today = now.atZone(zone).toLocalDate()
     return when {
-        mins < 1 -> "now"
-        mins < 60 -> "${mins}m"
+        mins < 1 -> Words.now
+        mins < 60 -> Words.minutes.format(mins)
         day == today -> hm.format(t.atZone(zone))
-        day == today.minusDays(1) -> "Yesterday"
+        day == today.minusDays(1) -> Words.yesterday
         else -> dayMonth.format(t.atZone(zone))
     }
 }
@@ -82,8 +92,8 @@ fun clock(iso: String?): String = instant(iso)?.let { hm.format(it.atZone(ZoneId
 fun dayLabel(iso: String?, today: LocalDate = LocalDate.now()): String {
     val d = instant(iso)?.atZone(ZoneId.systemDefault())?.toLocalDate() ?: return ""
     return when (d) {
-        today -> "Today"
-        today.minusDays(1) -> "Yesterday"
+        today -> Words.today
+        today.minusDays(1) -> Words.yesterday
         else -> DateTimeFormatter.ofPattern("EEE d MMM").format(d)
     }
 }

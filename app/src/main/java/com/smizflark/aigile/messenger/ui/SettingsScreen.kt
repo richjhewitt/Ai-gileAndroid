@@ -39,6 +39,8 @@ import com.smizflark.aigile.messenger.BuildConfig
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.work.CheckWorker
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.smizflark.aigile.messenger.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,43 +54,43 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
     var to by remember { mutableStateOf(s.quietTo) }
     var note by remember { mutableStateOf<String?>(null) }
     val askPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
-        if (!ok) note = "Alerts need permission: allow notifications in Android settings."
+        if (!ok) note = ctx.getString(R.string.alerts_permission)
     }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text("Settings") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } })
+        TopAppBar(title = { Text(stringResource(R.string.settings)) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } })
     }) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Connection", style = MaterialTheme.typography.titleMedium)
-            Text(if (s.demo) "Demo: made-up chats, nothing leaves the phone" else "Board: ${s.url}\nSigned in as ${s.owner}",
+            Text(stringResource(R.string.connection), style = MaterialTheme.typography.titleMedium)
+            Text(if (s.demo) stringResource(R.string.demo_note) else stringResource(R.string.board_signed_in, s.url, s.owner),
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             HorizontalDivider()
 
-            Text("Alerts", style = MaterialTheme.typography.titleMedium)
-            Toggle("New message alerts", "Checks about every 15 minutes, one alert per batch", alerts) {
+            Text(stringResource(R.string.alerts), style = MaterialTheme.typography.titleMedium)
+            Toggle(stringResource(R.string.alerts_new), stringResource(R.string.alerts_new_sub), alerts) {
                 alerts = it; s.alerts = it
                 if (it) {
                     if (Build.VERSION.SDK_INT >= 33) askPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     if (!s.demo) CheckWorker.schedule(ctx)
                 } else CheckWorker.cancel(ctx)
             }
-            Toggle("Quiet hours", "No alerts from ${hour(from)} to ${hour(to)}", quietOn) { quietOn = it; s.quietOn = it }
+            Toggle(stringResource(R.string.quiet_hours), stringResource(R.string.quiet_sub, hour(from), hour(to)), quietOn) { quietOn = it; s.quietOn = it }
             if (quietOn) {
-                Stepper("From", from) { from = it; s.quietFrom = it }
-                Stepper("To", to) { to = it; s.quietTo = it }
+                Stepper(stringResource(R.string.from), from) { from = it; s.quietFrom = it }
+                Stepper(stringResource(R.string.to), to) { to = it; s.quietTo = it }
             }
             if (!s.demo) OutlinedButton(onClick = {
-                scope.launch { note = runCatching { CheckWorker.check(ctx); "Checked: all up to date." }.getOrElse { it.message } }
-            }) { Text("Check now") }
+                scope.launch { note = runCatching { CheckWorker.check(ctx); ctx.getString(R.string.checked_ok) }.getOrElse { it.message } }
+            }) { Text(stringResource(R.string.check_now)) }
             note?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             HorizontalDivider()
 
             TextButton(onClick = { CheckWorker.cancel(ctx); repo.signOut(); onSignedOut() }) {
-                Text(if (s.demo) "Leave the demo" else "Sign out of this board", color = MaterialTheme.colorScheme.error)
+                Text(if (s.demo) stringResource(R.string.leave_demo) else stringResource(R.string.sign_out), color = MaterialTheme.colorScheme.error)
             }
-            Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelSmall,
+            Text(stringResource(R.string.version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

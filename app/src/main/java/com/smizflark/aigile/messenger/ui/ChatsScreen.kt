@@ -51,6 +51,8 @@ import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Repo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.smizflark.aigile.messenger.R
 
 /** Journey 2: every chat in one list. Shows the last list at once, then fetches. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,13 +81,13 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (repo.store.demo) "Messages · demo" else "Messages") },
-                actions = { IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "Settings") } },
+                title = { Text(if (repo.store.demo) stringResource(R.string.chats_title_demo) else stringResource(R.string.chats_title)) },
+                actions = { IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, stringResource(R.string.settings)) } },
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(onClick = onNew, icon = { Icon(Icons.AutoMirrored.Filled.Chat, null) },
-                text = { Text("New message") }, modifier = Modifier.testTag("new"))
+                text = { Text(stringResource(R.string.new_message)) }, modifier = Modifier.testTag("new"))
         },
     ) { pad ->
         PullToRefreshBox(
@@ -97,7 +99,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 error?.let { e ->
                     item {
                         Text(
-                            if (chats.isEmpty()) e else "$e\nShowing chats from ${shortTime(java.time.Instant.ofEpochMilli(repo.store.lastSync).toString())}.",
+                            if (chats.isEmpty()) e else stringResource(R.string.chats_offline, e, shortTime(java.time.Instant.ofEpochMilli(repo.store.lastSync).toString())),
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.fillMaxWidth().padding(12.dp)
                                 .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(12.dp)).padding(12.dp),
@@ -105,7 +107,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     }
                 }
                 if (loaded && chats.isEmpty() && error == null) item {
-                    Text("No chats yet. Tap New message to write to a team.", Modifier.padding(24.dp),
+                    Text(stringResource(R.string.chats_empty), Modifier.padding(24.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 items(chats, key = { it.key }) { c ->
@@ -141,7 +143,7 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit)
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
                 )
                 if (c.waiting > 0) Badge(containerColor = MaterialTheme.colorScheme.primary) {
-                    Text("${c.waiting} waiting", Modifier.padding(horizontal = 4.dp))
+                    Text(stringResource(R.string.waiting, c.waiting), Modifier.padding(horizontal = 4.dp))
                 } else if (fresh) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
             }
         }

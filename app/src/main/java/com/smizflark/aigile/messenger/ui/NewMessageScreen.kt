@@ -40,11 +40,15 @@ import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Repo
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.smizflark.aigile.messenger.R
+import androidx.compose.ui.platform.LocalContext
 
 /** Journey 4: a new 💬 message to any team (or a friend, or the Lead Scrum Master). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewMessageScreen(repo: Repo, onBack: () -> Unit, onSent: (ChatRef) -> Unit) {
+    val ctx = LocalContext.current
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var pick by rememberSaveable { mutableStateOf<String?>(null) }
     var text by rememberSaveable { mutableStateOf("") }
@@ -54,8 +58,8 @@ fun NewMessageScreen(repo: Repo, onBack: () -> Unit, onSent: (ChatRef) -> Unit) 
     LaunchedEffect(Unit) { runCatching { chats = repo.chats() } }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text("New message") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } })
+        TopAppBar(title = { Text(stringResource(R.string.new_message)) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } })
     }) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding().padding(horizontal = 16.dp)) {
             Text("To", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -70,7 +74,7 @@ fun NewMessageScreen(repo: Repo, onBack: () -> Unit, onSent: (ChatRef) -> Unit) 
                         Spacer(Modifier.size(10.dp))
                         Column {
                             Text(c.name, style = MaterialTheme.typography.titleSmall)
-                            Text(if (c.kind == Kind.LEAD) "New 💬 card for ${c.subtitle}" else c.subtitle,
+                            Text(if (c.kind == Kind.LEAD) stringResource(R.string.new_card_for, c.subtitle) else c.subtitle,
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -78,12 +82,12 @@ fun NewMessageScreen(repo: Repo, onBack: () -> Unit, onSent: (ChatRef) -> Unit) 
             }
             OutlinedTextField(
                 value = text, onValueChange = { text = it; error = null }, minLines = 3, maxLines = 8,
-                placeholder = { Text("What do you want to say?") }, modifier = Modifier.fillMaxWidth().testTag("input"),
+                placeholder = { Text(stringResource(R.string.new_placeholder)) }, modifier = Modifier.fillMaxWidth().testTag("input"),
             )
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 6.dp)) }
             Button(
                 onClick = {
-                    val to = chats.firstOrNull { it.key == pick } ?: run { error = "Pick who it's for."; return@Button }
+                    val to = chats.firstOrNull { it.key == pick } ?: run { error = ctx.getString(R.string.pick_who); return@Button }
                     busy = true
                     scope.launch {
                         try {
@@ -95,7 +99,7 @@ fun NewMessageScreen(repo: Repo, onBack: () -> Unit, onSent: (ChatRef) -> Unit) 
                 },
                 enabled = !busy && text.isNotBlank(),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).height(52.dp).testTag("send"),
-            ) { Text(if (busy) "Sending…" else "Send") }
+            ) { Text(if (busy) stringResource(R.string.sending) else stringResource(R.string.send)) }
         }
     }
 }

@@ -65,6 +65,8 @@ import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.SendState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.smizflark.aigile.messenger.R
 
 private sealed interface Row {
     val id: String
@@ -110,7 +112,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
-    val owner = repo.store.owner.ifBlank { "You" }
+    val owner = repo.store.owner.ifBlank { stringResource(R.string.you) }
 
     suspend fun load() {
         try {
@@ -155,7 +157,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Avatar(ref, repo, 36.dp)
@@ -191,9 +193,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
                             onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) })
                     }
                 }
-                if (convo == null && error == null) item { Text("Loading…", Modifier.padding(24.dp)) }
+                if (convo == null && error == null) item { Text(stringResource(R.string.loading), Modifier.padding(24.dp)) }
                 if (convo != null && convo!!.bubbles.isEmpty() && pending.isEmpty()) item {
-                    Text("No messages yet. Say hello below.", Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.chat_empty), Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             Composer(ref, text, { text = it }, targets.map { it.id to it.label }, target, { target = it; picked = true }) {
@@ -243,8 +245,8 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, onOption: (String) -> Unit, 
                 Text(Markdown.render(b.text, cs.surfaceVariant, cs.primary), style = MaterialTheme.typography.bodyLarge, color = fg)
                 Text(
                     when (b.state) {
-                        SendState.SENDING -> "Sending…"
-                        SendState.FAILED -> "Not sent"
+                        SendState.SENDING -> stringResource(R.string.sending)
+                        SendState.FAILED -> stringResource(R.string.not_sent)
                         SendState.SENT -> clock(b.at) + if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
                     },
                     style = MaterialTheme.typography.labelSmall,
@@ -255,8 +257,8 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, onOption: (String) -> Unit, 
         }
         val p = r.pending
         if (p != null && b.state == SendState.FAILED) Row {
-            TextButton(onClick = { onRetry(p) }) { Text("Tap to retry") }
-            TextButton(onClick = { onDiscard(p) }) { Text("Delete") }
+            TextButton(onClick = { onRetry(p) }) { Text(stringResource(R.string.retry)) }
+            TextButton(onClick = { onDiscard(p) }) { Text(stringResource(R.string.delete)) }
         }
         if (r.showOptions) FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             b.options.forEach { o -> OutlinedButton(onClick = { onOption(o) }) { Text(o) } }
@@ -273,11 +275,11 @@ private fun Composer(
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 10.dp, vertical = 8.dp)) {
             if (ref.kind == Kind.LEAD && targets.isNotEmpty()) {
                 var open by remember { mutableStateOf(false) }
-                val label = targets.firstOrNull { it.first == target }?.second ?: "New message"
+                val label = targets.firstOrNull { it.first == target }?.second ?: stringResource(R.string.new_message)
                 Box {
                     AssistChip(
                         onClick = { open = true },
-                        label = { Text("Replying to: $label", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        label = { Text(stringResource(R.string.replying_to, label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
                         modifier = Modifier.testTag("target"),
                     )
@@ -291,13 +293,13 @@ private fun Composer(
             Row(verticalAlignment = Alignment.Bottom) {
                 OutlinedTextField(
                     value = text, onValueChange = onText, maxLines = 6,
-                    placeholder = { Text(if (ref.kind == Kind.WATCHMAN) "Message the Lead Scrum Master" else "Message") },
+                    placeholder = { Text(if (ref.kind == Kind.WATCHMAN) stringResource(R.string.message_watchman) else stringResource(R.string.message)) },
                     shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.weight(1f).testTag("input"),
                 )
                 Spacer(Modifier.size(8.dp))
                 FilledIconButton(onClick = onSend, enabled = text.isNotBlank(), modifier = Modifier.size(52.dp).testTag("send")) {
-                    Icon(Icons.AutoMirrored.Filled.Send, "Send")
+                    Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.send))
                 }
             }
         }

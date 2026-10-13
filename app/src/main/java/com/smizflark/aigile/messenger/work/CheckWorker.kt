@@ -56,8 +56,8 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         fun cancel(context: Context) = WorkManager.getInstance(context).cancelUniqueWork(NAME)
 
         fun channel(context: Context) {
-            val ch = NotificationChannel(CHANNEL, "Messages", NotificationManager.IMPORTANCE_DEFAULT)
-                .apply { description = "New messages from your team leads and friends" }
+            val ch = NotificationChannel(CHANNEL, context.getString(R.string.channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+                .apply { description = context.getString(R.string.channel_desc) }
             context.getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
         }
 
@@ -87,11 +87,11 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                 if (news.size == 1) putExtra(EXTRA_CHAT, news[0].chat)
             }
             val pi = PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-            val title = if (news.size == 1) "New message" else "${news.size} chats have new messages"
+            val title = if (news.size == 1) context.getString(R.string.new_message) else context.getString(R.string.notify_many, news.size)
             val n = NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notify)
                 .setContentTitle(title)
-                .setContentText(News.summary(news))
+                .setContentText(News.summary(news, context.getString(R.string.notify_more)))
                 .setContentIntent(pi)
                 .setAutoCancel(true)
                 .setOnlyAlertOnce(true)
