@@ -101,6 +101,7 @@
     <string name="draft_label">Draft: %1$s</string>
     <string name="you_label">You: %1$s</string>
     <string name="working">working…</string>
+    <string name="working_on">working on %1$s</string>
     <string name="connect_need_address">Type your board\'s address first.</string>
     <string name="connect_failed">Couldn\'t connect.</string>
     <string name="connect_failed_unchanged">Couldn\'t connect. Nothing was changed.</string>

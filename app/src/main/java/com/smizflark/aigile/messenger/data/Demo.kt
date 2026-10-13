@@ -65,7 +65,7 @@ class DemoSource : ChatSource {
         val summaries = listOf("ai-gile", "tunio").map { s ->
             val t = threads.getValue(s)
             ChatSummary(t.slug, t.name, t.emoji, t.color, lead = t.lead, unread = t.open.size, last = t.messages.lastOrNull()?.at,
-                lastText = t.messages.lastOrNull()?.text, lastMine = t.messages.lastOrNull()?.mine, working = s == "ai-gile")   // AII-112: one team busy, to see 'working…'
+                lastText = t.messages.lastOrNull()?.text, lastMine = t.messages.lastOrNull()?.mine, working = s == "ai-gile", task = "AIG-2 Dark mode for the board?".takeIf { s == "ai-gile" })   // AII-112: one team busy, to see 'working…'
         } + ChatSummary("_watchman", "Lead Scrum Master", "🧭", "#3a5a7a", watchman = true, last = threads.getValue("_watchman").messages.last().at,
             lastText = threads.getValue("_watchman").messages.last().text, lastMine = threads.getValue("_watchman").messages.last().mine,
             unread = if (watchRead) 0 else threads.getValue("_watchman").messages.count { !it.mine })

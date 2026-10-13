@@ -74,6 +74,16 @@ class PreviewLineTest {
         assertEquals("on it", previewLabel(lead("on it")))
     }
 
+    // AII-113: the card the team is on, from its roster task; only while it is at work.
+    @Test fun workingOnTheCard() {
+        fun row(working: Boolean?, task: String?) = Mapper.chats(listOf(ChatSummary("x", "X", working = working, task = task)), emptyList())[0]
+        assertEquals("AII-5", row(true, "AII-5 📱 Voice to text").workingOn)
+        assertNull(row(false, "AII-5 Voice").workingOn)
+        assertNull(row(true, "tidy the repo").workingOn)
+        assertNull(row(true, null).workingOn)
+        assertEquals("AIG2-14", Mapper.cardId("  AIG2-14: fix"))
+    }
+
     @Test fun friendsKeepTheirLine() {
         val f = ChatRef(Kind.FRIEND, "d", "Davy", "🔒 Private", "")
         assertEquals("🔒 Private", previewLabel(f))

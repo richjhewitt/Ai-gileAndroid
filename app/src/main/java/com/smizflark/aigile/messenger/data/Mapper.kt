@@ -3,6 +3,10 @@ package com.smizflark.aigile.messenger.data
 /** Turns the board's answers into what the screens show. Pure, so it is unit tested. */
 object Mapper {
 
+    /** The card id at the start of a roster task ("AII-5 Title" -> "AII-5"), or null (AII-113). */
+    fun cardId(task: String): String? = CARD_ID.find(task)?.groupValues?.get(1)
+    private val CARD_ID = Regex("""^\s*([A-Z][A-Z0-9]*-\d+)\b""")
+
     /** Leads first (the board's own order), then friends, newest first; the 🧭 Lead Scrum Master on top when it has news. */
     fun chats(summaries: List<ChatSummary>, contacts: List<Contact>): List<ChatRef> {
         val leads = summaries.map { s ->
@@ -18,6 +22,7 @@ object Mapper {
                 waiting = s.unread, last = s.last, seen = s.seen?.takeIf { it.isNotBlank() },
                 preview = s.lastText?.let { plainLine(it) }?.takeIf { it.isNotEmpty() }, previewMine = s.lastMine == true,
                 working = s.working == true,   // AII-112
+                workingOn = s.task?.let { cardId(it) }?.takeIf { s.working == true },   // AII-113
             )
         }
         val friends = contacts.filter { !it.blocked }.sortedByDescending { it.last ?: "" }.map { c ->

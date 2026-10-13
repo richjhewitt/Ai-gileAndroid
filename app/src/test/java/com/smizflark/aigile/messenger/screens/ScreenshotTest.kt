@@ -185,6 +185,15 @@ class ScreenshotTest {
         rule.onRoot().captureRoboImage("../docs/shots/chat_quote_jump_light.png")
         rule.mainClock.autoAdvance = true
     }
+    /** AII-113: with "working on AIG-2" showing, tapping the chat name still opens the details. */
+    @Test fun workingOnKeepsTheNameTap() {
+        prime(lead())
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("working-on", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        rule.onAllNodes(androidx.compose.ui.test.hasText("AI-gile"), useUnmergedTree = true).onFirst().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("details-pin").fetchSemanticsNode()
+    }
     /** AII-80: tap the chat name; the details sheet opens (dark, as the phone shows it at night). */
     @Test fun chatDetailsDark() {
         prime(lead()); RuntimeEnvironment.setQualifiers("+night")
