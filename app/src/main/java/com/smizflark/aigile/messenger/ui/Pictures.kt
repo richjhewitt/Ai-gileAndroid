@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -77,6 +79,7 @@ private fun request(pic: Pic, repo: Repo): ImageRequest {
 @Composable
 fun MessagePictures(pics: List<Pic>, repo: Repo) {
     var open by remember { mutableStateOf<Pic?>(null) }
+    val images = pics.filter { it.image }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.padding(bottom = 6.dp)) {
         pics.forEach { p ->
@@ -94,7 +97,7 @@ fun MessagePictures(pics: List<Pic>, repo: Repo) {
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
-    open?.let { p -> FullPicture(p, repo) { open = null } }
+    open?.let { p -> FullPicture(images, images.indexOf(p).coerceAtLeast(0), repo) { open = null } }
 }
 
 @Composable
@@ -106,13 +109,19 @@ private fun Missing(p: Pic) {
     }
 }
 
-/** One picture, filling the screen on black. Tap anywhere or Back to close. */
+/** One picture, filling the screen on black; swipe to the next one (AII-87). Tap anywhere or Back to close. */
 @Composable
-private fun FullPicture(p: Pic, repo: Repo, onClose: () -> Unit) {
+private fun FullPicture(pics: List<Pic>, start: Int, repo: Repo, onClose: () -> Unit) {
+    val pager = rememberPagerState(initialPage = start) { pics.size }
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(Modifier.fillMaxSize().background(Color.Black).clickable(onClick = onClose).testTag("full-pic"), contentAlignment = Alignment.Center) {
-            SubcomposeAsyncImage(model = request(p, repo), contentDescription = p.name, contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize(), error = { Missing(p) })
+            HorizontalPager(pager, Modifier.fillMaxSize().testTag("full-pic-pager")) { i ->
+                val p = pics[i]
+                SubcomposeAsyncImage(model = request(p, repo), contentDescription = p.name, contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize(), error = { Missing(p) })
+            }
+            if (pics.size > 1) Text("${pager.currentPage + 1} / ${pics.size}", color = Color.White, style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp).testTag("full-pic-count"))
             IconButton(onClick = onClose, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)) {
                 Icon(Icons.Default.Close, "Close", tint = Color.White)
             }
