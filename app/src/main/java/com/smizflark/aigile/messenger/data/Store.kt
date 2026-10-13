@@ -138,7 +138,8 @@ class Store(context: Context) {
     fun clearCache() { dir.listFiles()?.forEach { it.delete() } }
     /* ---------- drafts: half-typed replies, per chat ---------- */
 
-    fun draft(chat: String): String = read<Map<String, String>>("drafts.json")?.get(chat) ?: ""
+    fun drafts(): Map<String, String> = read<Map<String, String>>("drafts.json") ?: emptyMap()
+    fun draft(chat: String): String = drafts()[chat] ?: ""
     fun saveDraft(chat: String, text: String) {
         val all = read<Map<String, String>>("drafts.json") ?: emptyMap()
         val next = Drafts.put(all, chat, text)

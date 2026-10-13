@@ -97,6 +97,7 @@
     <string name="filter_friends">Vrienden</string>
     <string name="unsent_failed">⚠️ %1$d niet verstuurd: tik om opnieuw te proberen</string>
     <string name="unsent_waiting">⏳ %1$d wachten om verstuurd te worden</string>
+    <string name="draft_label">Concept: %1$s</string>
     <string name="connect_need_address">Typ eerst het adres van je bord.</string>
     <string name="connect_failed">Kon geen verbinding maken.</string>
     <string name="connect_failed_unchanged">Kon geen verbinding maken. Er is niets gewijzigd.</string>

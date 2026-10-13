@@ -99,6 +99,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     var unread by remember { mutableStateOf(counts()) }
     var muted by remember { mutableStateOf(repo.store.muted()) }
     var outbox by remember { mutableStateOf(repo.store.outbox()) }
+    var drafts by remember { mutableStateOf(repo.store.drafts()) }
     var error by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
@@ -116,7 +117,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
         outbox = repo.store.outbox()   // first, so it shows at once even with no signal
         try { chats = repo.chats(); error = null }
         catch (e: Exception) { error = e.message }
-        seen = repo.store.seen(); unread = counts(); outbox = repo.store.outbox(); loaded = true
+        seen = repo.store.seen(); unread = counts(); outbox = repo.store.outbox(); drafts = repo.store.drafts(); loaded = true
         return chats != before
     }
 
@@ -220,7 +221,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 }
                 val unsent = outbox.groupBy { it.chat }
                 items(pinFirst(shown, pinned), key = { it.key }) { c ->
-                    ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, unsent[c.key].orEmpty(),
+                    ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, unsent[c.key].orEmpty(), drafts[c.key],
                         onRead = { markRead(listOf(c)) },
                         onMute = { on -> repo.store.setMuted(c.key, on); muted = repo.store.muted() },
                         onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned }) { onOpen(c) }
@@ -235,7 +236,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
 /** One chat; long-press for Mark as read and Pin to top (AII-25, AII-47). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>,
+private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>, draft: String?,
                     onRead: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     // Swipe right = mark read, left = mute/unmute (AII-61). The row always springs back.
@@ -289,7 +290,7 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
                     color = if (fresh) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val waiting = unsentLabel(unsent)
+                val waiting = unsentLabel(unsent) ?: draftLabel(draft)
                 val newDesc = stringResource(R.string.new_messages)
                 Text(
                     waiting ?: c.subtitle,
@@ -320,3 +321,7 @@ fun unsentLabel(unsent: List<Pending>): String? {
     val failed = unsent.count { it.failed && !it.offline }   // offline ones still go by themselves (AII-55)
     return if (failed > 0) Words.unsentFailed.format(failed) else Words.unsentWaiting.format(unsent.size)
 }
+
+/** "Draft: ..." for a chat with a half-typed reply (AII-98), on one line; null when there is none. */
+fun draftLabel(draft: String?): String? =
+    draft?.replace(Regex("\\s+"), " ")?.trim()?.takeIf { it.isNotEmpty() }?.let { Words.draft.format(it) }

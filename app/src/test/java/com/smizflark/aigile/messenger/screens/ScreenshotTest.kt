@@ -77,7 +77,12 @@ class ScreenshotTest {
         shot("chats_paused", false) { ChatsScreen(repo, {}, {}, {}) }
         repo.store.pausedUntil = 0L
     }
-    @Test fun chatsDark() = shot("chats", true) { ChatsScreen(repo, {}, {}, {}) }
+    @Test fun draftLight() {
+        repo.store.saveDraft(lead().key, "Sounds good, I'll check the\nscreenshot tonight")
+        shot("chats_draft", false) { ChatsScreen(repo, {}, {}, {}) }
+        repo.store.saveDraft(lead().key, "")
+    }
+    @Test fun chatsDark() =shot("chats", true) { ChatsScreen(repo, {}, {}, {}) }
     @Test fun chatLight() { prime(lead()); shot("chat", false) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatHuge() {
