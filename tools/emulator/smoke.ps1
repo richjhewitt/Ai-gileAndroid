@@ -45,6 +45,8 @@ function Find($pattern) {
 }
 function TapWhenFound($pattern, $what, $tries = 20) {
   for ($i = 0; $i -lt $tries; $i++) {
+    # a slow first boot can show "X isn't responding": tap Wait and carry on
+    if ((Dump).OuterXml -match "isn.t responding") { $w = Find '^Wait$'; if ($w) { & $adb shell input tap $w[0] $w[1]; Write-Host "dismissed a not-responding popup" } }
     $p = Find $pattern
     if ($p) { & $adb shell input tap $p[0] $p[1]; Write-Host "tapped $what"; return }
     Start-Sleep 1
@@ -88,8 +90,24 @@ TapWhenFound '^Message$|Message the' 'message field'
 TapWhenFound '^Send$' 'Send'
 Start-Sleep 2
 $ui = (Dump).OuterXml
-if ($ui -match [regex]::Escape($msg)) {
-  & $adb shell screencap -p /sdcard/smoke.png; & $adb pull /sdcard/smoke.png (Join-Path $env:TEMP 'smoke-pass.png') 2>$null | Out-Null
-  Write-Host "PASS: '$msg' shown in chat (screen in TEMP\smoke-pass.png)"; Cleanup; exit 0
-}
-Fail "sent text '$msg' not visible after send"
+if ($ui -notmatch [regex]::Escape($msg)) { Fail "sent text '$msg' not visible after send" }
+Write-Host "sent '$msg' shown in chat"
+
+# AII-92: pictures on a real phone (the JVM tests can't draw them): details -> hills full screen -> swipe
+TapWhenFound '^Back$' 'Back to chats'
+TapWhenFound '^AI-gile$' 'AI-gile chat' 30
+Start-Sleep 2
+TapWhenFound '^AI-gile$' 'chat name'
+TapWhenFound '^hills\.png$' 'hills picture' 15
+Start-Sleep 2
+$x = Dump
+$count = ($x.SelectNodes('//node') | Where-Object { $_.text -match '^\d+ / \d+$' } | Select-Object -First 1).text
+if (-not $count) { Fail "no 'N / N' count on the full screen picture" }
+Write-Host "full screen at $count"
+if ($count -match '^1 /') { & $adb shell input swipe 900 1200 150 1200 250 } else { & $adb shell input swipe 150 1200 900 1200 250 }
+Start-Sleep 2
+$after = ((Dump).SelectNodes('//node') | Where-Object { $_.text -match '^\d+ / \d+$' } | Select-Object -First 1).text
+if ($after -eq $count) { Fail "swipe did not change picture (still $count)" }
+Write-Host "swiped to $after"
+& $adb shell screencap -p /sdcard/smoke.png; & $adb pull /sdcard/smoke.png (Join-Path $env:TEMP 'smoke-pass.png') 2>$null | Out-Null
+Write-Host "PASS: message sent and pictures swipe (screen in TEMP\smoke-pass.png)"; Cleanup; exit 0

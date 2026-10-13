@@ -4,7 +4,7 @@
 
 Boots a headless emulator (`-no-window -no-audio -no-boot-anim`, hidden process, no window or console),
 installs `app/build/outputs/apk/debug/app-debug.apk`, taps "Try the demo", opens the Tunio chat,
-sends a unique message, checks it appears via `uiautomator dump`, then kills the emulator and deletes the temp AVD.
+sends a unique message, checks it appears via `uiautomator dump`, opens AI-gile > chat name > hills picture full screen and swipes to the next (AII-92), then kills the emulator and deletes the temp AVD.
 Exit code 0 = pass, 1 = fail.
 
 Needs (SDK at `C:/Users/rich/AppData/Local/AndroidTools/sdk`): `emulator` package and a
