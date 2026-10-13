@@ -11,9 +11,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.ui.ChatScreen
 import com.smizflark.aigile.messenger.ui.ChatsScreen
@@ -49,11 +51,14 @@ class MainActivity : ComponentActivity() {
                         ChatsScreen(repo, onOpen = { nav.openChat(it.key) }, onNew = { nav.navigate("new") },
                             onSettings = { nav.navigate("settings") })
                     }
-                    composable("chat/{key}") { e ->
+                    // A chat, or one card of it (?card=AIG-12, AII-28).
+                    composable("chat/{key}?card={card}", arguments = listOf(navArgument("card") { type = NavType.StringType; nullable = true })) { e ->
                         val key = Uri.decode(e.arguments?.getString("key") ?: "")
+                        val card = e.arguments?.getString("card")
                         val ref = repo.store.cachedChats()?.firstOrNull { it.key == key }
                         if (ref == null) LaunchedEffect(Unit) { nav.popBackStack() }
-                        else ChatScreen(repo, ref, onBack = { nav.popBackStack() })
+                        else ChatScreen(repo, ref, onBack = { nav.popBackStack() }, focus = card,
+                            onOpenCard = { id -> nav.navigate("chat/" + Uri.encode(key) + "?card=" + Uri.encode(id)) })
                     }
                     composable("new") {
                         NewMessageScreen(repo, onBack = { nav.popBackStack() }, onSent = { to ->
