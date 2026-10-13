@@ -38,12 +38,13 @@ import com.smizflark.aigile.messenger.data.Store
 
 val Brand = Color(0xFF16A34A)
 
-private val Light = lightColorScheme(
-    primary = Brand, onPrimary = Color.White,
+/** Older phones (no Material You). Light primary is a shade darker than Brand so white text on it passes WCAG AA. */
+internal val Light = lightColorScheme(
+    primary = Color(0xFF15803D), onPrimary = Color.White,
     primaryContainer = Color(0xFFD7F5E1), onPrimaryContainer = Color(0xFF0B3B1C),
     secondaryContainer = Color(0xFFEDEFF3), surface = Color(0xFFF7F7F9), background = Color(0xFFF7F7F9),
 )
-private val Dark = darkColorScheme(
+internal val Dark = darkColorScheme(
     primary = Color(0xFF4ADE80), onPrimary = Color(0xFF00391A),
     primaryContainer = Color(0xFF14532D), onPrimaryContainer = Color(0xFFD7F5E1),
     surface = Color(0xFF121314), background = Color(0xFF121314),

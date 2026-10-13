@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -80,7 +81,7 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
 
         Button(
             onClick = { scan.launch(ScanOptions().setPrompt("Scan the QR code in the board's Setup > Phones").setBeepEnabled(false).setOrientationLocked(false)) },
-            modifier = Modifier.fillMaxWidth().height(52.dp), enabled = !busy,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = !busy,
         ) {
             Icon(Icons.Default.QrCodeScanner, null); Spacer(Modifier.size(8.dp)); Text("Scan QR code")
         }
@@ -102,7 +103,7 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
             color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
         )
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("error")) }
-        OutlinedButton(onClick = ::connect, enabled = !busy, modifier = Modifier.fillMaxWidth().height(52.dp)) {
+        OutlinedButton(onClick = ::connect, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Text("Connect")
         }
         Spacer(Modifier.height(8.dp))

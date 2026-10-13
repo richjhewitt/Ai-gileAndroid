@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -37,7 +38,7 @@ fun parseColor(hex: String?): Color? = runCatching {
 fun Avatar(ref: ChatRef, repo: Repo, size: Dp = 48.dp) {
     val bg = parseColor(ref.color)?.copy(alpha = 0.18f) ?: MaterialTheme.colorScheme.secondaryContainer
     val fallback = @Composable {
-        Box(Modifier.size(size).clip(CircleShape).background(bg), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(size).clip(CircleShape).background(bg).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
             Text(ref.emoji, fontSize = (size.value * 0.45f).sp)
         }
     }

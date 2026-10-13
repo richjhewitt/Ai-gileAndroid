@@ -45,6 +45,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -154,7 +157,8 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
 private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, onRead: () -> Unit, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     Row(
-        Modifier.fillMaxWidth().combinedClickable(onClick = onClick, onLongClick = { menu = true }, onLongClickLabel = "Options")
+        Modifier.fillMaxWidth().combinedClickable(onClickLabel = "Open chat", role = Role.Button, onClick = onClick,
+            onLongClick = { menu = true }, onLongClickLabel = "Options")
             .padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -181,7 +185,8 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, onRead:
                 }
                 if (fresh && unread > 0) Badge(containerColor = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("unread:${c.key}")) {
                     Text(if (unread > 99) "99+" else "$unread", Modifier.padding(horizontal = 2.dp))
-                } else if (fresh && c.waiting == 0) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
+                } else if (fresh && c.waiting == 0) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .semantics { contentDescription = "New messages" })
             }
         }
     }

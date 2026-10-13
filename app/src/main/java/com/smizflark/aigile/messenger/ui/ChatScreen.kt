@@ -54,6 +54,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -280,7 +281,7 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<Strin
         Surface(
             color = bg,
             shape = RoundedCornerShape(18.dp, 18.dp, if (b.mine) 4.dp else 18.dp, if (b.mine) 18.dp else 4.dp),
-            modifier = Modifier.widthIn(max = 320.dp).testTag(if (b.mine) "mine" else "theirs"),
+            modifier = Modifier.widthIn(max = 320.dp).semantics(mergeDescendants = true) {}.testTag(if (b.mine) "mine" else "theirs"),
         ) {
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
                 if (!b.mine && ref.kind != Kind.FRIEND && b.author.isNotBlank()) {
