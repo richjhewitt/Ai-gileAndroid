@@ -86,6 +86,10 @@ fun shortTime(iso: String?, now: Instant = Instant.now()): String {
     }
 }
 
+/** AII-51: the full time under a tapped bubble: "Tue 13 Oct, 11:42" (in the phone's language). */
+fun fullTime(iso: String?, zone: ZoneId = ZoneId.systemDefault()): String =
+    instant(iso)?.let { DateTimeFormatter.ofPattern("EEE d MMM, HH:mm").format(it.atZone(zone)) } ?: ""
+
 fun clock(iso: String?): String = instant(iso)?.let { hm.format(it.atZone(ZoneId.systemDefault())) } ?: ""
 
 /** Day separator in a chat: "Today", "Yesterday", "Mon 3 Oct". */
