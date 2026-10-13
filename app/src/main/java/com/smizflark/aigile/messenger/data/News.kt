@@ -2,7 +2,7 @@ package com.smizflark.aigile.messenger.data
 
 /** What's new since you last looked, and whether now is quiet hours. Pure, so it is unit tested. */
 object News {
-    data class Item(val chat: String, val name: String, val latestFromThem: String?)
+    data class Item(val chat: String, val name: String, val latestFromThem: String?, val preview: String? = null)
 
     /** Chats whose `last` moved past what you've seen or been told about: worth a closer look. */
     fun candidates(chats: List<ChatRef>, seen: Map<String, String>, told: Map<String, String>): List<ChatRef> =
