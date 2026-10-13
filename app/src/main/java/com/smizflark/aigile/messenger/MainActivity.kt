@@ -2,8 +2,9 @@ package com.smizflark.aigile.messenger
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import android.os.SystemClock
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.DisposableEffect
@@ -11,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -22,6 +24,8 @@ import com.smizflark.aigile.messenger.data.Share
 import com.smizflark.aigile.messenger.ui.ChatScreen
 import com.smizflark.aigile.messenger.ui.ChatsScreen
 import com.smizflark.aigile.messenger.ui.ConnectScreen
+import com.smizflark.aigile.messenger.ui.Lock
+import com.smizflark.aigile.messenger.ui.LockedScreen
 import com.smizflark.aigile.messenger.ui.MessengerTheme
 import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.SearchScreen
@@ -29,7 +33,7 @@ import com.smizflark.aigile.messenger.ui.SettingsScreen
 import com.smizflark.aigile.messenger.ui.Shortcuts
 import com.smizflark.aigile.messenger.work.CheckWorker
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     /** A pairing link (aigile://pair?...) or a chat to open from an alert. */
     private var pairing by mutableStateOf<Pair<String, String>?>(null)
     private var openChat by mutableStateOf<String?>(null)
@@ -37,9 +41,18 @@ class MainActivity : ComponentActivity() {
     private var shared by mutableStateOf<String?>(null)
     /** New message from the app icon menu (AII-53). */
     private var openNew by mutableStateOf(false)
+    /** App lock (AII-63): covers the app until unlocked; leftAt is when it last went to the background. */
+    private var locked by mutableStateOf(false)
+    private var unlocked = false
+    private var leftAt: Long? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Turning the phone keeps it unlocked; leftAt is on the boot clock, so a killed app still locks after the grace time.
+        savedInstanceState?.let { b ->
+            unlocked = b.getBoolean("unlocked")
+            leftAt = b.getLong("leftAt", -1).takeIf { it >= 0 }
+        }
         enableEdgeToEdge()
         read(intent)
         val repo = (application as App).repo
@@ -102,6 +115,11 @@ class MainActivity : ComponentActivity() {
                     if (repo.store.connected) nav.openChat(c)
                     openChat = null
                 }
+                // Covers everything until unlocked; asks again each time it locks.
+                if (locked) {
+                    LockedScreen(onUnlock = { unlock() })
+                    LaunchedEffect(Unit) { unlock() }
+                }
             }
         }
     }
@@ -121,6 +139,22 @@ class MainActivity : ComponentActivity() {
         if (intent?.action == Shortcuts.ACTION_NEW) openNew = true
     }
 
-    override fun onStart() { super.onStart(); App.inForeground = true }
-    override fun onStop() { super.onStop(); App.inForeground = false }
+    private fun unlock() = Lock.ask(this) { unlocked = true; locked = false }
+
+    override fun onStart() {
+        super.onStart()
+        App.inForeground = true
+        val lockOn = (application as App).repo.store.lock
+        // No chat preview in the recent apps list while the lock is on.
+        if (Build.VERSION.SDK_INT >= 33) setRecentsScreenshotEnabled(!lockOn)
+        if (Lock.shouldLock(lockOn, unlocked, leftAt, SystemClock.elapsedRealtime())) {
+            unlocked = false; locked = true
+        }
+    }
+    override fun onStop() { super.onStop(); App.inForeground = false; leftAt = SystemClock.elapsedRealtime() }
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean("unlocked", unlocked)
+        outState.putLong("leftAt", leftAt ?: SystemClock.elapsedRealtime())
+    }
 }

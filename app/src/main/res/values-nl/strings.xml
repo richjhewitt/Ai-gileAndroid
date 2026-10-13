@@ -116,6 +116,13 @@
     <string name="demo_note">Demo: verzonnen chats, er gaat niets van je telefoon af</string>
     <string name="board_info">Bord: %1$s\nIngelogd als %2$s\nTelefoonsleutel: %3$s</string>
     <string name="saved_as">Opgeslagen: ingelogd als %1$s</string>
+    <string name="privacy">Privacy</string>
+    <string name="lock">Vergrendelen met vingerafdruk</string>
+    <string name="lock_sub">Vraagt om je vingerafdruk, gezicht of pincode als je de app opent</string>
+    <string name="lock_unavailable">Deze telefoon heeft nog geen vingerafdruk, gezicht of pincode ingesteld.</string>
+    <string name="lock_title">Messenger ontgrendelen</string>
+    <string name="locked">Messenger is vergrendeld</string>
+    <string name="unlock">Ontgrendelen</string>
     <string name="alerts">Meldingen</string>
     <string name="alerts_new">Meldingen bij nieuwe berichten</string>
     <string name="alerts_new_sub">Kijkt ongeveer elke 15 minuten, één melding per keer</string>

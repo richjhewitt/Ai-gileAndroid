@@ -68,6 +68,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var alerts by remember { mutableStateOf(s.alerts) }
+    var lockOn by remember { mutableStateOf(s.lock) }
     var quietOn by remember { mutableStateOf(s.quietOn) }
     var from by remember { mutableStateOf(s.quietFrom) }
     var to by remember { mutableStateOf(s.quietTo) }
@@ -101,6 +102,13 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
             HorizontalDivider()
 
             AppearanceSettings(s)
+            HorizontalDivider()
+
+            Text(stringResource(R.string.privacy), style = MaterialTheme.typography.titleMedium)
+            Toggle(stringResource(R.string.lock), stringResource(R.string.lock_sub), lockOn) {
+                if (it && !Lock.available(ctx)) note = ctx.getString(R.string.lock_unavailable)
+                else { lockOn = it; s.lock = it }
+            }
             HorizontalDivider()
 
             Text(stringResource(R.string.alerts), style = MaterialTheme.typography.titleMedium)
