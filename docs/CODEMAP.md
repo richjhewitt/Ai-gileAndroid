@@ -23,7 +23,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Quote.kt: quoting a message in a reply.
 - data/Repo.kt: the one place screens and background checks get chats from.
 - data/ScrollPlace.kt: remembers where you left each chat.
-- data/Seal.kt: sealing the phone key with a Keystore key.
+- data/Seal.kt: seals every board call end to end (AES-256-GCM, key from pairing; vectors in docs/SEALED.md).
 - data/Search.kt: search results (chats and messages).
 - data/Share.kt: text shared in from other apps.
 - data/Source.kt: chat source, the real board or the demo.
