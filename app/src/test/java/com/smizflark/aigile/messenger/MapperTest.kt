@@ -30,6 +30,13 @@ class MapperTest {
         assertEquals(2, l[0].waiting)
     }
 
+    @Test fun unreadComesThroughForWatchmanAndFriends() {
+        val l = Mapper.chats(listOf(ChatSummary("_watchman", watchman = true, unread = 3)),
+            listOf(Contact("a", "Ann", last = "2026-10-02T00:00:00Z", lastIn = "2026-10-01T00:00:00Z")))
+        assertEquals(3, l[0].unread)
+        assertEquals("2026-10-01T00:00:00Z", l[1].lastIn)
+    }
+
     @Test fun realBoardJsonParses() {
         val raw = """[{"slug":"tunio","name":"Tunio","color":"#ca8a04","emoji":"🎵","logo":"/api/projects/tunio/logo?v=1",
             "lead":"Lead","leadPic":"","unread":1,"last":"2026-10-13T04:50:22.653Z","extra":{"x":1}}]"""

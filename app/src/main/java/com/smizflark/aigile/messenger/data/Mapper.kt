@@ -9,7 +9,7 @@ object Mapper {
             if (s.watchman) ChatRef(
                 kind = Kind.WATCHMAN, id = "_watchman", name = "Lead Scrum Master",
                 subtitle = "Passes your message to the right team", emoji = s.emoji ?: "🧭",
-                color = s.color, last = s.last,
+                color = s.color, last = s.last, unread = s.unread,
             ) else ChatRef(
                 kind = Kind.LEAD, id = s.slug, name = s.name.ifBlank { s.slug },
                 subtitle = s.lead ?: "Lead", emoji = s.emoji ?: "🗂️", color = s.color,
@@ -21,7 +21,7 @@ object Mapper {
             ChatRef(
                 kind = Kind.FRIEND, id = c.id, name = c.name.ifBlank { "Friend" },
                 subtitle = if (c.checked) "🔒 Private, safety code checked" else "🔒 Private",
-                emoji = "🔒", last = c.last,
+                emoji = "🔒", last = c.last, lastIn = c.lastIn,
             )
         }
         return leads + friends

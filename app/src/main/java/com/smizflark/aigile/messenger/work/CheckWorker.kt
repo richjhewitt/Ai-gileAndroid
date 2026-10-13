@@ -59,6 +59,9 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
 
         fun cancel(context: Context) = WorkManager.getInstance(context).cancelUniqueWork(NAME)
 
+        /** Everything read: the "new messages" alert has nothing left to say. */
+        fun clearAlert(context: Context) = NotificationManagerCompat.from(context).cancel(1)
+
         fun channel(context: Context) {
             val ch = NotificationChannel(CHANNEL, "Messages", NotificationManager.IMPORTANCE_DEFAULT)
                 .apply { description = "New messages from your team leads and friends" }
@@ -73,6 +76,8 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             val seen = store.seen()
             val told = store.told()
             val items = News.candidates(chats, seen, told).map { ref ->
+                // Fetching the Lead Scrum Master's chat would mark it read on the board: go by its count instead.
+                if (ref.kind == Kind.WATCHMAN) return@map News.Item(ref.key, ref.name, ref.last.takeIf { ref.unread > 0 })
                 val convo = runCatching { repo.conversation(ref) }.getOrNull()
                 News.Item(ref.key, ref.name, convo?.lastFromThem, QuickReply.preview(convo))
             }

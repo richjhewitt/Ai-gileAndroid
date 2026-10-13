@@ -1,6 +1,8 @@
 package com.smizflark.aigile.messenger
 
+import com.smizflark.aigile.messenger.data.Bubble
 import com.smizflark.aigile.messenger.data.ChatRef
+import com.smizflark.aigile.messenger.data.Conversation
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.ui.Markdown
@@ -37,6 +39,45 @@ class NewsTest {
         val a = ChatRef(Kind.LEAD, "a", "A", "", "", last = t2)
         val b = ChatRef(Kind.LEAD, "b", "B", "", "", last = t1)
         assertEquals(listOf("lead:a"), News.candidates(listOf(a, b), mapOf("lead:b" to t1), mapOf("lead:a" to t1)).map { it.key })
+    }
+
+    /* ---------- AII-25: unread badges and mark as read ---------- */
+
+    private val t3 = "2026-10-13T03:00:00Z"
+    private fun b(at: String, mine: Boolean = false) = Bubble(at, "x", "hi", at, mine)
+    private fun convo(ref: ChatRef, vararg b: Bubble) = Conversation(ref, b.toList())
+
+    @Test fun leadCountsMessagesFromThemAfterSeen() {
+        val a = ChatRef(Kind.LEAD, "a", "A", "", "", last = t3)
+        val saved = convo(a, b(t1), b(t2), b(t3, mine = true))
+        assertEquals(1, News.unread(a, t1, saved))   // t2 only: t1 seen, t3 is mine
+        assertEquals(2, News.unread(a, null, saved))
+        assertEquals(0, News.unread(a, t3, saved))
+        assertEquals(0, News.unread(a, t1, null))      // nothing saved: the list shows a dot instead
+        assertTrue(News.fresh(a, t1))
+    }
+
+    @Test fun watchmanGoesByTheBoardsCount() {
+        val w = ChatRef(Kind.WATCHMAN, "_watchman", "LSM", "", "", last = t3, unread = 0)
+        assertEquals(0, News.unread(w, null, convo(w, b(t3))))   // read on the PC: read here
+        assertFalse(News.fresh(w, null))
+        val w2 = w.copy(unread = 3)
+        assertEquals(3, News.unread(w2, t3, null))
+        assertTrue(News.fresh(w2, t3))
+    }
+
+    @Test fun friendWithNewerMessageCountsAtLeastOne() {
+        val f = ChatRef(Kind.FRIEND, "d", "Davy", "", "", last = t3, lastIn = t2)
+        assertEquals(1, News.unread(f, t1, null))
+        assertEquals(0, News.unread(f, t2, null))
+        assertEquals(0, News.unread(f.copy(lastIn = null), t1, null))   // only my own message moved it
+    }
+
+    @Test fun markAsReadGoesUpToTheNewestMessage() {
+        val a = ChatRef(Kind.LEAD, "a", "A", "", "", last = t2)
+        assertEquals(t3, News.readUpTo(a, convo(a, b(t3))))
+        assertEquals(t2, News.readUpTo(a, null))
+        assertEquals(null, News.readUpTo(a.copy(last = null), null))
     }
 
     @Test fun quietHoursAcrossMidnight() {

@@ -99,6 +99,10 @@ data class ChatRef(
     val waiting: Int = 0,
     /** Newest message time, ISO. */
     val last: String? = null,
+    /** Newest message from them, ISO, when the board says (friends). */
+    val lastIn: String? = null,
+    /** Unread messages as the board counts them (the Lead Scrum Master): read on the PC = read here. */
+    val unread: Int = 0,
 ) {
     val key get() = "${kind.name.lowercase()}:$id"
 }

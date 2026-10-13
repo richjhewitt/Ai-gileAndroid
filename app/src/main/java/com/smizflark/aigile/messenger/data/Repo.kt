@@ -36,7 +36,15 @@ class Repo(context: Context) {
     suspend fun chats(): List<ChatRef> {
         val l = source.chats()
         store.cacheChats(l); store.lastSync = System.currentTimeMillis()
+        // In step with the board (AII-25): the Lead Scrum Master read on the PC counts as read here too.
+        l.filter { it.kind == Kind.WATCHMAN && it.unread == 0 }.forEach { store.markSeen(it.key, it.last) }
         return l
+    }
+
+    /** Mark as read (AII-25). Opening the Lead Scrum Master's chat is what reads it on the board, so that one is fetched. */
+    suspend fun markRead(ref: ChatRef) {
+        val saved = if (ref.kind == Kind.WATCHMAN) runCatching { conversation(ref) }.getOrNull() else store.cachedConversation(ref.key)
+        store.markSeen(ref.key, News.readUpTo(ref, saved))
     }
 
     suspend fun conversation(ref: ChatRef): Conversation {

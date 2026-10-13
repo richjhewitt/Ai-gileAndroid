@@ -1,7 +1,8 @@
 package com.smizflark.aigile.messenger.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +19,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Badge
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -39,6 +43,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,7 +53,9 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
+import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.Repo
+import com.smizflark.aigile.messenger.work.CheckWorker
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -58,6 +65,8 @@ import kotlinx.coroutines.launch
 fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var seen by remember { mutableStateOf(repo.store.seen()) }
+    fun counts() = chats.associate { it.key to News.unread(it, seen[it.key], repo.store.cachedConversation(it.key)) }
+    var unread by remember { mutableStateOf(counts()) }
     var error by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
@@ -66,8 +75,17 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     suspend fun load() {
         try { chats = repo.chats(); error = null }
         catch (e: Exception) { error = e.message }
-        seen = repo.store.seen(); loaded = true
+        seen = repo.store.seen(); unread = counts(); loaded = true
     }
+
+    val context = LocalContext.current
+    /** Mark as read (AII-25): one chat from its menu, or all from the top bar. */
+    fun markRead(l: List<ChatRef>) = scope.launch {
+        l.forEach { repo.markRead(it) }
+        seen = repo.store.seen(); unread = counts()
+        if (chats.none { News.fresh(it, seen[it.key]) }) CheckWorker.clearAlert(context)
+    }
+    val total = unread.values.sum()
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
@@ -79,8 +97,12 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (repo.store.demo) "Messages · demo" else "Messages") },
-                actions = { IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "Settings") } },
+                title = { Text((if (repo.store.demo) "Messages · demo" else "Messages") + if (total > 0) " ($total)" else "") },
+                actions = {
+                    if (chats.any { News.fresh(it, seen[it.key]) })
+                        IconButton(onClick = { markRead(chats) }, Modifier.testTag("readAll")) { Icon(Icons.Default.DoneAll, "Mark all as read") }
+                    IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "Settings") }
+                },
             )
         },
         floatingActionButton = {
@@ -109,8 +131,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 items(chats, key = { it.key }) { c ->
-                    val fresh = c.last != null && c.last > (seen[c.key] ?: "")
-                    ChatRow(c, repo, fresh) { onOpen(c) }
+                    ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, onRead = { markRead(listOf(c)) }) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
                 item { Spacer(Modifier.size(88.dp)) }
@@ -120,11 +141,17 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
 }
 
 @Composable
-private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit) {
+@OptIn(ExperimentalFoundationApi::class)
+private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, onRead: () -> Unit, onClick: () -> Unit) {
+    var menu by remember { mutableStateOf(false) }
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
+        Modifier.fillMaxWidth().combinedClickable(onClick = onClick, onLongClick = { menu = true }, onLongClickLabel = "Options")
+            .padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(text = { Text("Mark as read") }, enabled = fresh, onClick = { menu = false; onRead() })
+        }
         Avatar(c, repo)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
@@ -140,9 +167,12 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit)
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
                 )
-                if (c.waiting > 0) Badge(containerColor = MaterialTheme.colorScheme.primary) {
+                if (c.waiting > 0) Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
                     Text("${c.waiting} waiting", Modifier.padding(horizontal = 4.dp))
-                } else if (fresh) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
+                }
+                if (fresh && unread > 0) Badge(containerColor = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("unread:${c.key}")) {
+                    Text(if (unread > 99) "99+" else "$unread", Modifier.padding(horizontal = 2.dp))
+                } else if (fresh && c.waiting == 0) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
             }
         }
     }
