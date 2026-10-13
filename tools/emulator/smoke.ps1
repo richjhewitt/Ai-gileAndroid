@@ -81,7 +81,10 @@ Write-Host "booted"
 
 & $adb install -r $Apk | Out-String | Write-Host
 & $adb shell pm grant $pkg android.permission.POST_NOTIFICATIONS 2>$null
-& $adb shell monkey -p $pkg -c android.intent.category.LAUNCHER 1 | Out-Null
+# am start, not monkey: monkey gives up if Play Services freezes during a cold boot
+& $adb shell input keyevent 3
+$main = (& $adb shell cmd package resolve-activity --brief -c android.intent.category.LAUNCHER $pkg | Select-Object -Last 1).Trim()
+& $adb shell am start -W -n $main | Out-Null
 
 TapWhenFound 'Try the demo' 'Try the demo'
 TapWhenFound 'Tunio' 'Tunio chat' 30
@@ -100,6 +103,8 @@ Start-Sleep 2
 TapWhenFound '^AI-gile$' 'chat name'
 TapWhenFound '^hills\.png$' 'hills picture' 15
 Start-Sleep 2
+$g = Find '^Got it$'   # Android's one-time "Viewing full screen" hint (AII-93 hides the bars)
+if ($g) { & $adb shell input tap $g[0] $g[1]; Start-Sleep 1 }
 $x = Dump
 $count = ($x.SelectNodes('//node') | Where-Object { $_.text -match '^\d+ / \d+$' } | Select-Object -First 1).text
 if (-not $count) { Fail "no 'N / N' count on the full screen picture" }
