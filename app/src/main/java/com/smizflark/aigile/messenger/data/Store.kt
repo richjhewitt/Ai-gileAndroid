@@ -85,6 +85,16 @@ class Store(context: Context) {
         get() = prefs.getBoolean("quietOn", true)
         set(v) = prefs.edit().putBoolean("quietOn", v).apply()
 
+    /** Look: system, light, dark or black (pure black for OLED screens). */
+    var look: String
+        get() = prefs.getString("look", "system") ?: "system"
+        set(v) = prefs.edit().putString("look", v).apply()
+
+    /** Use the phone's own colours (Material You, Android 12+). */
+    var phoneColours: Boolean
+        get() = prefs.getBoolean("phoneColours", true)
+        set(v) = prefs.edit().putBoolean("phoneColours", v).apply()
+
     var lastSync: Long
         get() = prefs.getLong("lastSync", 0)
         set(v) = prefs.edit().putLong("lastSync", v).apply()
