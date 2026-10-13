@@ -326,6 +326,7 @@ private fun Composer(
                 OutlinedTextField(
                     value = text, onValueChange = onText, maxLines = 6,
                     placeholder = { Text(if (ref.kind == Kind.WATCHMAN) "Message the Lead Scrum Master" else "Message") },
+                    trailingIcon = { MicButton { onText(Dictate.join(text, it)) } },
                     shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.weight(1f).testTag("input"),
                 )

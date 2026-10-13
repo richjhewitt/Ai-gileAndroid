@@ -78,7 +78,8 @@ fun NewMessageScreen(repo: Repo, onBack: () -> Unit, onSent: (ChatRef) -> Unit) 
             }
             OutlinedTextField(
                 value = text, onValueChange = { text = it; error = null }, minLines = 3, maxLines = 8,
-                placeholder = { Text("What do you want to say?") }, modifier = Modifier.fillMaxWidth().testTag("input"),
+                placeholder = { Text("What do you want to say?") },
+                trailingIcon = { MicButton { text = Dictate.join(text, it); error = null } }, modifier = Modifier.fillMaxWidth().testTag("input"),
             )
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 6.dp)) }
             Button(
