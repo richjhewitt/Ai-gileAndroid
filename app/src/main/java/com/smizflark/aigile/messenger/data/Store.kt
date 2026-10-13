@@ -85,6 +85,11 @@ class Store(context: Context) {
         get() = prefs.getBoolean("quietOn", true)
         set(v) = prefs.edit().putBoolean("quietOn", v).apply()
 
+    /** Chats pinned to the top of the list (AII-47), by chat key. */
+    var pinned: Set<String>
+        get() = prefs.getStringSet("pinned", emptySet())?.toSet() ?: emptySet()
+        set(v) = prefs.edit().putStringSet("pinned", v).apply()
+
     var lastSync: Long
         get() = prefs.getLong("lastSync", 0)
         set(v) = prefs.edit().putLong("lastSync", v).apply()

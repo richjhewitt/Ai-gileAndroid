@@ -1,7 +1,8 @@
 package com.smizflark.aigile.messenger.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +19,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -49,6 +53,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Repo
+import com.smizflark.aigile.messenger.data.pinFirst
+import com.smizflark.aigile.messenger.data.togglePin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -61,6 +67,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     var error by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
+    var pinned by remember { mutableStateOf(repo.store.pinned) }
     val scope = rememberCoroutineScope()
 
     suspend fun load() {
@@ -108,9 +115,10 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     Text("No chats yet. Tap New message to write to a team.", Modifier.padding(24.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                items(chats, key = { it.key }) { c ->
+                items(pinFirst(chats, pinned), key = { it.key }) { c ->
                     val fresh = c.last != null && c.last > (seen[c.key] ?: "")
-                    ChatRow(c, repo, fresh) { onOpen(c) }
+                    ChatRow(c, repo, fresh, c.key in pinned,
+                        onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned }) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
                 item { Spacer(Modifier.size(88.dp)) }
@@ -119,30 +127,44 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     }
 }
 
+/** One chat; long-press to pin it to the top (AII-47). */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Avatar(c, repo)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    fontWeight = if (fresh) FontWeight.Bold else FontWeight.Medium, modifier = Modifier.weight(1f))
-                Text(shortTime(c.last), style = MaterialTheme.typography.labelMedium,
-                    color = if (fresh) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    c.subtitle,
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
-                )
-                if (c.waiting > 0) Badge(containerColor = MaterialTheme.colorScheme.primary) {
-                    Text("${c.waiting} waiting", Modifier.padding(horizontal = 4.dp))
-                } else if (fresh) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
+private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, pinned: Boolean, onPin: () -> Unit, onClick: () -> Unit) {
+    var menu by remember { mutableStateOf(false) }
+    Box {
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(text = { Text(if (pinned) "Unpin" else "Pin to top") }, leadingIcon = { Icon(Icons.Default.PushPin, null) },
+                onClick = { menu = false; onPin() }, modifier = Modifier.testTag("pin"))
+        }
+        Row(
+            Modifier.fillMaxWidth()
+                .combinedClickable(onClick = onClick, onLongClick = { menu = true }, onLongClickLabel = if (pinned) "Unpin" else "Pin to top")
+                .padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Avatar(c, repo)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        fontWeight = if (fresh) FontWeight.Bold else FontWeight.Medium, modifier = Modifier.weight(1f, fill = false))
+                    if (pinned) Icon(Icons.Default.PushPin, "Pinned", Modifier.padding(start = 4.dp).size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.weight(1f))
+                    Text(shortTime(c.last), style = MaterialTheme.typography.labelMedium,
+                        color = if (fresh) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        c.subtitle,
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
+                    )
+                    if (c.waiting > 0) Badge(containerColor = MaterialTheme.colorScheme.primary) {
+                        Text("${c.waiting} waiting", Modifier.padding(horizontal = 4.dp))
+                    } else if (fresh) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
+                }
             }
         }
     }
