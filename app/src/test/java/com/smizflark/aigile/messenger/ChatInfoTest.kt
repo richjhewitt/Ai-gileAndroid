@@ -33,10 +33,10 @@ class ChatInfoTest {
         assertEquals(listOf(a, c), chatInfo(convo).pictures)
     }
 
-    @Test fun demoChatHasAPictureOnThePhone() = runBlocking {   // AII-86
+    @Test fun demoChatHasPicturesOnThePhone() = runBlocking {   // AII-86, AII-91: two, so swiping can be tried
         val demo = DemoSource()
         val pics = chatInfo(demo.conversation(demo.chats().first { it.id == "ai-gile" })).pictures
-        assertEquals(1, pics.size)
-        assertTrue(pics[0].local && pics[0].image)
+        assertEquals(2, pics.size)
+        assertTrue(pics.all { it.local && it.image })
     }
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AII-91: a second made-up photo in the demo (moon over the sea), so swiping between pictures can be tried. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp" android:height="240dp"
+    android:viewportWidth="320" android:viewportHeight="240">
+    <path android:fillColor="#1e3a8a" android:pathData="M0,0h320v240h-320z" />
+    <path android:fillColor="#f8fafc" android:pathData="M80,60m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0" />
+    <path android:fillColor="#0e7490" android:pathData="M0,150 C50,140 100,160 160,150 C220,140 270,160 320,150 L320,240 L0,240 Z" />
+    <path android:fillColor="#155e75" android:pathData="M0,195 C60,185 120,205 180,195 C240,185 290,200 320,195 L320,240 L0,240 Z" />
+</vector>
