@@ -30,7 +30,7 @@ class ReplyReceiver : BroadcastReceiver() {
                 val p = repo.queue(ref, text, QuickReply.target(convo))
                 val r = repo.deliver(ref, p)
                 if (r.isSuccess) repo.store.markSeen(chat, convo?.lastFromThem)
-                CheckWorker.settle(app, chat, QuickReply.outcome(r.isSuccess, r.exceptionOrNull()?.message))
+                CheckWorker.settle(app, chat, QuickReply.outcome(r.isSuccess, r.exceptionOrNull()?.message), text)
             } finally {
                 done.finish()
             }

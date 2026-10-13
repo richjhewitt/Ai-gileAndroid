@@ -48,7 +48,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         const val CHANNEL = "messages"
         const val EXTRA_CHAT = "chat"
         private const val GROUP = "messages"
-        private const val SUMMARY = 1
+        private const val SUMMARY = ChatNotifier.SUMMARY
 
         fun schedule(context: Context) {
             val req = PeriodicWorkRequestBuilder<CheckWorker>(15, TimeUnit.MINUTES)
@@ -60,7 +60,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         fun cancel(context: Context) = WorkManager.getInstance(context).cancelUniqueWork(NAME)
 
         /** Everything read: the "new messages" alert has nothing left to say. */
-        fun clearAlert(context: Context) = NotificationManagerCompat.from(context).cancel(1)
+        fun clearAlert(context: Context) = NotificationManagerCompat.from(context).cancel(SUMMARY)
 
         fun channel(context: Context) {
             val ch = NotificationChannel(CHANNEL, "Messages", NotificationManager.IMPORTANCE_DEFAULT)
@@ -91,12 +91,17 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         private fun allowed(context: Context) = Build.VERSION.SDK_INT < 33 ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
-        private fun openChat(context: Context, chat: String?, code: Int): PendingIntent {
-            val open = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                if (chat != null) putExtra(EXTRA_CHAT, chat)
+        private fun notify(context: Context, news: List<News.Item>) {
+            if (!allowed(context)) return
+            val nm = NotificationManagerCompat.from(context)
+            if (news.size > QuickReply.MAX_SINGLE) {
+                // Too many to reply to one by one: one line, opens the chats list.
+                nm.notify(SUMMARY, base(context).setContentTitle("${news.size} chats have new messages")
+                    .setContentText(News.summary(news)).setContentIntent(ChatNotifier.openChat(context, null, 0)).build())
+                return
             }
-            return PendingIntent.getActivity(context, code, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            // One notification per chat (AII-65), lines stacked, with a summary when there are several.
+            for (n in news) ChatNotifier.post(context, n)
         }
 
         private fun base(context: Context) = NotificationCompat.Builder(context, CHANNEL)
@@ -104,51 +109,15 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             .setAutoCancel(true)
             .setOnlyAlertOnce(true)
 
-        private fun notify(context: Context, news: List<News.Item>) {
-            if (!allowed(context)) return
-            val nm = NotificationManagerCompat.from(context)
-            if (news.size > QuickReply.MAX_SINGLE) {
-                // Too many to reply to one by one: one line, opens the chats list.
-                nm.notify(SUMMARY, base(context).setContentTitle("${news.size} chats have new messages")
-                    .setContentText(News.summary(news)).setContentIntent(openChat(context, null, 0)).build())
-                return
-            }
-            // One alert per chat, each with its own Reply button (AII-24); grouped when there are several.
-            for (n in news) {
-                val id = QuickReply.notificationId(n.chat)
-                val reply = Intent(context, ReplyReceiver::class.java).setAction(ReplyReceiver.ACTION).putExtra(EXTRA_CHAT, n.chat)
-                val replyPi = PendingIntent.getBroadcast(context, id, reply,
-                    PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0))
-                val action = NotificationCompat.Action.Builder(R.drawable.ic_notify, "Reply", replyPi)
-                    .addRemoteInput(RemoteInput.Builder(ReplyReceiver.KEY_TEXT).setLabel("Reply to ${n.name}").build())
-                    .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
-                    .setShowsUserInterface(false)
-                    .build()
-                val text = n.preview ?: "New message"
-                nm.notify(id, base(context)
-                    .setContentTitle(n.name)
-                    .setContentText(text)
-                    .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-                    .setContentIntent(openChat(context, n.chat, id))
-                    .addAction(action)
-                    .setGroup(GROUP)
-                    .build())
-            }
-            if (news.size > 1) nm.notify(SUMMARY, base(context).setContentTitle("${news.size} chats have new messages")
-                .setContentText(News.summary(news)).setGroup(GROUP).setGroupSummary(true).build())
-            else nm.cancel(SUMMARY)
-        }
-
         /** After a quick reply: say how it went in the same alert (Android keeps a spinner until we do). */
-        fun settle(context: Context, chat: String, outcome: String?) {
+        fun settle(context: Context, chat: String, outcome: String?, sentText: String? = null) {
             val nm = NotificationManagerCompat.from(context)
             val id = QuickReply.notificationId(chat)
-            if (outcome == null || !allowed(context)) { nm.cancel(id); return }
-            val sent = outcome.startsWith("Sent")
+            if (outcome == null || !allowed(context)) { ChatNotifier.clear(context, chat); return }
             val name = (context.applicationContext as App).repo.store.cachedChats()?.firstOrNull { it.key == chat }?.name ?: "Messenger"
-            val b = base(context).setContentTitle(name).setContentText(outcome).setContentIntent(openChat(context, chat, id)).setGroup(GROUP)
-            if (sent) b.setTimeoutAfter(4000)
-            nm.notify(id, b.build())
+            if (outcome.startsWith("Sent") && sentText != null) { ChatNotifier.sent(context, chat, name, sentText); return }
+            nm.notify(id, base(context).setContentTitle(name).setContentText(outcome)
+                .setContentIntent(ChatNotifier.openChat(context, chat, id)).setGroup(GROUP).build())
         }
     }
 }
