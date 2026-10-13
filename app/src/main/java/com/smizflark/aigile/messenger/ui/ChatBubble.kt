@@ -32,6 +32,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material.icons.automirrored.filled.Reply
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AddPhotoAlternate
@@ -134,7 +146,23 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
     var showTime by remember { mutableStateOf(false) }   // AII-51: tap a bubble for its exact time
     val clipboard = LocalClipboardManager.current
     val ctx = LocalContext.current
-    Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalAlignment = if (b.mine) Alignment.End else Alignment.Start) {
+    // AII-101: drag a message to the right to reply to it; it springs back.
+    val canReply = b.state == SendState.SENT && !b.unverified
+    val view = LocalView.current
+    val reach = with(LocalDensity.current) { SWIPE_REPLY.toPx() }
+    val drag = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    Box(Modifier.fillMaxWidth()) {
+    if (drag.value > 0f) Icon(Icons.AutoMirrored.Filled.Reply, null, Modifier.align(Alignment.CenterStart).padding(start = 16.dp)
+        .graphicsLayer { alpha = replyProgress(drag.value, reach) }, tint = cs.primary)
+    Column(Modifier.fillMaxWidth().offset { IntOffset(drag.value.roundToInt(), 0) }
+        .draggable(rememberDraggableState { d -> scope.launch { drag.snapTo((drag.value + d).coerceIn(0f, reach * 1.3f)) } },
+            Orientation.Horizontal, enabled = canReply,
+            onDragStopped = {
+                if (replyProgress(drag.value, reach) >= 1f) { view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY); onReply(b) }
+                drag.animateTo(0f)
+            })
+        .padding(horizontal = 12.dp).testTag("swipe-msg"), horizontalAlignment = if (b.mine) Alignment.End else Alignment.Start) {
         val failedP = r.pending?.takeIf { b.state == SendState.FAILED }
         Row(verticalAlignment = Alignment.CenterVertically) {
         if (failedP != null) {
@@ -203,4 +231,10 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             b.options.forEach { o -> OutlinedButton(onClick = { onOption(o) }) { Text(o) } }
         }
     }
+    }
 }
+
+private val SWIPE_REPLY = 72.dp
+
+/** How far a reply swipe has got, 0 to 1; at 1 letting go starts the reply (AII-101). */
+internal fun replyProgress(drag: Float, reach: Float): Float = if (reach <= 0f) 0f else (drag / reach).coerceIn(0f, 1f)

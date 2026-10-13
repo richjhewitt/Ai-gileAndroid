@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -112,6 +113,16 @@ class ScreenshotTest {
         repo.store.markSeen(c.key, java.time.Instant.parse(all[last].at).minusSeconds(1).toString())
         shot("chat_new_line", false) { ChatScreen(repo, c, onBack = {}) }
         rule.onNodeWithTag("new-line").assertExists()
+    }
+    /** AII-101: drag a message to the right and let go: the reply bar shows its quote. */
+    @Test fun swipeReplyLight() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
+        prime(c); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, c, onBack = {}) } }
+        rule.onAllNodesWithTag("swipe-msg").onLast().performTouchInput { swipeRight(startX = centerX - 200f, endX = centerX + 200f) }
+        rule.onNodeWithTag("quoting").assertExists()
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("../docs/shots/chat_swipe_reply_light.png")
     }
     /** AII-99: reply to a message, then tap the quote: the quoted message gets outlined. */
     @Test fun quoteJumpLight() {
