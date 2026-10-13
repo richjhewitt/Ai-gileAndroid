@@ -72,7 +72,8 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                 val convo = runCatching { repo.conversation(ref) }.getOrNull()
                 News.Item(ref.key, ref.name, convo?.lastFromThem)
             }
-            val (news, nextTold) = News.diff(items, seen, told)
+            val (all, nextTold) = News.diff(items, seen, told)
+            val news = News.audible(all, store.muted())
             store.setTold(nextTold)
             val quiet = store.quietOn && News.quiet(LocalTime.now().hour, store.quietFrom, store.quietTo)
             if (news.isNotEmpty() && store.alerts && !quiet && !App.inForeground) notify(context, news)

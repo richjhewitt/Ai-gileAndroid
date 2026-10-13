@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -58,6 +59,7 @@ import kotlinx.coroutines.launch
 fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var seen by remember { mutableStateOf(repo.store.seen()) }
+    val muted = remember { repo.store.muted() }
     var error by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
@@ -110,7 +112,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 }
                 items(chats, key = { it.key }) { c ->
                     val fresh = c.last != null && c.last > (seen[c.key] ?: "")
-                    ChatRow(c, repo, fresh) { onOpen(c) }
+                    ChatRow(c, repo, fresh, c.key in muted) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
                 item { Spacer(Modifier.size(88.dp)) }
@@ -120,7 +122,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
 }
 
 @Composable
-private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit) {
+private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, muted: Boolean, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
         verticalAlignment = Alignment.CenterVertically,
@@ -129,8 +131,12 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    fontWeight = if (fresh) FontWeight.Bold else FontWeight.Medium, modifier = Modifier.weight(1f))
+                Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        fontWeight = if (fresh) FontWeight.Bold else FontWeight.Medium, modifier = Modifier.weight(1f, fill = false))
+                    if (muted) Icon(Icons.Default.NotificationsOff, "Muted", Modifier.padding(horizontal = 4.dp).size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 Text(shortTime(c.last), style = MaterialTheme.typography.labelMedium,
                     color = if (fresh) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }

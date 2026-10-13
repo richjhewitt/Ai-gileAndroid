@@ -24,6 +24,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -108,6 +111,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
     var picked by rememberSaveable { mutableStateOf(false) }
     var text by rememberSaveable { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
     val owner = repo.store.owner.ifBlank { "You" }
@@ -165,6 +169,18 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
                             Text(ref.subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
+                    }
+                },
+                actions = {
+                    var menu by remember { mutableStateOf(false) }
+                    IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, "More") }
+                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(
+                            text = { Text(if (muted) "Unmute" else "Mute alerts") },
+                            leadingIcon = { Icon(if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff, null) },
+                            onClick = { muted = !muted; repo.store.setMuted(ref.key, muted); menu = false },
+                            modifier = Modifier.testTag("mute"),
+                        )
                     }
                 },
             )

@@ -24,6 +24,9 @@ object News {
         return news to next
     }
 
+    /** Drops muted chats from an alert (AII-48). */
+    fun audible(news: List<Item>, muted: Set<String>): List<Item> = news.filter { it.chat !in muted }
+
     /** Quiet from `from` o'clock to `to` o'clock, across midnight when from > to. */
     fun quiet(hour: Int, from: Int, to: Int): Boolean = when {
         from == to -> false
