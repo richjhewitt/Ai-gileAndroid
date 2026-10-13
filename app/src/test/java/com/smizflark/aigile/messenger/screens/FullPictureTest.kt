@@ -1,10 +1,11 @@
 package com.smizflark.aigile.messenger.screens
 
 import android.app.Application
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.doubleClick
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
@@ -16,6 +17,7 @@ import com.smizflark.aigile.messenger.data.Pic
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.ui.MessagePictures
 import com.smizflark.aigile.messenger.ui.MessengerTheme
+import com.smizflark.aigile.messenger.ui.PictureHost
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,12 +30,12 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], qualifiers = "w411dp-h891dp-xxhdpi")
 class FullPictureTest {
-    @get:Rule val rule = createComposeRule()
+    @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
     @Test fun swipeToNext() {
         val repo = Repo(ApplicationProvider.getApplicationContext<Application>())
         val pics = listOf(Pic("file:///a.png", "a.png"), Pic("file:///notes.pdf", "notes.pdf"), Pic("file:///b.jpg", "b.jpg"))
-        rule.setContent { MessengerTheme { MessagePictures(pics, repo) } }
+        rule.setContent { MessengerTheme { PictureHost { MessagePictures(pics, repo) } } }
         rule.onAllNodesWithTag("pic").onFirst().performClick()
         rule.onNodeWithTag("full-pic-count", useUnmergedTree = true).assertTextEquals("1 / 2")
         rule.onNodeWithTag("full-pic-pager", useUnmergedTree = true).performTouchInput { swipeLeft() }
@@ -45,7 +47,7 @@ class FullPictureTest {
     @Test fun doubleTapZooms() {
         val repo = Repo(ApplicationProvider.getApplicationContext<Application>())
         val pics = listOf(Pic("file:///a.png", "a.png"), Pic("file:///b.jpg", "b.jpg"))
-        rule.setContent { MessengerTheme { MessagePictures(pics, repo) } }
+        rule.setContent { MessengerTheme { PictureHost { MessagePictures(pics, repo) } } }
         rule.onAllNodesWithTag("pic").onFirst().performClick()
         val pager = rule.onNodeWithTag("full-pic-pager", useUnmergedTree = true)
         pager.performTouchInput { doubleClick() }
@@ -60,6 +62,17 @@ class FullPictureTest {
         rule.onNodeWithTag("full-pic-count", useUnmergedTree = true).assertTextEquals("2 / 2")
         pager.performTouchInput { click() }
         rule.mainClock.advanceTimeBy(1_000)
+        rule.waitForIdle()
+        rule.onNodeWithTag("full-pic", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    /** AII-93: drawn over the app, not in a dialog; Back closes it. */
+    @Test fun backCloses() {
+        val repo = Repo(ApplicationProvider.getApplicationContext<Application>())
+        rule.setContent { MessengerTheme { PictureHost { MessagePictures(listOf(Pic("file:///a.png", "a.png")), repo) } } }
+        rule.onAllNodesWithTag("pic").onFirst().performClick()
+        rule.onNodeWithTag("full-pic", useUnmergedTree = true).assertExists()
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
         rule.onNodeWithTag("full-pic", useUnmergedTree = true).assertDoesNotExist()
     }
