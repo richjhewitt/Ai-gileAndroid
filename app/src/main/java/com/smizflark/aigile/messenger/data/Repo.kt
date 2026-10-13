@@ -107,8 +107,8 @@ class Repo(context: Context) {
         val r = runCatching { source.send(ref, p.text, p.target, p.files.map { upload(it) }) }
         val offline = r.exceptionOrNull()?.let(::isOffline) == true
         store.saveOutbox(
-            if (r.isSuccess) store.outbox().filter { it.id != p.id }
-            else store.outbox().map { if (it.id == p.id) it.copy(failed = true, offline = offline) else it }
+            if (r.isSuccess) Outbox.remove(store.outbox(), p.id)
+            else Outbox.fail(store.outbox(), p.id, offline)
         )
         if (r.isSuccess) p.files.forEach { File(it).delete() }
         if (offline && !store.demo) SendWorker.schedule(app)
@@ -132,7 +132,13 @@ class Repo(context: Context) {
 
     fun discard(id: String) {
         store.outbox().firstOrNull { it.id == id }?.files?.forEach { File(it).delete() }
-        store.saveOutbox(store.outbox().filter { it.id != id })
+        store.saveOutbox(Outbox.remove(store.outbox(), id))
+    }
+
+    /** Tap Retry on a failed message (AII-62): marks it fresh, then sends it again. */
+    suspend fun retry(ref: ChatRef, p: Pending): Result<String?> {
+        store.saveOutbox(Outbox.retry(store.outbox(), p.id))
+        return deliver(ref, p.copy(failed = false, offline = false))
     }
 
     /* ---------- pictures (AII-27) ---------- */

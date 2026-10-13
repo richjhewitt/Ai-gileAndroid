@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -199,7 +201,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     fun deliver(p: Pending) {
         pending = repo.pendingFor(ref.key)
         scope.launch {
-            val r = repo.deliver(ref, p)
+            val r = if (p.failed) repo.retry(ref, p) else repo.deliver(ref, p)
             r.onSuccess { card ->
                 // A new 💬 carries on in its own card, like the board's page (AIG-757).
                 if (ref.kind == Kind.LEAD && p.target == null && card != null && focus == null) { target = card; picked = true }
@@ -402,6 +404,21 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble
     val clipboard = LocalClipboardManager.current
     val ctx = LocalContext.current
     Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalAlignment = if (b.mine) Alignment.End else Alignment.Start) {
+        val failedP = r.pending?.takeIf { b.state == SendState.FAILED }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+        if (failedP != null) {
+            var ask by remember { mutableStateOf(false) }
+            Box {
+                Box(Modifier.padding(end = 6.dp).size(28.dp).background(cs.error, CircleShape).testTag("failed-mark")
+                    .clickable(onClickLabel = "Retry or delete") { ask = true }
+                    .semantics { contentDescription = "Not sent. Tap to retry or delete" },
+                    contentAlignment = Alignment.Center) { Text("!", color = cs.onError, style = MaterialTheme.typography.labelLarge) }
+                DropdownMenu(expanded = ask, onDismissRequest = { ask = false }) {
+                    DropdownMenuItem(text = { Text("Retry") }, modifier = Modifier.testTag("retry"), onClick = { ask = false; onRetry(failedP) })
+                    DropdownMenuItem(text = { Text("Delete") }, modifier = Modifier.testTag("delete"), onClick = { ask = false; onDiscard(failedP) })
+                }
+            }
+        }
         Surface(
             color = bg,
             shape = RoundedCornerShape(18.dp, 18.dp, if (b.mine) 4.dp else 18.dp, if (b.mine) 18.dp else 4.dp),
@@ -443,13 +460,9 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble
                 )
             }
         }
+        }
         if (showTime && b.at.isNotBlank()) Text(fullTime(b.at), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).testTag("fulltime"))
-        val p = r.pending
-        if (p != null && b.state == SendState.FAILED) Row {
-            TextButton(onClick = { onRetry(p) }) { Text("Tap to retry") }
-            TextButton(onClick = { onDiscard(p) }) { Text("Delete") }
-        }
         if (r.showOptions) FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             b.options.forEach { o -> OutlinedButton(onClick = { onOption(o) }) { Text(o) } }
         }

@@ -167,6 +167,6 @@ class Store(context: Context) {
 
     private inline fun <reified T> write(name: String, v: T) {
         val f = File(dir, name); val tmp = File(dir, "$name.tmp")
-        tmp.writeText(json.encodeToString(v)); tmp.renameTo(f)
+        tmp.writeText(json.encodeToString(v)); java.nio.file.Files.move(tmp.toPath(), f.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
     }
 }

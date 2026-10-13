@@ -1,0 +1,32 @@
+package com.smizflark.aigile.messenger
+
+import com.smizflark.aigile.messenger.data.Outbox
+import com.smizflark.aigile.messenger.data.Pending
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/** A failed message can be retried or deleted (AII-62). */
+class OutboxTest {
+    private fun p(id: String, failed: Boolean = false, offline: Boolean = false) =
+        Pending(id, "lead:ai-gile", "hi", null, "2026-10-01T10:00:00Z", failed, offline = offline)
+
+    @Test fun failMarksOnlyThatMessage() {
+        val l = Outbox.fail(listOf(p("a"), p("b")), "b", offline = false)
+        assertFalse(l[0].failed); assertTrue(l[1].failed); assertFalse(l[1].offline)
+    }
+
+    @Test fun retryClearsTheMarkAndKeepsTheMessage() {
+        val l = Outbox.retry(listOf(p("a", failed = true), p("b", failed = true)), "a")
+        assertFalse(l[0].failed); assertEquals("hi", l[0].text); assertTrue(l[1].failed)
+    }
+
+    @Test fun deleteRemovesOnlyThatMessage() =
+        assertEquals(listOf("b"), Outbox.remove(listOf(p("a", failed = true), p("b")), "a").map { it.id })
+
+    @Test fun onlyRefusedOnesGetTheRedMark() {
+        val l = listOf(p("new"), p("offline", failed = true, offline = true), p("refused", failed = true))
+        assertEquals(listOf("refused"), Outbox.failedForGood(l).map { it.id })
+    }
+}
