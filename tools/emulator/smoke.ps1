@@ -114,5 +114,11 @@ Start-Sleep 2
 $after = ((Dump).SelectNodes('//node') | Where-Object { $_.text -match '^\d+ / \d+$' } | Select-Object -First 1).text
 if ($after -eq $count) { Fail "swipe did not change picture (still $count)" }
 Write-Host "swiped to $after"
+# AII-95: Save puts the picture in Pictures/AI-gile
+TapWhenFound '^Save to phone$' 'Save'
+Start-Sleep 2
+$media = & $adb shell content query --uri content://media/external/images/media --projection _display_name:relative_path 2>$null | Out-String
+if ($media -notmatch 'AI-gile') { Fail "saved picture not found in Pictures/AI-gile" }
+Write-Host "picture saved to Pictures/AI-gile"
 & $adb shell screencap -p /sdcard/smoke.png; & $adb pull /sdcard/smoke.png (Join-Path $env:TEMP 'smoke-pass.png') 2>$null | Out-Null
-Write-Host "PASS: message sent and pictures swipe (screen in TEMP\smoke-pass.png)"; Cleanup; exit 0
+Write-Host "PASS: message sent, pictures swipe and save (screen in TEMP\smoke-pass.png)"; Cleanup; exit 0

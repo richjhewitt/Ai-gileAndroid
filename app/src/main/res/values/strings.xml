@@ -65,6 +65,9 @@
     <string name="picture">Picture</string>
     <string name="file">File</string>
     <string name="picture_to_send">Picture to send</string>
+    <string name="save_picture">Save to phone</string>
+    <string name="picture_saved">Saved to Pictures</string>
+    <string name="picture_not_saved">Couldn\'t save the picture</string>
     <string name="remove_picture">Remove picture</string>
     <string name="chats_title">Messages</string>
     <string name="chats_title_demo">Demo</string>
