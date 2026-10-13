@@ -66,5 +66,8 @@ class Repo(context: Context) {
 
     fun discard(id: String) = store.saveOutbox(store.outbox().filter { it.id != id })
 
+    /** AII-38: a bug report or crash log to the app's team, as a 💬 message. Null in the demo: nothing leaves the phone. */
+    suspend fun reportBug(text: String): String? = if (store.demo) null else source.newMessage(Crash.TEAM, text)
+
     fun pendingFor(chat: String) = store.outbox().filter { it.chat == chat }
 }
