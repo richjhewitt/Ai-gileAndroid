@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
 import java.io.File
+import com.smizflark.aigile.messenger.widget.LatestWidget
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
@@ -47,13 +48,14 @@ class Repo(context: Context) {
 
     fun startDemo() { store.demo = true; store.owner = "Rich" }
 
-    fun signOut() { board = null; store.signOut() }
+    fun signOut() { board = null; store.signOut(); LatestWidget.refresh(app) }
 
     suspend fun chats(): List<ChatRef> {
         val l = source.chats()
         store.cacheChats(l); store.lastSync = System.currentTimeMillis()
         // In step with the board (AII-25): the Lead Scrum Master read on the PC counts as read here too.
         l.filter { it.kind == Kind.WATCHMAN && it.unread == 0 }.forEach { store.markSeen(it.key, it.last) }
+        LatestWidget.refresh(app)
         return l
     }
 

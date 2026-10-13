@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AI-gile Messenger</string>
+    <string name="widget_description">Your latest chats</string>
+    <string name="widget_connect">Open the app to connect to your board</string>
+    <string name="widget_no_chats">No chats yet</string>
 </resources>
