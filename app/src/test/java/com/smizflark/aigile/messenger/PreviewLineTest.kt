@@ -59,6 +59,12 @@ class PreviewLineTest {
     @Test fun widgetShowsItToo() =
         assertEquals("You: thanks", com.smizflark.aigile.messenger.widget.WidgetRows.rows(listOf(lead("thanks", mine = true)), emptyMap(), java.time.Instant.parse(at))[0].subtitle)
 
+    @Test fun leadScrumMasterToo() {
+        val w = Mapper.chats(listOf(ChatSummary("_watchman", watchman = true, last = at, lastText = "- Woke **Tunio**")), emptyList())[0]
+        assertEquals("Woke Tunio", previewLabel(w))
+        assertEquals("Passes your message to the right team", previewLabel(Mapper.chats(listOf(ChatSummary("_watchman", watchman = true)), emptyList())[0]))
+    }
+
     @Test fun friendsKeepTheirLine() {
         val f = ChatRef(Kind.FRIEND, "d", "Davy", "🔒 Private", "")
         assertEquals("🔒 Private", previewLabel(f))
