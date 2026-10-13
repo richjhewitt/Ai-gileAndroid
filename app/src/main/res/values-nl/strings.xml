@@ -63,6 +63,12 @@
     <string name="chats_title_demo">Berichten · demo</string>
     <string name="chats_offline">%1$s\nChats van %2$s.</string>
     <string name="mark_all_read">Alles als gelezen markeren</string>
+    <string name="pause_alerts">Meldingen pauzeren</string>
+    <string name="pause_1h">1 uur</string>
+    <string name="pause_4h">4 uur</string>
+    <string name="pause_tomorrow">Tot morgen</string>
+    <string name="paused_until">Meldingen gepauzeerd tot %1$s</string>
+    <string name="resume">Hervatten</string>
     <string name="mark_read">Als gelezen markeren</string>
     <string name="mute">Dempen</string>
     <string name="open_chat">Chat openen</string>

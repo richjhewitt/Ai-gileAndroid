@@ -84,7 +84,8 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             val (all, nextTold) = News.diff(items, seen, told)
             val news = News.audible(all, store.muted())
             store.setTold(nextTold)
-            val quiet = store.quietOn && News.quiet(LocalTime.now().hour, store.quietFrom, store.quietTo)
+            val quiet = (store.quietOn && News.quiet(LocalTime.now().hour, store.quietFrom, store.quietTo)) ||
+                com.smizflark.aigile.messenger.data.Pause.paused(System.currentTimeMillis(), store.pausedUntil)
             if (news.isNotEmpty() && store.alerts && !quiet && !App.inForeground) notify(context, news)
         }
 
