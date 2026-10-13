@@ -58,8 +58,15 @@ object ChatNotifier {
             .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
             .setShowsUserInterface(false)
             .build()
+        // AII-116: Mark as read, without opening the app.
+        val read = Intent(context, ReadReceiver::class.java).setAction(ReadReceiver.ACTION).putExtra(CheckWorker.EXTRA_CHAT, chat)
+        val readPi = PendingIntent.getBroadcast(context, id, read, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val readAction = NotificationCompat.Action.Builder(R.drawable.ic_notify, context.getString(R.string.mark_read), readPi)
+            .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
+            .setShowsUserInterface(false)
+            .build()
         return base(context).setContentTitle(name).setStyle(style)
-            .setContentIntent(openChat(context, chat, id)).addAction(action).setGroup(GROUP)
+            .setContentIntent(openChat(context, chat, id)).addAction(action).addAction(readAction).setGroup(GROUP)
     }
 
     private fun newStyle(context: Context, name: String) = NotificationCompat.MessagingStyle(Person.Builder().setName(context.getString(R.string.notify_me)).build())

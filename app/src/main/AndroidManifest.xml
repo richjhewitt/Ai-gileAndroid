@@ -44,6 +44,8 @@
 
         <!-- Reply button on message alerts (AII-24) -->
         <receiver android:name=".work.ReplyReceiver" android:exported="false" />
+        <!-- Mark as read button on message alerts (AII-116) -->
+        <receiver android:name=".work.ReadReceiver" android:exported="false" />
         <!-- Home-screen widget: latest chats -->
         <receiver
             android:name=".widget.LatestWidget"
