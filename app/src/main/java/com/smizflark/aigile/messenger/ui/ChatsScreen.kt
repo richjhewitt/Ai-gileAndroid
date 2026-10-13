@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
+import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Repo
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -58,15 +59,17 @@ import kotlinx.coroutines.launch
 fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var seen by remember { mutableStateOf(repo.store.seen()) }
+    var outbox by remember { mutableStateOf(repo.store.outbox()) }
     var error by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
     val scope = rememberCoroutineScope()
 
     suspend fun load() {
+        outbox = repo.store.outbox()   // first, so it shows at once even with no signal
         try { chats = repo.chats(); error = null }
         catch (e: Exception) { error = e.message }
-        seen = repo.store.seen(); loaded = true
+        seen = repo.store.seen(); outbox = repo.store.outbox(); loaded = true
     }
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -108,9 +111,10 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     Text("No chats yet. Tap New message to write to a team.", Modifier.padding(24.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                val unsent = outbox.groupBy { it.chat }
                 items(chats, key = { it.key }) { c ->
                     val fresh = c.last != null && c.last > (seen[c.key] ?: "")
-                    ChatRow(c, repo, fresh) { onOpen(c) }
+                    ChatRow(c, repo, fresh, unsent[c.key].orEmpty()) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
                 item { Spacer(Modifier.size(88.dp)) }
@@ -120,7 +124,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
 }
 
 @Composable
-private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit) {
+private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unsent: List<Pending>, onClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
         verticalAlignment = Alignment.CenterVertically,
@@ -135,9 +139,15 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit)
                     color = if (fresh) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val waiting = unsentLabel(unsent)
                 Text(
-                    c.subtitle,
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    waiting ?: c.subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = when {
+                        waiting == null -> MaterialTheme.colorScheme.onSurfaceVariant
+                        unsent.any { it.failed } -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.primary
+                    },
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
                 )
                 if (c.waiting > 0) Badge(containerColor = MaterialTheme.colorScheme.primary) {
@@ -146,4 +156,11 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit)
             }
         }
     }
+}
+
+/** What a chat row says about messages typed on the phone that haven't reached the board (AII-52); null when none. */
+fun unsentLabel(unsent: List<Pending>): String? {
+    if (unsent.isEmpty()) return null
+    val failed = unsent.count { it.failed }
+    return if (failed > 0) "⚠️ $failed not sent: tap to retry" else "⏳ ${unsent.size} waiting to send"
 }
