@@ -121,4 +121,11 @@ $media = & $adb shell content query --uri content://media/external/images/media 
 if ($media -notmatch 'AI-gile') { Fail "saved picture not found in Pictures/AI-gile" }
 Write-Host "picture saved to Pictures/AI-gile"
 & $adb shell screencap -p /sdcard/smoke.png; & $adb pull /sdcard/smoke.png (Join-Path $env:TEMP 'smoke-pass.png') 2>$null | Out-Null
-Write-Host "PASS: message sent, pictures swipe and save (screen in TEMP\smoke-pass.png)"; Cleanup; exit 0
+# AII-96: Share opens Android's share menu
+TapWhenFound '^Share$' 'Share'
+$shared = $false
+for ($i = 0; $i -lt 10 -and -not $shared; $i++) { Start-Sleep 1; $shared = (Dump).OuterXml -match 'package="(com\.android\.intentresolver|android)"' }
+if (-not $shared) { Fail "share menu did not open" }
+Write-Host "share menu opened"
+& $adb shell input keyevent 4
+Write-Host "PASS: message sent, pictures swipe, save and share (screen in TEMP\smoke-pass.png)"; Cleanup; exit 0

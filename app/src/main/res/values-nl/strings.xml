@@ -68,6 +68,8 @@
     <string name="save_picture">Opslaan op telefoon</string>
     <string name="picture_saved">Opgeslagen in Foto\'s</string>
     <string name="picture_not_saved">Foto opslaan lukte niet</string>
+    <string name="share_picture">Delen</string>
+    <string name="picture_not_shared">Foto delen lukte niet</string>
     <string name="remove_picture">Foto verwijderen</string>
     <string name="chats_title">Berichten</string>
     <string name="chats_title_demo">Demo</string>

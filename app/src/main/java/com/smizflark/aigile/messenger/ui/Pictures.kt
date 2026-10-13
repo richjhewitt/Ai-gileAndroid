@@ -10,6 +10,7 @@ import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
@@ -18,6 +19,8 @@ import android.provider.MediaStore
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.material.icons.filled.SaveAlt
+import androidx.compose.material.icons.filled.Share
+import androidx.core.content.FileProvider
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.graphics.drawable.toBitmap
 import coil.imageLoader
@@ -197,40 +200,71 @@ private fun FullPicture(pics: List<Pic>, start: Int, repo: Repo, onClose: () -> 
         IconButton(onClick = onClose, modifier = Modifier.align(Alignment.TopEnd).then(cutout).padding(16.dp)) {
             Icon(Icons.Default.Close, "Close", tint = Color.White)
         }
-        // AII-95: Android 10 and up save without asking for storage access.
-        if (Build.VERSION.SDK_INT >= 29) {
-            val ctx = LocalContext.current
-            val scope = rememberCoroutineScope()
-            val p = pics[pager.currentPage]
-            val req = request(p, repo)
-            val saved = stringResource(R.string.picture_saved)
-            val failed = stringResource(R.string.picture_not_saved)
-            IconButton(onClick = { scope.launch { Toast.makeText(ctx, if (savePicture(ctx, req, p.name)) saved else failed, Toast.LENGTH_SHORT).show() } },
-                modifier = Modifier.align(Alignment.TopStart).then(cutout).padding(16.dp).testTag("full-pic-save")) {
-                Icon(Icons.Default.SaveAlt, stringResource(R.string.save_picture), tint = Color.White)
+        val ctx = LocalContext.current
+        val scope = rememberCoroutineScope()
+        val p = pics[pager.currentPage]
+        val req = request(p, repo)
+        Row(Modifier.align(Alignment.TopStart).then(cutout).padding(16.dp)) {
+            // AII-95: Android 10 and up save without asking for storage access.
+            if (Build.VERSION.SDK_INT >= 29) {
+                val saved = stringResource(R.string.picture_saved)
+                val failed = stringResource(R.string.picture_not_saved)
+                IconButton(onClick = { scope.launch { Toast.makeText(ctx, if (savePicture(ctx, req, p.name)) saved else failed, Toast.LENGTH_SHORT).show() } },
+                    modifier = Modifier.testTag("full-pic-save")) {
+                    Icon(Icons.Default.SaveAlt, stringResource(R.string.save_picture), tint = Color.White)
+                }
+            }
+            // AII-96: Android's share menu
+            val share = stringResource(R.string.share_picture)
+            val failed = stringResource(R.string.picture_not_shared)
+            IconButton(onClick = { scope.launch { if (!sharePicture(ctx, req, p.name, share)) Toast.makeText(ctx, failed, Toast.LENGTH_SHORT).show() } },
+                modifier = Modifier.testTag("full-pic-share")) {
+                Icon(Icons.Default.Share, share, tint = Color.White)
             }
         }
     }
 }
 
-/** AII-95: saves the picture into the phone's Pictures/AI-gile folder. JPEG unless it was a PNG. */
+/** AII-95: saves the picture into the phone's Pictures/AI-gile folder. */
 @RequiresApi(29)
 private suspend fun savePicture(ctx: Context, req: ImageRequest, name: String): Boolean = withContext(Dispatchers.IO) {
-    val bmp = (ctx.imageLoader.execute(req.newBuilder().allowHardware(false).build()) as? SuccessResult)?.drawable?.toBitmap()
-        ?: return@withContext false
-    val png = name.endsWith(".png", ignoreCase = true)
+    val bmp = loadBitmap(ctx, req) ?: return@withContext false
+    val f = PicFormat(name)
     val values = ContentValues().apply {
-        put(MediaStore.Images.Media.DISPLAY_NAME, name.substringBeforeLast('.').ifEmpty { "picture" } + if (png) ".png" else ".jpg")
-        put(MediaStore.Images.Media.MIME_TYPE, if (png) "image/png" else "image/jpeg")
+        put(MediaStore.Images.Media.DISPLAY_NAME, f.fileName)
+        put(MediaStore.Images.Media.MIME_TYPE, f.mime)
         put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/AI-gile")
     }
     val r = ctx.contentResolver
     val uri = r.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return@withContext false
-    val ok = runCatching {
-        r.openOutputStream(uri)!!.use { bmp.compress(if (png) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG, 92, it) }
-    }.getOrDefault(false)
+    val ok = runCatching { r.openOutputStream(uri)!!.use { f.write(bmp, it) } }.getOrDefault(false)
     if (!ok) r.delete(uri, null, null)
     ok
+}
+
+/** AII-96: hands the picture to Android's share menu, through a copy in the app's cache (only the last one is kept). */
+private suspend fun sharePicture(ctx: Context, req: ImageRequest, name: String, title: String): Boolean {
+    val f = PicFormat(name)
+    val file = withContext(Dispatchers.IO) {
+        val bmp = loadBitmap(ctx, req) ?: return@withContext null
+        val dir = File(ctx.cacheDir, "shared").apply { mkdirs(); listFiles()?.forEach { it.delete() } }
+        File(dir, f.fileName).takeIf { out -> runCatching { out.outputStream().use { f.write(bmp, it) } }.getOrDefault(false) }
+    } ?: return false
+    val send = Intent(Intent.ACTION_SEND).setType(f.mime)
+        .putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(ctx, ctx.packageName + ".pictures", file))
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    return runCatching { ctx.startActivity(Intent.createChooser(send, title)) }.isSuccess
+}
+
+private suspend fun loadBitmap(ctx: Context, req: ImageRequest): Bitmap? =
+    (ctx.imageLoader.execute(req.newBuilder().allowHardware(false).build()) as? SuccessResult)?.drawable?.toBitmap()
+
+/** JPEG unless it was a PNG. */
+private class PicFormat(name: String) {
+    private val png = name.endsWith(".png", ignoreCase = true)
+    val fileName = name.substringBeforeLast('.').ifEmpty { "picture" } + if (png) ".png" else ".jpg"
+    val mime = if (png) "image/png" else "image/jpeg"
+    fun write(bmp: Bitmap, out: java.io.OutputStream) = bmp.compress(if (png) Bitmap.CompressFormat.PNG else Bitmap.CompressFormat.JPEG, 92, out)
 }
 
 /** AII-90: pinch to zoom, drag to look around, double tap to zoom in and back out. */
