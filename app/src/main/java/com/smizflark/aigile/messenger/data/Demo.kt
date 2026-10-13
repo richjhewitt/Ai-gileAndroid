@@ -41,6 +41,9 @@ class DemoSource : ChatSource {
         ),
     )
 
+    /** The Lead Scrum Master's read mark, which the board keeps (AII-25). */
+    private var watchRead = false
+
     override suspend fun owner() = "Rich"
 
     override suspend fun chats(): List<ChatRef> {
@@ -48,13 +51,15 @@ class DemoSource : ChatSource {
         val summaries = listOf("ai-gile", "tunio").map { s ->
             val t = threads.getValue(s)
             ChatSummary(t.slug, t.name, t.emoji, t.color, lead = t.lead, unread = t.open.size, last = t.messages.lastOrNull()?.at)
-        } + ChatSummary("_watchman", "Lead Scrum Master", "🧭", "#3a5a7a", watchman = true, last = threads.getValue("_watchman").messages.last().at)
+        } + ChatSummary("_watchman", "Lead Scrum Master", "🧭", "#3a5a7a", watchman = true, last = threads.getValue("_watchman").messages.last().at,
+            unread = if (watchRead) 0 else threads.getValue("_watchman").messages.count { !it.mine })
         val contacts = friends.map { (id, l) -> Contact(id, "Davy", checked = true, last = l.last().at, lastIn = l.last { it.dir == "in" }.at) }
         return Mapper.chats(summaries, contacts)
     }
 
     override suspend fun conversation(ref: ChatRef): Conversation {
         delay(150)
+        if (ref.kind == Kind.WATCHMAN) watchRead = true   // like the board: opening it reads it
         return if (ref.kind == Kind.FRIEND) Mapper.friend(ref, "Rich", friends.getValue(ref.id).toList())
         else Mapper.conversation(ref, threads.getValue(ref.id))
     }
