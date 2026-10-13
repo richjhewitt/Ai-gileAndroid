@@ -12,6 +12,7 @@ import com.smizflark.aigile.messenger.ui.ChatsScreen
 import com.smizflark.aigile.messenger.ui.ConnectScreen
 import com.smizflark.aigile.messenger.ui.MessengerTheme
 import com.smizflark.aigile.messenger.ui.Appearance
+import com.smizflark.aigile.messenger.ui.Look
 import com.smizflark.aigile.messenger.ui.TextSize
 import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.EmptyState
@@ -68,4 +69,18 @@ class ScreenshotTest {
     @Test fun emptySearchDark() = shot("empty_search", true) { EmptyState("No results for “zebra”", button = "Clear search") }
     @Test fun settingsLight() = shot("settings", false) { SettingsScreen(repo, {}, {}) }
     @Test fun settingsDark() = shot("settings", true) { SettingsScreen(repo, {}, {}) }
+
+    /** AII-69: the pure black (OLED) look, so every screen can be checked for grey panels. */
+    private fun black(name: String, content: @androidx.compose.runtime.Composable () -> Unit) {
+        Appearance.look = Look.Black; Appearance.phoneColours = false
+        try {
+            rule.setContent { MessengerTheme { content() } }
+            rule.waitForIdle()
+            rule.onRoot().captureRoboImage("../docs/shots/${name}_black.png")
+        } finally { Appearance.look = null; Appearance.phoneColours = true }
+    }
+    @Test fun chatsBlack() = black("chats") { ChatsScreen(repo, {}, {}, {}) }
+    @Test fun chatBlack() { prime(lead()); black("chat") { ChatScreen(repo, lead(), onBack = {}) } }
+    @Test fun newBlack() = black("new_message") { NewMessageScreen(repo, onBack = {}, onSent = {}) }
+    @Test fun settingsBlack() = black("settings") { SettingsScreen(repo, {}, {}) }
 }
