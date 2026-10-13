@@ -56,6 +56,9 @@ class PreviewLineTest {
         assertEquals("Heading", Mapper.plainLine("## Heading"))
     }
 
+    @Test fun widgetShowsItToo() =
+        assertEquals("You: thanks", com.smizflark.aigile.messenger.widget.WidgetRows.rows(listOf(lead("thanks", mine = true)), emptyMap(), java.time.Instant.parse(at))[0].subtitle)
+
     @Test fun friendsKeepTheirLine() {
         val f = ChatRef(Kind.FRIEND, "d", "Davy", "🔒 Private", "")
         assertEquals("🔒 Private", previewLabel(f))

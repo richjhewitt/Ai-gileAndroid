@@ -29,7 +29,7 @@ object WidgetRows {
             Row(
                 chat = c.key,
                 title = "${c.emoji} ${c.name}".trim(),
-                subtitle = c.subtitle,
+                subtitle = com.smizflark.aigile.messenger.ui.previewLabel(c),   // newest message, as on the chats list (AII-106)
                 ago = ago(c.last, now),
                 new = c.last != null && c.last > (seen[c.key] ?: ""),
             )
