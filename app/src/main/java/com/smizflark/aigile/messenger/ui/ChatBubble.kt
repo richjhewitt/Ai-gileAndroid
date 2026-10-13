@@ -199,6 +199,12 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     // Android 13+ shows its own "copied" note; a toast as well would say it twice.
                     if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
                 })
+                // AII-121: out to another app (email, notes...) through the phone's share menu.
+                if (shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, modifier = Modifier.testTag("share"), onClick = {
+                    menu = false
+                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, shown.text)
+                    runCatching { ctx.startActivity(android.content.Intent.createChooser(send, null)) }
+                })
             }
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
                 if (!b.mine && ref.kind != Kind.FRIEND && b.author.isNotBlank()) {

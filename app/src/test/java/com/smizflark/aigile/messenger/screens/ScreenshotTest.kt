@@ -217,6 +217,20 @@ class ScreenshotTest {
         rule.onRoot().captureRoboImage("../docs/shots/chat_quote_jump_light.png")
         rule.mainClock.autoAdvance = true
     }
+    /** AII-121: hold a message, Share: the phone's share menu gets the message text. */
+    @Test fun shareMessage() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onAllNodesWithTag("theirs").onLast().performTouchInput { longClick() }
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chat_share_menu_light.png")
+        rule.onNodeWithTag("share").performClick()
+        val chooser = org.robolectric.Shadows.shadowOf(ApplicationProvider.getApplicationContext<Application>()).nextStartedActivity
+        org.junit.Assert.assertEquals(android.content.Intent.ACTION_CHOOSER, chooser.action)
+        val send = chooser.getParcelableExtra<android.content.Intent>(android.content.Intent.EXTRA_INTENT)!!
+        org.junit.Assert.assertEquals("text/plain", send.type)
+        org.junit.Assert.assertTrue(send.getStringExtra(android.content.Intent.EXTRA_TEXT).orEmpty().isNotBlank())
+    }
     /** AII-113: with "working on AIG-2" showing, tapping the chat name still opens the details. */
     @Test fun workingOnKeepsTheNameTap() {
         prime(lead())
