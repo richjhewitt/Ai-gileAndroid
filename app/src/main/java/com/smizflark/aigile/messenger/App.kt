@@ -1,6 +1,7 @@
 package com.smizflark.aigile.messenger
 
 import android.app.Application
+import com.smizflark.aigile.messenger.data.Crash
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.work.CheckWorker
 
@@ -9,6 +10,7 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        Crash.install(this)
         CheckWorker.channel(this)
         if (repo.store.connected && !repo.store.demo && repo.store.alerts) CheckWorker.schedule(this)
     }
