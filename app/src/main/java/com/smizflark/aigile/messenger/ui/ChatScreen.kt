@@ -4,65 +4,23 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.AddPhotoAlternate
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.NotificationsOff
-import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -75,31 +33,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material3.HorizontalDivider
-import com.smizflark.aigile.messenger.data.News
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.smizflark.aigile.messenger.data.Bubble
 import com.smizflark.aigile.messenger.data.chatInfo
 import com.smizflark.aigile.messenger.data.CardDetail
 import com.smizflark.aigile.messenger.data.ChatRef
-import com.smizflark.aigile.messenger.data.Conversation
 import com.smizflark.aigile.messenger.data.Kind
-import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Forward
 import com.smizflark.aigile.messenger.data.Quote
-import com.smizflark.aigile.messenger.data.Pic
 import com.smizflark.aigile.messenger.data.Repo
-import com.smizflark.aigile.messenger.data.SendState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -109,11 +59,7 @@ import androidx.compose.ui.res.stringResource
 import com.smizflark.aigile.messenger.R
 import android.os.Build
 import android.widget.Toast
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import android.view.HapticFeedbackConstants
 import androidx.compose.runtime.snapshotFlow
 import com.smizflark.aigile.messenger.data.ScrollPlace
@@ -121,41 +67,6 @@ import com.smizflark.aigile.messenger.data.ScrollPlaces
 import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.ui.platform.LocalView
-
-/** Bubbles, pending messages, day lines and card headers, oldest first. */
-/** Messages from them after the newest one you saw at the bottom of the chat (AII-46). */
-internal fun unreadBelow(bubbles: List<Bubble>, seen: String?): Int {
-    val at = bubbles.indexOfLast { it.key == seen }
-    if (seen == null || at < 0) return 0
-    return bubbles.subList(at + 1, bubbles.size).count { !it.mine }
-}
-
-private fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus: String? = null, seenAtOpen: String? = null): List<Row> {
-    val out = mutableListOf<Row>()
-    val bubbles = c?.bubbles.orEmpty().filter { focus == null || it.card == focus }
-    // Answer buttons only under the newest message of a card still waiting on you.
-    val optionsAt = bubbles.withIndex().filter { it.value.options.isNotEmpty() && it.value.waiting }
-        .groupBy { it.value.card }.mapNotNull { (_, l) -> l.maxOf { it.index } }.toSet()
-    var day: java.time.LocalDate? = null
-    var card: String? = null
-    val firstNew = News.firstNew(bubbles, seenAtOpen)
-    bubbles.forEachIndexed { i, b ->
-        val d = dayOf(b.at)
-        if (d != null && d != day) { out += Row.Day("day:$d", dayLabel(b.at)); day = d; card = null }
-        if (b.key == firstNew) out += Row.New
-        if (b.card != null && b.card != card) {
-            out += Row.Card("card:$i:${b.card}", b.card, Mapper.clean(b.cardTitle ?: ""), b.waiting)
-        }
-        card = b.card
-        out += Row.Msg(b.key, b, showOptions = i in optionsAt)
-    }
-    pending.filter { focus == null || it.target == focus }.forEach { p ->
-        out += Row.Msg("p:${p.id}", Bubble("p:${p.id}", owner, p.text, p.at, true, p.target,
-            state = if (p.failed && !p.offline) SendState.FAILED else SendState.SENDING,   // offline ones go by themselves (AII-55)
-            pics = p.files.map { Pic(File(it).toURI().toString(), File(it).name, "image/") }), p)
-    }
-    return out
-}
 
 /**
  * Journey 3: read a chat and reply. Replies go to the question waiting on you, a card you pick, or a new 💬.
@@ -358,38 +269,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     if (details) ChatDetails(ref, repo, chatInfo(convo)) { details = false; muted = ref.key in repo.store.muted() }
     Scaffold(
         topBar = {
-            TopAppBar(
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { details = true }.testTag("chat-title")) {
-                        Avatar(ref, repo, 36.dp)
-                        Spacer(Modifier.size(10.dp))
-                        Column {
-                            Text(if (focus != null) "$focus ${Mapper.clean(focusBubble?.cardTitle ?: "")}" else ref.name,
-                                style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            val on = workingOn.takeIf { working && focus == null }
-                            Text(if (on != null) stringResource(R.string.working_on, on) else if (focus == null) (if (working) stringResource(R.string.working) else ref.subtitle) else ref.name + if (focusBubble?.waiting == true) " · ⏳ " + stringResource(R.string.waiting_on_you) else "", style = MaterialTheme.typography.labelMedium,
-                                color = if (focus == null && working) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                // Not a link of its own: Compose widens a small tap target to 48 dp, which would take taps on the name too (AII-113).
-                                modifier = if (on != null) Modifier.testTag("working-on") else Modifier,
-                                maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
-                },
-                actions = {
-                    var menu by remember { mutableStateOf(false) }
-                    IconButton(onClick = { finding = true }) { Icon(Icons.Default.Search, stringResource(R.string.find_in_chat)) }
-                    IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.more)) }
-                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(if (muted) R.string.unmute else R.string.mute_alerts)) },
-                            leadingIcon = { Icon(if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff, null) },
-                            onClick = { muted = !muted; repo.store.setMuted(ref.key, muted); menu = false },
-                            modifier = Modifier.testTag("mute"),
-                        )
-                    }
-                },
-            )
+            ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
+                onFind = { finding = true }, onMute = { muted = !muted; repo.store.setMuted(ref.key, muted) })
         },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {
