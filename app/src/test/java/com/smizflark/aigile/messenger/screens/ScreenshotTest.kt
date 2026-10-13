@@ -18,6 +18,9 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.onChildren
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.test.core.app.ApplicationProvider
@@ -227,6 +230,24 @@ class ScreenshotTest {
         rule.mainClock.advanceTimeBy(1_000)
         rule.onRoot().captureRoboImage("../docs/shots/chat_quote_jump_light.png")
         rule.mainClock.autoAdvance = true
+    }
+    /** AII-126: with Enter key sends on, the keyboard's Send key sends the message; off, it doesn't. */
+    @Test fun enterSends() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }; prime(c)
+        try {
+            Appearance.enterSends = true
+            rule.setContent { MessengerTheme { ChatScreen(repo, c, onBack = {}) } }
+            val before = rule.onAllNodesWithTag("mine").fetchSemanticsNodes().size
+            rule.onNodeWithTag("input").performTextInput("Sent with Enter")
+            rule.onNodeWithTag("input").performImeAction()
+            rule.waitUntil(5_000) { rule.onAllNodesWithTag("mine").fetchSemanticsNodes().size > before }
+        } finally { Appearance.enterSends = false }
+    }
+    @Test fun enterSendsSetting() {
+        rule.setContent { MessengerTheme { SettingsScreen(repo, {}, {}) } }
+        rule.onNodeWithTag("enterSends").performScrollTo()
+        rule.onNodeWithTag("enterSends").onChildren().filterToOne(androidx.compose.ui.test.isToggleable()).performClick()
+        try { org.junit.Assert.assertTrue(repo.store.enterSends && Appearance.enterSends) } finally { Appearance.enterSends = false; repo.store.enterSends = false }
     }
     /** AII-122: on a short screen, scroll to the bottom of the chats, tap the title: back at the first chat. */
     @Test @Config(qualifiers = "w411dp-h300dp-xxhdpi") fun titleTapGoesToTop() {

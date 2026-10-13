@@ -1,5 +1,14 @@
 package com.smizflark.aigile.messenger.ui
 
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -156,6 +165,7 @@ internal fun Composer(
                 leadingIcon = { Icon(Icons.Default.ContentPaste, null) }, modifier = Modifier.testTag("paste-pic"),
             )
             if (pics.isNotEmpty()) PickedPictures(pics, onRemovePic)
+            val canSend = text.isNotBlank() || pics.isNotEmpty()
             Row(verticalAlignment = Alignment.Bottom) {
                 IconButton(onClick = onAttach, enabled = pics.size < MAX_PICS, modifier = Modifier.size(52.dp).testTag("attach")) {
                     Icon(Icons.Default.AddPhotoAlternate, stringResource(R.string.add_picture))
@@ -165,10 +175,17 @@ internal fun Composer(
                     placeholder = { Text(stringResource(if (ref.kind == Kind.WATCHMAN) R.string.message_watchman else R.string.message)) },
                     trailingIcon = { MicButton { onText(Dictate.join(text, it)) } },
                     shape = RoundedCornerShape(24.dp),
-                    modifier = Modifier.weight(1f).testTag("input"),
+                    // Enter sends (AII-126): the keyboard shows a Send key, and a hardware Enter sends too (Shift+Enter still makes a new line).
+                    keyboardOptions = if (Appearance.enterSends) KeyboardOptions(imeAction = ImeAction.Send) else KeyboardOptions.Default,
+                    keyboardActions = KeyboardActions(onSend = { if (canSend) onSend() }),
+                    modifier = Modifier.weight(1f).testTag("input").onPreviewKeyEvent {
+                        val enter = it.key == Key.Enter || it.key == Key.NumPadEnter
+                        if (!Appearance.enterSends || !enter || it.isShiftPressed) false
+                        else { if (it.type == KeyEventType.KeyDown && canSend) onSend(); true }
+                    },
                 )
                 Spacer(Modifier.size(8.dp))
-                FilledIconButton(onClick = onSend, enabled = text.isNotBlank() || pics.isNotEmpty(), modifier = Modifier.size(52.dp).testTag("send")) {
+                FilledIconButton(onClick = onSend, enabled = canSend, modifier = Modifier.size(52.dp).testTag("send")) {
                     Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.send))
                 }
             }

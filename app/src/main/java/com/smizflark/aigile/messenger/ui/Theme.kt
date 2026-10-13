@@ -74,9 +74,11 @@ object Appearance {
     var look by mutableStateOf<Look?>(null)
     var phoneColours by mutableStateOf(true)
     var textSize by mutableStateOf(TextSize.Normal)
+    /** Enter sends (AII-126): read by the message box. */
+    var enterSends by mutableStateOf(false)
 
     fun load(store: Store) {
-        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize) }
+        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends }
     }
 }
 

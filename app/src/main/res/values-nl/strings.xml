@@ -152,6 +152,8 @@
     <string name="locked">Messenger is vergrendeld</string>
     <string name="unlock">Ontgrendelen</string>
     <string name="alerts">Meldingen</string>
+    <string name="enter_sends">Enter-toets verstuurt</string>
+    <string name="enter_sends_sub">Enter verstuurt het bericht; Shift+Enter maakt een nieuwe regel</string>
     <string name="alerts_new">Meldingen bij nieuwe berichten</string>
     <string name="alerts_new_sub">Kijkt ongeveer elke 15 minuten, één melding per keer</string>
     <string name="quiet_hours">Stille uren</string>

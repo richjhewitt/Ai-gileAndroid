@@ -152,6 +152,8 @@
     <string name="locked">Messenger is locked</string>
     <string name="unlock">Unlock</string>
     <string name="alerts">Alerts</string>
+    <string name="enter_sends">Enter key sends</string>
+    <string name="enter_sends_sub">Enter sends the message; Shift+Enter makes a new line</string>
     <string name="alerts_new">New message alerts</string>
     <string name="alerts_new_sub">Checks about every 15 minutes, one alert per batch</string>
     <string name="quiet_hours">Quiet hours</string>
