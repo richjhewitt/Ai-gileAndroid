@@ -1,5 +1,9 @@
 package com.smizflark.aigile.messenger.ui
 
+import com.smizflark.aigile.messenger.R
+
+import androidx.compose.ui.res.stringResource
+
 import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.net.Uri
@@ -78,7 +82,7 @@ fun MessagePictures(pics: List<Pic>, repo: Repo) {
         pics.forEach { p ->
             if (p.image) {
                 SubcomposeAsyncImage(
-                    model = request(p, repo), contentDescription = p.name.ifEmpty { "Picture" },
+                    model = request(p, repo), contentDescription = p.name.ifEmpty { stringResource(R.string.picture) },
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.widthIn(max = if (pics.size == 1) 260.dp else 126.dp)
                         .heightIn(min = 80.dp, max = if (pics.size == 1) 320.dp else 126.dp)
@@ -86,7 +90,7 @@ fun MessagePictures(pics: List<Pic>, repo: Repo) {
                     loading = { Box(Modifier.size(126.dp).background(MaterialTheme.colorScheme.surfaceVariant)) },
                     error = { Missing(p) },
                 )
-            } else Text("📎 ${p.name.ifEmpty { "File" }}", style = MaterialTheme.typography.bodyMedium,
+            } else Text("📎 ${p.name.ifEmpty { stringResource(R.string.file) }}", style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
@@ -98,7 +102,7 @@ private fun Missing(p: Pic) {
     Row(Modifier.size(126.dp).background(MaterialTheme.colorScheme.surfaceVariant).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Default.BrokenImage, null)
-        Text(" ${p.name.ifEmpty { "Picture" }}", style = MaterialTheme.typography.labelSmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        Text(" ${p.name.ifEmpty { stringResource(R.string.picture) }}", style = MaterialTheme.typography.labelSmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -124,13 +128,13 @@ fun PickedPictures(files: List<String>, onRemove: (String) -> Unit) {
             Box {
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(LocalContext.current).data(File(f)).build(),
-                    contentDescription = "Picture to send", contentScale = ContentScale.Crop,
+                    contentDescription = stringResource(R.string.picture_to_send), contentScale = ContentScale.Crop,
                     modifier = Modifier.size(72.dp).clip(RoundedCornerShape(10.dp)).testTag("picked"),
                     error = { Missing(Pic(f, File(f).name)) },
                 )
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.inverseSurface,
                     modifier = Modifier.align(Alignment.TopEnd).padding(2.dp).size(24.dp).clickable { onRemove(f) }) {
-                    Icon(Icons.Default.Close, "Remove picture", tint = MaterialTheme.colorScheme.inverseOnSurface, modifier = Modifier.padding(3.dp))
+                    Icon(Icons.Default.Close, stringResource(R.string.remove_picture), tint = MaterialTheme.colorScheme.inverseOnSurface, modifier = Modifier.padding(3.dp))
                 }
             }
         }

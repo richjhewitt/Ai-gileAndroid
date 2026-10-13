@@ -1,5 +1,7 @@
 package com.smizflark.aigile.messenger.ui
 
+import androidx.compose.ui.res.stringResource
+
 import com.smizflark.aigile.messenger.R
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -57,12 +59,13 @@ fun NewMessageScreen(repo: Repo, draft: String = "", onBack: () -> Unit, onSent:
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) { runCatching { chats = repo.chats() } }
 
+    val pickWho = stringResource(R.string.pick_who)
     Scaffold(topBar = {
-        TopAppBar(title = { Text("New message") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } })
+        TopAppBar(title = { Text(stringResource(R.string.new_message)) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } })
     }) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding().padding(horizontal = 16.dp)) {
-            Text("To", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.new_to), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             LazyColumn(Modifier.weight(1f).selectableGroup()) {
                 if (chats.isEmpty()) item { EmptyState(androidx.compose.ui.res.stringResource(R.string.empty_pick_team)) }
                 items(chats, key = { it.key }) { c ->
@@ -75,7 +78,7 @@ fun NewMessageScreen(repo: Repo, draft: String = "", onBack: () -> Unit, onSent:
                         Spacer(Modifier.size(10.dp))
                         Column {
                             Text(c.name, style = MaterialTheme.typography.titleSmall)
-                            Text(if (c.kind == Kind.LEAD) "New 💬 card for ${c.subtitle}" else c.subtitle,
+                            Text(if (c.kind == Kind.LEAD) stringResource(R.string.new_card_for, c.subtitle) else c.subtitle,
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -83,13 +86,13 @@ fun NewMessageScreen(repo: Repo, draft: String = "", onBack: () -> Unit, onSent:
             }
             OutlinedTextField(
                 value = text, onValueChange = { text = it; error = null }, minLines = 3, maxLines = 8,
-                placeholder = { Text("What do you want to say?") },
+                placeholder = { Text(stringResource(R.string.new_placeholder)) },
                 trailingIcon = { MicButton { text = Dictate.join(text, it); error = null } }, modifier = Modifier.fillMaxWidth().testTag("input"),
             )
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 6.dp)) }
             Button(
                 onClick = {
-                    val to = chats.firstOrNull { it.key == pick } ?: run { error = "Pick who it's for."; return@Button }
+                    val to = chats.firstOrNull { it.key == pick } ?: run { error = pickWho; return@Button }
                     busy = true
                     scope.launch {
                         try {
@@ -101,7 +104,7 @@ fun NewMessageScreen(repo: Repo, draft: String = "", onBack: () -> Unit, onSent:
                 },
                 enabled = !busy && text.isNotBlank(),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).heightIn(min = 52.dp).testTag("send"),
-            ) { Text(if (busy) "Sending…" else "Send") }
+            ) { Text(if (busy) stringResource(R.string.sending) else stringResource(R.string.send)) }
         }
     }
 }

@@ -1,5 +1,9 @@
 package com.smizflark.aigile.messenger.ui
 
+import com.smizflark.aigile.messenger.R
+
+import androidx.compose.ui.res.stringResource
+
 import android.Manifest
 import android.content.Intent
 import android.os.Build
@@ -75,23 +79,23 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
     var bugNote by remember { mutableStateOf<String?>(null) }
     var sending by remember { mutableStateOf(false) }
     val askPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
-        if (!ok) note = "Alerts need permission: allow notifications in Android settings."
+        if (!ok) note = ctx.getString(R.string.alerts_permission)
     }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text("Settings") },
-            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } })
+        TopAppBar(title = { Text(stringResource(R.string.settings)) },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } })
     }) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Connection", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.connection), style = MaterialTheme.typography.titleMedium)
             key(saved) {
-                Text(if (s.demo) "Demo: made-up chats, nothing leaves the phone"
-                    else "Board: ${s.url}\nSigned in as ${s.owner}\nPhone key: ${Mapper.maskKey(s.key)}",
+                Text(if (s.demo) stringResource(R.string.demo_note)
+                    else stringResource(R.string.board_info, s.url, s.owner, Mapper.maskKey(s.key)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("connection"))
             }
             ChangeBoard(repo, onSaved = { owner ->
-                saved++; note = "Saved: signed in as $owner"
+                saved++; note = ctx.getString(R.string.saved_as, owner)
                 if (s.alerts) CheckWorker.schedule(ctx)
             })
             HorizontalDivider()
@@ -99,72 +103,71 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
             AppearanceSettings(s)
             HorizontalDivider()
 
-            Text("Alerts", style = MaterialTheme.typography.titleMedium)
-            Toggle("New message alerts", "Checks about every 15 minutes, one alert per batch", alerts) {
+            Text(stringResource(R.string.alerts), style = MaterialTheme.typography.titleMedium)
+            Toggle(stringResource(R.string.alerts_new), stringResource(R.string.alerts_new_sub), alerts) {
                 alerts = it; s.alerts = it
                 if (it) {
                     if (Build.VERSION.SDK_INT >= 33) askPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     if (!s.demo) CheckWorker.schedule(ctx)
                 } else CheckWorker.cancel(ctx)
             }
-            Toggle("Quiet hours", "No alerts from ${hour(from)} to ${hour(to)}", quietOn) { quietOn = it; s.quietOn = it }
+            Toggle(stringResource(R.string.quiet_hours), stringResource(R.string.quiet_sub, hour(from), hour(to)), quietOn) { quietOn = it; s.quietOn = it }
             if (quietOn) {
-                Stepper("From", from) { from = it; s.quietFrom = it }
-                Stepper("To", to) { to = it; s.quietTo = it }
+                Stepper(stringResource(R.string.quiet_from), from) { from = it; s.quietFrom = it }
+                Stepper(stringResource(R.string.quiet_to), to) { to = it; s.quietTo = it }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!s.demo) OutlinedButton(onClick = {
-                    scope.launch { note = runCatching { CheckWorker.check(ctx); "Checked: all up to date." }.getOrElse { it.message } }
-                }) { Text("Check now") }
+                    scope.launch { note = runCatching { CheckWorker.check(ctx); ctx.getString(R.string.checked_ok) }.getOrElse { it.message } }
+                }) { Text(stringResource(R.string.check_now)) }
                 OutlinedButton(onClick = {
                     ctx.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                         .putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName))
-                }) { Text("Sound and vibration") }
+                }) { Text(stringResource(R.string.sound_vibration)) }
             }
             note?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("note")) }
             HorizontalDivider()
 
-            Text("Report a bug", style = MaterialTheme.typography.titleMedium)
-            if (crash != null) Text("The app crashed last time. Sending includes the crash log.",
+            Text(stringResource(R.string.report_bug), style = MaterialTheme.typography.titleMedium)
+            if (crash != null) Text(stringResource(R.string.crash_note),
                 color = MaterialTheme.colorScheme.error)
-            OutlinedTextField(bug, { bug = it }, Modifier.fillMaxWidth(), label = { Text("What went wrong?") }, minLines = 2)
+            OutlinedTextField(bug, { bug = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.bug_hint)) }, minLines = 2)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(enabled = !sending && !s.demo && (bug.isNotBlank() || crash != null), onClick = {
                     sending = true
                     scope.launch {
                         bugNote = runCatching { repo.reportBug(Crash.report(bug, crash, BuildConfig.VERSION_NAME)) }.fold(
-                            { id -> Crash.clear(ctx); crash = null; bug = ""; "Sent to the team" + (id?.let { " as $it" } ?: "") + "." },
+                            { id -> Crash.clear(ctx); crash = null; bug = ""; if (id != null) ctx.getString(R.string.bug_sent_as, id) else ctx.getString(R.string.bug_sent) },
                             { it.message })
                         sending = false
                     }
-                }) { Text("Send to the team") }
-                if (crash != null) TextButton(onClick = { Crash.clear(ctx); crash = null }) { Text("Forget the crash") }
+                }) { Text(stringResource(R.string.bug_send)) }
+                if (crash != null) TextButton(onClick = { Crash.clear(ctx); crash = null }) { Text(stringResource(R.string.crash_forget)) }
             }
-            if (s.demo) Text("In the demo nothing leaves the phone.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (s.demo) Text(stringResource(R.string.demo_nothing_leaves), color = MaterialTheme.colorScheme.onSurfaceVariant)
             bugNote?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             HorizontalDivider()
 
             TextButton(onClick = { confirmSignOut = true }) {
-                Text(if (s.demo) "Leave the demo" else "Sign out of this board", color = MaterialTheme.colorScheme.error)
+                Text(stringResource(if (s.demo) R.string.leave_demo else R.string.sign_out), color = MaterialTheme.colorScheme.error)
             }
-            Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelSmall,
+            Text(stringResource(R.string.version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 
     if (confirmSignOut) AlertDialog(
         onDismissRequest = { confirmSignOut = false },
-        title = { Text(if (s.demo) "Leave the demo?" else "Sign out?") },
+        title = { Text(stringResource(if (s.demo) R.string.leave_demo_title else R.string.sign_out_title)) },
         text = {
-            Text(if (s.demo) "You go back to the connect screen."
-                else "This phone forgets the board, its key and the chats saved on it. Messages not yet sent are lost.")
+            Text(stringResource(if (s.demo) R.string.leave_demo_text else R.string.sign_out_text))
         },
         confirmButton = {
             TextButton(onClick = { confirmSignOut = false; CheckWorker.cancel(ctx); repo.signOut(); onSignedOut() }) {
-                Text(if (s.demo) "Leave" else "Sign out", color = MaterialTheme.colorScheme.error)
+                Text(stringResource(if (s.demo) R.string.leave else R.string.sign_out_short), color = MaterialTheme.colorScheme.error)
             }
         },
-        dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text(stringResource(R.string.cancel)) } },
     )
 }
 
@@ -174,6 +177,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
 private fun ChangeBoard(repo: Repo, onSaved: (String) -> Unit) {
     val s = repo.store
     val scope = rememberCoroutineScope()
+    val res = LocalContext.current.resources
     var open by remember { mutableStateOf(false) }
     var url by remember { mutableStateOf(s.url) }
     var key by remember { mutableStateOf("") }
@@ -182,46 +186,46 @@ private fun ChangeBoard(repo: Repo, onSaved: (String) -> Unit) {
 
     if (!open) {
         OutlinedButton(onClick = { open = true; url = s.url; key = ""; error = null }, modifier = Modifier.testTag("change")) {
-            Text(if (s.demo) "Connect to your board" else "Change address or key")
+            Text(stringResource(if (s.demo) R.string.connect_to_board else R.string.change_board))
         }
         return
     }
     OutlinedTextField(
         value = url, onValueChange = { url = it; error = null },
-        label = { Text("Board address") }, placeholder = { Text("my-pc.tail1234.ts.net") },
+        label = { Text(stringResource(R.string.board_address)) }, placeholder = { Text("my-pc.tail1234.ts.net") },
         singleLine = true, modifier = Modifier.fillMaxWidth().testTag("url"),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
     )
     OutlinedTextField(
         value = key, onValueChange = { key = it; error = null },
-        label = { Text("Phone key") },
-        placeholder = { if (!s.demo && s.key.isNotEmpty()) Text("Leave blank to keep ${Mapper.maskKey(s.key)}") },
+        label = { Text(stringResource(R.string.phone_key)) },
+        placeholder = { if (!s.demo && s.key.isNotEmpty()) Text(stringResource(R.string.key_keep, Mapper.maskKey(s.key))) },
         singleLine = true, modifier = Modifier.fillMaxWidth().testTag("key"),
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
     )
     if (Mapper.insecure(Mapper.normaliseUrl(url))) Text(
-        "⚠️ Plain http outside Tailscale sends your key unprotected. Use https or your Tailscale address.",
+        stringResource(R.string.http_warning),
         color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
     )
     if (Mapper.boardChanged(s.demo, s.url, Mapper.normaliseUrl(url))) Text(
-        "Another board: chats saved on this phone are cleared when you save.",
+        stringResource(R.string.board_changed),
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("error")) }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         Button(enabled = !busy, onClick = {
-            if (url.isBlank()) { error = "Type your board's address first."; return@Button }
+            if (url.isBlank()) { error = res.getString(R.string.connect_need_address); return@Button }
             busy = true; error = null
             scope.launch {
                 try { val owner = repo.change(url, key); open = false; key = ""; onSaved(owner) }
-                catch (e: Exception) { error = e.message ?: "Couldn't connect. Nothing was changed." }
+                catch (e: Exception) { error = e.message ?: res.getString(R.string.connect_failed_unchanged) }
                 busy = false
             }
         }) {
-            if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Text("Save")
+            if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.save))
         }
-        TextButton(enabled = !busy, onClick = { open = false }) { Text("Cancel") }
+        TextButton(enabled = !busy, onClick = { open = false }) { Text(stringResource(R.string.cancel)) }
     }
 }
 

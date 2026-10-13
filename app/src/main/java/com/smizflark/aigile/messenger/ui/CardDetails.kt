@@ -1,5 +1,9 @@
 package com.smizflark.aigile.messenger.ui
 
+import com.smizflark.aigile.messenger.R
+
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,11 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.smizflark.aigile.messenger.data.CardDetail
 
 /** The board's column names, as Rich knows them. */
-fun statusLabel(status: String) = when (status) {
-    "backlog" -> "Backlog"; "todo" -> "To do"; "doing" -> "In progress"; "review" -> "Team checking"
-    "verify" -> "For you to test"; "team" -> "For the team"; "done" -> "Done"
-    else -> status.replaceFirstChar { it.uppercase() }
-}
+fun statusLabel(status: String) = Words.status[status] ?: status.replaceFirstChar { it.uppercase() }
 
 /** The top of a card's view (AII-45): where it is on the board, what it's about, and the steps to test it. */
 @Composable
@@ -32,7 +32,7 @@ fun CardDetails(c: CardDetail) {
             if (c.description.isNotBlank()) Text(Markdown.render(c.description.trim(), cs.surfaceVariant, cs.primary),
                 style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
             if (c.testSteps.isNotBlank()) {
-                Text("To test", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 10.dp))
+                Text(stringResource(R.string.card_to_test), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 10.dp))
                 Text(Markdown.render(c.testSteps.trim(), cs.surfaceVariant, cs.primary), style = MaterialTheme.typography.bodyMedium)
             }
         }

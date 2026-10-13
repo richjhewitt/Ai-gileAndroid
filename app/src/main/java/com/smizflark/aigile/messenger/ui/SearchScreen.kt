@@ -1,5 +1,7 @@
 package com.smizflark.aigile.messenger.ui
 
+import androidx.compose.ui.res.stringResource
+
 import com.smizflark.aigile.messenger.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -71,11 +73,11 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
                 title = {
                     TextField(
                         query, { query = it },
-                        placeholder = { Text("Search all chats") },
+                        placeholder = { Text(stringResource(R.string.search_all)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         colors = TextFieldDefaults.colors(
@@ -85,7 +87,7 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onBack: () -> Unit) {
                         modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("search"),
                     )
                 },
-                actions = { if (query.isNotEmpty()) IconButton(onClick = { query = "" }) { Icon(Icons.Default.Close, "Clear") } },
+                actions = { if (query.isNotEmpty()) IconButton(onClick = { query = "" }) { Icon(Icons.Default.Close, stringResource(R.string.clear)) } },
             )
         },
     ) { pad ->
@@ -125,7 +127,7 @@ private fun HitRow(h: Hit, repo: Repo, onClick: () -> Unit) {
                 if (b != null) Text(shortTime(b.at), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(
-                if (b == null) "Open chat" else h.snippet,
+                if (b == null) stringResource(R.string.open_chat) else h.snippet,
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2, overflow = TextOverflow.Ellipsis,
             )

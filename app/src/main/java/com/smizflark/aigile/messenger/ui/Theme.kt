@@ -1,5 +1,9 @@
 package com.smizflark.aigile.messenger.ui
 
+import com.smizflark.aigile.messenger.R
+
+import androidx.compose.ui.res.stringResource
+
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -56,11 +60,11 @@ internal val Dark = darkColorScheme(
 /* ---------- looks ---------- */
 
 /** The looks in Settings; [id] is what the Store keeps. */
-enum class Look(val id: String, val label: String) {
-    System("system", "Follow the phone"),
-    Light("light", "Light"),
-    Dark("dark", "Dark"),
-    Black("black", "Black (OLED)");
+enum class Look(val id: String, val label: String, @androidx.annotation.StringRes val res: Int) {
+    System("system", "Follow the phone", R.string.look_system),
+    Light("light", "Light", R.string.look_light),
+    Dark("dark", "Dark", R.string.look_dark),
+    Black("black", "Black (OLED)", R.string.look_black);
 
     companion object { fun of(id: String) = entries.firstOrNull { it.id == id } ?: System }
 }
@@ -79,11 +83,11 @@ object Appearance {
 /* ---------- text size ---------- */
 
 /** The text sizes in Settings (AII-66); [id] is what the Store keeps. */
-enum class TextSize(val id: String, val label: String, val scale: Float) {
-    Small("small", "Small", 0.85f),
-    Normal("normal", "Normal", 1f),
-    Large("large", "Large", 1.15f),
-    Huge("huge", "Huge", 1.3f);
+enum class TextSize(val id: String, val label: String, val scale: Float, @androidx.annotation.StringRes val res: Int) {
+    Small("small", "Small", 0.85f, R.string.size_small),
+    Normal("normal", "Normal", 1f, R.string.size_normal),
+    Large("large", "Large", 1.15f, R.string.size_large),
+    Huge("huge", "Huge", 1.3f, R.string.size_huge);
 
     companion object { fun of(id: String) = entries.firstOrNull { it.id == id } ?: Normal }
 }
@@ -153,7 +157,7 @@ fun MessengerTheme(store: Store? = null, content: @Composable () -> Unit) {
 @Composable
 fun AppearanceSettings(store: Store) {
     Appearance.load(store)
-    Text("Look", style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(R.string.look), style = MaterialTheme.typography.titleMedium)
     Column(Modifier.selectableGroup()) {
         Look.entries.forEach { l ->
             Row(
@@ -165,20 +169,20 @@ fun AppearanceSettings(store: Store) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 RadioButton(selected = Appearance.look == l, onClick = null)
-                Text(l.label, Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(l.res), Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
             }
         }
     }
     if (Build.VERSION.SDK_INT >= 31) Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text("Phone's colours", style = MaterialTheme.typography.bodyLarge)
-            Text("Match your wallpaper; off for AI-gile green", style = MaterialTheme.typography.bodySmall,
+            Text(stringResource(R.string.phone_colours), style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.phone_colours_sub), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Switch(checked = Appearance.phoneColours, onCheckedChange = { Appearance.phoneColours = it; store.phoneColours = it },
             modifier = Modifier.testTag("phoneColours"))
     }
-    Text("Text size", style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(R.string.text_size), style = MaterialTheme.typography.titleMedium)
     Column(Modifier.selectableGroup()) {
         TextSize.entries.forEach { t ->
             Row(
@@ -190,7 +194,7 @@ fun AppearanceSettings(store: Store) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 RadioButton(selected = Appearance.textSize == t, onClick = null)
-                Text(t.label, Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(t.res), Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
             }
         }
     }

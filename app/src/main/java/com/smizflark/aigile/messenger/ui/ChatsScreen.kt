@@ -1,5 +1,7 @@
 package com.smizflark.aigile.messenger.ui
 
+import androidx.compose.ui.res.stringResource
+
 import com.smizflark.aigile.messenger.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -134,18 +136,18 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text((if (repo.store.demo) "Messages · demo" else "Messages") + if (total > 0) " ($total)" else "") },
+                title = { Text(stringResource(if (repo.store.demo) R.string.chats_title_demo else R.string.chats_title) + if (total > 0) " ($total)" else "") },
                 actions = {
-                    IconButton(onClick = onSearch, modifier = Modifier.testTag("open-search")) { Icon(Icons.Default.Search, "Search") }
+                    IconButton(onClick = onSearch, modifier = Modifier.testTag("open-search")) { Icon(Icons.Default.Search, stringResource(R.string.search)) }
                     if (chats.any { News.fresh(it, seen[it.key]) })
-                        IconButton(onClick = { markRead(chats) }, Modifier.testTag("readAll")) { Icon(Icons.Default.DoneAll, "Mark all as read") }
-                    IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "Settings") }
+                        IconButton(onClick = { markRead(chats) }, Modifier.testTag("readAll")) { Icon(Icons.Default.DoneAll, stringResource(R.string.mark_all_read)) }
+                    IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, stringResource(R.string.settings)) }
                 },
             )
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(onClick = onNew, icon = { Icon(Icons.AutoMirrored.Filled.Chat, null) },
-                text = { Text("New message") }, modifier = Modifier.testTag("new"))
+                text = { Text(stringResource(R.string.new_message)) }, modifier = Modifier.testTag("new"))
         },
     ) { pad ->
         PullToRefreshBox(
@@ -157,7 +159,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 error?.let { e ->
                     item {
                         Text(
-                            if (chats.isEmpty()) e else "$e\nShowing chats from ${shortTime(java.time.Instant.ofEpochMilli(repo.store.lastSync).toString())}.",
+                            if (chats.isEmpty()) e else stringResource(R.string.chats_offline, e, shortTime(java.time.Instant.ofEpochMilli(repo.store.lastSync).toString())),
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.fillMaxWidth().padding(12.dp)
                                 .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(12.dp)).padding(12.dp),
@@ -168,7 +170,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         ChatFilter.entries.forEach { f ->
-                            FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(f.label) },
+                            FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(stringResource(f.res)) },
                                 modifier = Modifier.testTag("filter:${f.name.lowercase()}"))
                         }
                     }
@@ -227,18 +229,18 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
             else -> MaterialTheme.colorScheme.secondaryContainer
         }).padding(horizontal = 24.dp), contentAlignment = if (toRead) Alignment.CenterStart else Alignment.CenterEnd) {
             if (!idle) Icon(if (toRead) Icons.Default.DoneAll else if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff,
-                if (toRead) "Mark as read" else if (muted) "Unmute" else "Mute")
+                stringResource(if (toRead) R.string.mark_read else if (muted) R.string.unmute else R.string.mute))
         }
     }) {
     Row(
-        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).combinedClickable(onClickLabel = "Open chat", role = Role.Button, onClick = onClick,
-            onLongClick = { menu = true }, onLongClickLabel = "Options")
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).combinedClickable(onClickLabel = stringResource(R.string.open_chat), role = Role.Button, onClick = onClick,
+            onLongClick = { menu = true }, onLongClickLabel = stringResource(R.string.options))
             .padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(text = { Text("Mark as read") }, enabled = fresh, onClick = { menu = false; onRead() })
-            DropdownMenuItem(text = { Text(if (pinned) "Unpin" else "Pin to top") }, leadingIcon = { Icon(Icons.Default.PushPin, null) },
+            DropdownMenuItem(text = { Text(stringResource(R.string.mark_read)) }, enabled = fresh, onClick = { menu = false; onRead() })
+            DropdownMenuItem(text = { Text(stringResource(if (pinned) R.string.unpin else R.string.pin)) }, leadingIcon = { Icon(Icons.Default.PushPin, null) },
                 onClick = { menu = false; onPin() }, modifier = Modifier.testTag("pin"))
         }
         Avatar(c, repo)
@@ -249,9 +251,9 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
                 Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                     Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         fontWeight = if (fresh) FontWeight.Bold else FontWeight.Medium, modifier = Modifier.weight(1f, fill = false))
-                    if (pinned) Icon(Icons.Default.PushPin, "Pinned", Modifier.padding(start = 4.dp).size(14.dp),
+                    if (pinned) Icon(Icons.Default.PushPin, stringResource(R.string.pinned), Modifier.padding(start = 4.dp).size(14.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (muted) Icon(Icons.Default.NotificationsOff, "Muted", Modifier.padding(start = 4.dp).size(16.dp),
+                    if (muted) Icon(Icons.Default.NotificationsOff, stringResource(R.string.muted), Modifier.padding(start = 4.dp).size(16.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Text(shortTime(c.last), style = MaterialTheme.typography.labelMedium,
@@ -259,6 +261,7 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val waiting = unsentLabel(unsent)
+                val newDesc = stringResource(R.string.new_messages)
                 Text(
                     waiting ?: c.subtitle,
                     style = MaterialTheme.typography.bodyMedium,
@@ -270,12 +273,12 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
                 )
                 if (c.waiting > 0) Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
-                    Text("${c.waiting} waiting", Modifier.padding(horizontal = 4.dp))
+                    Text(stringResource(R.string.waiting, c.waiting), Modifier.padding(horizontal = 4.dp))
                 }
                 if (fresh && unread > 0) Badge(containerColor = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("unread:${c.key}")) {
                     Text(if (unread > 99) "99+" else "$unread", Modifier.padding(horizontal = 2.dp))
                 } else if (fresh && c.waiting == 0) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape)
-                    .semantics { contentDescription = "New messages" })
+                    .semantics { contentDescription = newDesc })
             }
         }
     }
@@ -286,5 +289,5 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
 fun unsentLabel(unsent: List<Pending>): String? {
     if (unsent.isEmpty()) return null
     val failed = unsent.count { it.failed && !it.offline }   // offline ones still go by themselves (AII-55)
-    return if (failed > 0) "⚠️ $failed not sent: tap to retry" else "⏳ ${unsent.size} waiting to send"
+    return if (failed > 0) Words.unsentFailed.format(failed) else Words.unsentWaiting.format(unsent.size)
 }

@@ -1,5 +1,7 @@
 package com.smizflark.aigile.messenger.ui
 
+import com.smizflark.aigile.messenger.R
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,6 +64,24 @@ fun Avatar(ref: ChatRef, repo: Repo, size: Dp = 48.dp) {
     )
 }
 
+/** Words for plain (non-screen) code, so it stays testable: English until App loads the phone's language from strings.xml. */
+object Words {
+    var now = "now"; var minutes = "%1\$dm"; var hours = "%1\$dh"; var days = "%1\$dd"; var today = "Today"; var yesterday = "Yesterday"
+    var status: Map<String, String> = mapOf("backlog" to "Backlog", "todo" to "To do", "doing" to "In progress", "review" to "Team checking",
+        "verify" to "For you to test", "team" to "For the team", "done" to "Done")
+    var unsentFailed = "⚠️ %1\$d not sent: tap to retry"; var unsentWaiting = "⏳ %1\$d waiting to send"
+
+    fun load(ctx: android.content.Context) {
+        now = ctx.getString(R.string.time_now); minutes = ctx.getString(R.string.time_minutes)
+        hours = ctx.getString(R.string.time_hours); days = ctx.getString(R.string.time_days)
+        today = ctx.getString(R.string.today); yesterday = ctx.getString(R.string.yesterday)
+        status = mapOf("backlog" to R.string.status_backlog, "todo" to R.string.status_todo, "doing" to R.string.status_doing,
+            "review" to R.string.status_review, "verify" to R.string.status_verify, "team" to R.string.status_team, "done" to R.string.status_done)
+            .mapValues { ctx.getString(it.value) }
+        unsentFailed = ctx.getString(R.string.unsent_failed); unsentWaiting = ctx.getString(R.string.unsent_waiting)
+    }
+}
+
 private val hm = DateTimeFormatter.ofPattern("HH:mm")
 private val dayMonth = DateTimeFormatter.ofPattern("d MMM")
 
@@ -75,10 +95,10 @@ fun shortTime(iso: String?, now: Instant = Instant.now()): String {
     val day = t.atZone(zone).toLocalDate()
     val today = now.atZone(zone).toLocalDate()
     return when {
-        mins < 1 -> "now"
-        mins < 60 -> "${mins}m"
+        mins < 1 -> Words.now
+        mins < 60 -> Words.minutes.format(mins)
         day == today -> hm.format(t.atZone(zone))
-        day == today.minusDays(1) -> "Yesterday"
+        day == today.minusDays(1) -> Words.yesterday
         else -> dayMonth.format(t.atZone(zone))
     }
 }
@@ -93,8 +113,8 @@ fun clock(iso: String?): String = instant(iso)?.let { hm.format(it.atZone(ZoneId
 fun dayLabel(iso: String?, today: LocalDate = LocalDate.now()): String {
     val d = instant(iso)?.atZone(ZoneId.systemDefault())?.toLocalDate() ?: return ""
     return when (d) {
-        today -> "Today"
-        today.minusDays(1) -> "Yesterday"
+        today -> Words.today
+        today.minusDays(1) -> Words.yesterday
         else -> DateTimeFormatter.ofPattern("EEE d MMM").format(d)
     }
 }

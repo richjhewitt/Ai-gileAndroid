@@ -1,5 +1,9 @@
 package com.smizflark.aigile.messenger.ui
 
+import com.smizflark.aigile.messenger.R
+
+import androidx.compose.ui.res.stringResource
+
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -31,6 +35,8 @@ object Dictate {
 @Composable
 fun MicButton(modifier: Modifier = Modifier, onWords: (String) -> Unit) {
     val context = LocalContext.current
+    val prompt = stringResource(R.string.dictate_prompt)
+    val noVoice = stringResource(R.string.no_voice)
     val listen = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if (r.resultCode != Activity.RESULT_OK) return@rememberLauncherForActivityResult
         r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let(onWords)
@@ -39,10 +45,10 @@ fun MicButton(modifier: Modifier = Modifier, onWords: (String) -> Unit) {
         onClick = {
             val ask = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
                 .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                .putExtra(RecognizerIntent.EXTRA_PROMPT, "Say your message")
+                .putExtra(RecognizerIntent.EXTRA_PROMPT, prompt)
             try { listen.launch(ask) }
-            catch (e: ActivityNotFoundException) { Toast.makeText(context, "This phone has no voice typing.", Toast.LENGTH_SHORT).show() }
+            catch (e: ActivityNotFoundException) { Toast.makeText(context, noVoice, Toast.LENGTH_SHORT).show() }
         },
         modifier = modifier.testTag("mic"),
-    ) { Icon(Icons.Default.Mic, "Dictate a message") }
+    ) { Icon(Icons.Default.Mic, stringResource(R.string.dictate)) }
 }

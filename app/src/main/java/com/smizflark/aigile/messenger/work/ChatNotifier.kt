@@ -53,8 +53,8 @@ object ChatNotifier {
         val reply = Intent(context, ReplyReceiver::class.java).setAction(ReplyReceiver.ACTION).putExtra(CheckWorker.EXTRA_CHAT, chat)
         val replyPi = PendingIntent.getBroadcast(context, id, reply,
             PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0))
-        val action = NotificationCompat.Action.Builder(R.drawable.ic_notify, "Reply", replyPi)
-            .addRemoteInput(RemoteInput.Builder(ReplyReceiver.KEY_TEXT).setLabel("Reply to $name").build())
+        val action = NotificationCompat.Action.Builder(R.drawable.ic_notify, context.getString(R.string.reply), replyPi)
+            .addRemoteInput(RemoteInput.Builder(ReplyReceiver.KEY_TEXT).setLabel(context.getString(R.string.notify_reply_to, name)).build())
             .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
             .setShowsUserInterface(false)
             .build()
@@ -62,16 +62,16 @@ object ChatNotifier {
             .setContentIntent(openChat(context, chat, id)).addAction(action).setGroup(GROUP)
     }
 
-    private fun newStyle(name: String) = NotificationCompat.MessagingStyle(Person.Builder().setName("Me").build())
+    private fun newStyle(context: Context, name: String) = NotificationCompat.MessagingStyle(Person.Builder().setName(context.getString(R.string.notify_me)).build())
         .setConversationTitle(name)
 
     private fun addLine(style: NotificationCompat.MessagingStyle, text: String, at: Long, from: Person?) {
         style.addMessage(text, at, from)
     }
 
-    private fun trimmed(style: NotificationCompat.MessagingStyle, name: String): NotificationCompat.MessagingStyle {
+    private fun trimmed(context: Context, style: NotificationCompat.MessagingStyle, name: String): NotificationCompat.MessagingStyle {
         if (style.messages.size <= MAX_LINES) return style
-        val s = newStyle(name)
+        val s = newStyle(context, name)
         style.messages.takeLast(MAX_LINES).forEach { s.addMessage(it) }
         return s
     }
@@ -81,19 +81,19 @@ object ChatNotifier {
         val nm = NotificationManagerCompat.from(context)
         val id = QuickReply.notificationId(item.chat)
         val sender = Person.Builder().setName(item.name).build()
-        val style = styleOf(active(context, id)) ?: newStyle(item.name)
+        val style = styleOf(active(context, id)) ?: newStyle(context, item.name)
         val at = item.latestFromThem?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() } ?: System.currentTimeMillis()
-        addLine(style, item.preview ?: "New message", at, sender)
-        nm.notify(id, build(context, item.chat, item.name, trimmed(style, item.name)).build())
+        addLine(style, item.preview ?: context.getString(R.string.new_message), at, sender)
+        nm.notify(id, build(context, item.chat, item.name, trimmed(context, style, item.name)).build())
         refreshSummary(context)
     }
 
     /** After a sent quick reply: the line you sent joins the stack, and the spinner goes. */
     fun sent(context: Context, chat: String, name: String, text: String) {
         val id = QuickReply.notificationId(chat)
-        val style = styleOf(active(context, id)) ?: newStyle(name)
+        val style = styleOf(active(context, id)) ?: newStyle(context, name)
         addLine(style, text, System.currentTimeMillis(), null)
-        NotificationManagerCompat.from(context).notify(id, build(context, chat, name, trimmed(style, name)).build())
+        NotificationManagerCompat.from(context).notify(id, build(context, chat, name, trimmed(context, style, name)).build())
         refreshSummary(context)
     }
 
@@ -108,8 +108,8 @@ object ChatNotifier {
         val nm = NotificationManagerCompat.from(context)
         val n = chatCount(context)
         if (n < 2) { nm.cancel(SUMMARY); return }
-        nm.notify(SUMMARY, base(context).setContentTitle("$n chats have new messages")
-            .setStyle(NotificationCompat.InboxStyle().setSummaryText("$n chats"))
+        nm.notify(SUMMARY, base(context).setContentTitle(context.getString(R.string.notify_many, n))
+            .setStyle(NotificationCompat.InboxStyle().setSummaryText(context.getString(R.string.notify_chats, n)))
             .setContentIntent(openChat(context, null, 0)).setGroup(GROUP).setGroupSummary(true).build())
     }
 }

@@ -54,10 +54,10 @@ object News {
     }
 
     /** One line for the notification: "AI-gile, Tunio" or "AI-gile and 3 more". */
-    fun summary(items: List<Item>): String = when (items.size) {
+    fun summary(items: List<Item>, more: String = "%1\$s and %2\$d more"): String = when (items.size) {
         0 -> ""
         1 -> items[0].name
         2 -> "${items[0].name}, ${items[1].name}"
-        else -> "${items[0].name} and ${items.size - 1} more"
+        else -> more.format(items[0].name, items.size - 1)
     }
 }

@@ -1,5 +1,7 @@
 package com.smizflark.aigile.messenger.widget
 
+import com.smizflark.aigile.messenger.ui.Words
+
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -38,10 +40,10 @@ object WidgetRows {
         val t = runCatching { Instant.parse(iso) }.getOrNull() ?: return ""
         val m = Duration.between(t, now).toMinutes().coerceAtLeast(0)
         return when {
-            m < 1 -> "now"
-            m < 60 -> "${m}m"
-            m < 60 * 24 -> "${m / 60}h"
-            else -> "${m / (60 * 24)}d"
+            m < 1 -> Words.now
+            m < 60 -> Words.minutes.format(m)
+            m < 60 * 24 -> Words.hours.format(m / 60)
+            else -> Words.days.format(m / (60 * 24))
         }
     }
 }

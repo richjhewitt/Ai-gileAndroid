@@ -23,6 +23,7 @@ object QuickReply {
     fun notificationId(chat: String): Int = (chat.hashCode() and 0x3fffffff) + 100
 
     /** What the notification says once the reply has gone, or failed. */
-    fun outcome(sent: Boolean, error: String?): String =
-        if (sent) "Sent ✓" else "Not sent: ${error ?: "no connection"}. Open the chat to try again."
+    fun outcome(sent: Boolean, error: String?, sentText: String = "Sent ✓", failText: String = "Not sent: %1\$s. Open the chat to try again.",
+                noConnection: String = "no connection"): String =
+        if (sent) sentText else failText.format(error ?: noConnection)
 }

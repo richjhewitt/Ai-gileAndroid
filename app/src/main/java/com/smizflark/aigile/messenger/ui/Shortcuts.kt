@@ -25,7 +25,7 @@ object Shortcuts {
         if (now == shown) return
         val sm = context.getSystemService(ShortcutManager::class.java) ?: return
         val open = { action: String -> Intent(action).setClass(context, MainActivity::class.java) }
-        val new = ShortcutInfo.Builder(context, "new").setShortLabel("New message")
+        val new = ShortcutInfo.Builder(context, "new").setShortLabel(context.getString(R.string.new_message))
             .setIcon(Icon.createWithResource(context, R.drawable.ic_shortcut_new)).setIntent(open(ACTION_NEW)).setRank(0).build()
         val list = pick.mapIndexed { i, c ->
             ShortcutInfo.Builder(context, "chat:${c.key}").setShortLabel(c.name.take(24)).setLongLabel(c.name)

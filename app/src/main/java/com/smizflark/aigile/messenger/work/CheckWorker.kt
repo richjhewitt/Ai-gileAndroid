@@ -63,8 +63,8 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         fun clearAlert(context: Context) = NotificationManagerCompat.from(context).cancel(SUMMARY)
 
         fun channel(context: Context) {
-            val ch = NotificationChannel(CHANNEL, "Messages", NotificationManager.IMPORTANCE_DEFAULT)
-                .apply { description = "New messages from your team leads and friends" }
+            val ch = NotificationChannel(CHANNEL, context.getString(R.string.channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+                .apply { description = context.getString(R.string.channel_desc) }
             context.getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
         }
 
@@ -96,8 +96,8 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             val nm = NotificationManagerCompat.from(context)
             if (news.size > QuickReply.MAX_SINGLE) {
                 // Too many to reply to one by one: one line, opens the chats list.
-                nm.notify(SUMMARY, base(context).setContentTitle("${news.size} chats have new messages")
-                    .setContentText(News.summary(news)).setContentIntent(ChatNotifier.openChat(context, null, 0)).build())
+                nm.notify(SUMMARY, base(context).setContentTitle(context.getString(R.string.notify_many, news.size))
+                    .setContentText(News.summary(news, context.getString(R.string.notify_more))).setContentIntent(ChatNotifier.openChat(context, null, 0)).build())
                 return
             }
             // One notification per chat (AII-65), lines stacked, with a summary when there are several.

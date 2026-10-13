@@ -179,6 +179,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val view = LocalView.current
     fun tick() = view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
     val owner = repo.store.owner.ifBlank { "You" }
+    val res = LocalContext.current.resources
 
     // Keep the half-typed reply (AII-42): saved a moment after typing stops, and on the way out.
     LaunchedEffect(text) { delay(400); repo.store.saveDraft(ref.key, text) }
@@ -226,20 +227,20 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(MAX_PICS)) { uris ->
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
         scope.launch {
-            picNote = "Adding ${uris.size} picture${if (uris.size == 1) "" else "s"}…"
+            picNote = res.getQuantityString(R.plurals.adding_pictures, uris.size, uris.size)
             val kept = withContext(Dispatchers.IO) { uris.map { repo.keepPicture(it) } }
             pics = (pics + kept.filterNotNull()).take(MAX_PICS)
-            picNote = if (kept.any { it == null }) "Couldn't read one of those pictures." else null
+            picNote = if (kept.any { it == null }) res.getString(R.string.pic_read_one) else null
         }
     }
 
     // A copied picture (AII-56): offered as a chip above the message box.
     val copied = rememberCopiedPicture()
     fun pasteCopied() {
-        val uri = copied.take() ?: run { picNote = "Couldn't read the copied picture."; return }
+        val uri = copied.take() ?: run { picNote = res.getString(R.string.pic_read_copied); return }
         scope.launch {
             val kept = withContext(Dispatchers.IO) { repo.keepPicture(uri) }
-            if (kept == null) picNote = "Couldn't read the copied picture." else { pics = (pics + kept).take(MAX_PICS); picNote = null }
+            if (kept == null) picNote = res.getString(R.string.pic_read_copied) else { pics = (pics + kept).take(MAX_PICS); picNote = null }
         }
     }
 
@@ -253,7 +254,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             scope.launch {
                 val r = repo.deliver(to, p)
                 if (to.key == ref.key) { load(); pending = repo.pendingFor(ref.key) }
-                Toast.makeText(ctx, if (r.isSuccess) "Forwarded to ${to.name}" else "Forward queued for ${to.name}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(ctx, ctx.getString(if (r.isSuccess) R.string.forwarded_to else R.string.forward_queued, to.name), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -302,7 +303,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     Scaffold(
         topBar = {
             TopAppBar(
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Avatar(ref, repo, 36.dp)
@@ -310,17 +311,17 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                         Column {
                             Text(if (focus != null) "$focus ${Mapper.clean(focusBubble?.cardTitle ?: "")}" else ref.name,
                                 style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(if (focus == null) ref.subtitle else ref.name + if (focusBubble?.waiting == true) " · ⏳ waiting on you" else "", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            Text(if (focus == null) ref.subtitle else ref.name + if (focusBubble?.waiting == true) " · ⏳ " + stringResource(R.string.waiting_on_you) else "", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 },
                 actions = {
                     var menu by remember { mutableStateOf(false) }
-                    IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, "More") }
+                    IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.more)) }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         DropdownMenuItem(
-                            text = { Text(if (muted) "Unmute" else "Mute alerts") },
+                            text = { Text(stringResource(if (muted) R.string.unmute else R.string.mute_alerts)) },
                             leadingIcon = { Icon(if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff, null) },
                             onClick = { muted = !muted; repo.store.setMuted(ref.key, muted); menu = false },
                             modifier = Modifier.testTag("mute"),
@@ -357,10 +358,10 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) })
                         }
                     }
-                    if (convo == null && error == null) item { Text("Loading…", Modifier.padding(24.dp)) }
+                    if (convo == null && error == null) item { Text(stringResource(R.string.loading), Modifier.padding(24.dp)) }
                     detail?.let { d -> item(key = "card-details") { CardDetails(d) } }   // last item = top of the reversed list
                     if (convo != null && convo!!.bubbles.isEmpty() && pending.isEmpty()) item {
-                        Text("No messages yet. Say hello below.", Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.chat_empty), Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 JumpToNewest(show = !atBottom && convo != null, unread = unread) { scope.launch { list.animateScrollToItem(0) } }
@@ -383,10 +384,10 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
 private fun BoxScope.JumpToNewest(show: Boolean, unread: Int, onClick: () -> Unit) {
     if (!show) return
     if (unread > 0) ExtendedFloatingActionButton(
-        onClick = onClick, icon = { Icon(Icons.Default.ArrowDownward, null) }, text = { Text("$unread new") },
+        onClick = onClick, icon = { Icon(Icons.Default.ArrowDownward, null) }, text = { Text(stringResource(R.string.jump_unread, unread)) },
         modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp).testTag("jump"),
     ) else SmallFloatingActionButton(onClick = onClick, modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp).testTag("jump")) {
-        Icon(Icons.Default.ArrowDownward, "Jump to newest")
+        Icon(Icons.Default.ArrowDownward, stringResource(R.string.jump_newest))
     }
 }
 
@@ -405,7 +406,7 @@ private fun CardHeader(r: Row.Card, chosen: Boolean, onOpen: (() -> Unit)?, onCl
             )
         }
         if (onOpen != null) IconButton(onClick = onOpen, modifier = Modifier.size(40.dp).testTag("open:${r.card}")) {
-            Icon(Icons.AutoMirrored.Filled.OpenInNew, "Open ${r.card}", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+            Icon(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_card, r.card), Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -432,14 +433,16 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble
         Row(verticalAlignment = Alignment.CenterVertically) {
         if (failedP != null) {
             var ask by remember { mutableStateOf(false) }
+            val retryLabel = stringResource(R.string.retry_or_delete)
+            val failDesc = stringResource(R.string.not_sent_desc)
             Box {
                 Box(Modifier.padding(end = 6.dp).size(28.dp).background(cs.error, CircleShape).testTag("failed-mark")
-                    .clickable(onClickLabel = "Retry or delete") { ask = true }
-                    .semantics { contentDescription = "Not sent. Tap to retry or delete" },
+                    .clickable(onClickLabel = retryLabel) { ask = true }
+                    .semantics { contentDescription = failDesc },
                     contentAlignment = Alignment.Center) { Text("!", color = cs.onError, style = MaterialTheme.typography.labelLarge) }
                 DropdownMenu(expanded = ask, onDismissRequest = { ask = false }) {
-                    DropdownMenuItem(text = { Text("Retry") }, modifier = Modifier.testTag("retry"), onClick = { ask = false; onRetry(failedP) })
-                    DropdownMenuItem(text = { Text("Delete") }, modifier = Modifier.testTag("delete"), onClick = { ask = false; onDiscard(failedP) })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.retry)) }, modifier = Modifier.testTag("retry"), onClick = { ask = false; onRetry(failedP) })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, modifier = Modifier.testTag("delete"), onClick = { ask = false; onDiscard(failedP) })
                 }
             }
         }
@@ -467,15 +470,15 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble
                 }
                 if (b.pics.isNotEmpty()) MessagePictures(b.pics, repo)
                 val (forwarded, body) = Forward.split(b.text)
-                if (forwarded) Text("↪ Forwarded", style = MaterialTheme.typography.labelSmall, color = fg.copy(alpha = 0.6f), modifier = Modifier.testTag("forwarded"))
+                if (forwarded) Text(stringResource(R.string.forwarded_label), style = MaterialTheme.typography.labelSmall, color = fg.copy(alpha = 0.6f), modifier = Modifier.testTag("forwarded"))
                 val (quoted, rest) = Quote.split(body)
                 if (quoted != null) QuoteBar(Markdown.render(quoted, cs.surfaceVariant, cs.primary), fg)
                 if (quoted != null && rest.isNotEmpty()) Text(Markdown.render(rest, cs.surfaceVariant, cs.primary, cards, onCard), style = MaterialTheme.typography.bodyLarge, color = fg)
                 else if (quoted == null && body.isNotEmpty()) Text(if (forwarded) Markdown.render(body, cs.surfaceVariant, cs.primary, cards, onCard) else shown, style = MaterialTheme.typography.bodyLarge, color = fg)
                 Text(
                     when (b.state) {
-                        SendState.SENDING -> "Sending…"
-                        SendState.FAILED -> "Not sent"
+                        SendState.SENDING -> stringResource(R.string.sending)
+                        SendState.FAILED -> stringResource(R.string.not_sent)
                         SendState.SENT -> clock(b.at) + if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
                     },
                     style = MaterialTheme.typography.labelSmall,
@@ -506,17 +509,18 @@ private fun Composer(
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 10.dp, vertical = 8.dp)) {
             if (ref.kind == Kind.LEAD && targets.isNotEmpty()) {
                 var open by remember { mutableStateOf(false) }
-                val label = targets.firstOrNull { it.first == target }?.second ?: "New message"
+                val newMessage = stringResource(R.string.new_message)
+                val label = targets.firstOrNull { it.first == target && it.first != null }?.second ?: newMessage
                 Box {
                     AssistChip(
                         onClick = { open = true },
-                        label = { Text("Replying to: $label", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        label = { Text(stringResource(R.string.replying_to, label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
                         modifier = Modifier.testTag("target"),
                     )
                     DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
                         targets.forEach { (id, l) ->
-                            DropdownMenuItem(text = { Text(if (id == null) "✏️ $l" else l, maxLines = 2) }, onClick = { onTarget(id); open = false })
+                            DropdownMenuItem(text = { Text(if (id == null) "✏️ $newMessage" else l, maxLines = 2) }, onClick = { onTarget(id); open = false })
                         }
                     }
                 }
@@ -524,27 +528,27 @@ private fun Composer(
             picNote?.let { PictureNote(it) }
             if (quote != null) Row(Modifier.fillMaxWidth().padding(bottom = 6.dp).testTag("quoting"), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) { QuoteBar(Markdown.render(Quote.split(quote).first ?: quote, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.primary), MaterialTheme.colorScheme.onSurface) }
-                IconButton(onClick = onClearQuote, modifier = Modifier.size(40.dp)) { Icon(Icons.Default.Close, "Don't reply to this") }
+                IconButton(onClick = onClearQuote, modifier = Modifier.size(40.dp)) { Icon(Icons.Default.Close, stringResource(R.string.quote_cancel)) }
             }
             if (onPasteCopied != null) AssistChip(
-                onClick = onPasteCopied, label = { Text("Paste copied picture") },
+                onClick = onPasteCopied, label = { Text(stringResource(R.string.paste_picture)) },
                 leadingIcon = { Icon(Icons.Default.ContentPaste, null) }, modifier = Modifier.testTag("paste-pic"),
             )
             if (pics.isNotEmpty()) PickedPictures(pics, onRemovePic)
             Row(verticalAlignment = Alignment.Bottom) {
                 IconButton(onClick = onAttach, enabled = pics.size < MAX_PICS, modifier = Modifier.size(52.dp).testTag("attach")) {
-                    Icon(Icons.Default.AddPhotoAlternate, "Add a picture")
+                    Icon(Icons.Default.AddPhotoAlternate, stringResource(R.string.add_picture))
                 }
                 OutlinedTextField(
                     value = text, onValueChange = onText, maxLines = 6,
-                    placeholder = { Text(if (ref.kind == Kind.WATCHMAN) "Message the Lead Scrum Master" else "Message") },
+                    placeholder = { Text(stringResource(if (ref.kind == Kind.WATCHMAN) R.string.message_watchman else R.string.message)) },
                     trailingIcon = { MicButton { onText(Dictate.join(text, it)) } },
                     shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.weight(1f).testTag("input"),
                 )
                 Spacer(Modifier.size(8.dp))
                 FilledIconButton(onClick = onSend, enabled = text.isNotBlank() || pics.isNotEmpty(), modifier = Modifier.size(52.dp).testTag("send")) {
-                    Icon(Icons.AutoMirrored.Filled.Send, "Send")
+                    Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.send))
                 }
             }
         }
@@ -592,6 +596,6 @@ private fun ForwardDialog(repo: Repo, onDismiss: () -> Unit, onPick: (ChatRef) -
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }
