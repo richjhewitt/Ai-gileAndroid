@@ -59,6 +59,11 @@ class Store(context: Context) {
         get() = prefs.getString("key", null)?.let { Vault.open(it) } ?: ""
         set(v) = prefs.edit().putString("key", if (v.isEmpty()) null else Vault.seal(v)).apply()
 
+    /** Device id from a sealed pairing (AII-19), Keystore-sealed like the key. Empty for an older pairing. */
+    var device: String
+        get() = prefs.getString("device", null)?.let { Vault.open(it) } ?: ""
+        set(v) = prefs.edit().putString("device", if (v.isEmpty()) null else Vault.seal(v)).apply()
+
     var demo: Boolean
         get() = prefs.getBoolean("demo", false)
         set(v) = prefs.edit().putBoolean("demo", v).apply()
