@@ -1,0 +1,65 @@
+package com.smizflark.aigile.messenger
+
+import com.smizflark.aigile.messenger.data.Bubble
+import com.smizflark.aigile.messenger.data.ChatRef
+import com.smizflark.aigile.messenger.data.Conversation
+import com.smizflark.aigile.messenger.data.Kind
+import com.smizflark.aigile.messenger.data.Search
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/** Search across all chats (AII-30). */
+class SearchTest {
+    private val gile = ChatRef(Kind.LEAD, "ai-gile", "AI-gile", "Lead", "🗂️")
+    private val radio = ChatRef(Kind.LEAD, "loco-radio", "LocoRadio", "Lead", "📻")
+    private val ann = ChatRef(Kind.FRIEND, "a", "Ann", "", "🙂")
+
+    private fun b(text: String, at: String, card: String? = null, title: String? = null, author: String = "Lead") =
+        Bubble("$card:$at", author, text, at, mine = author == "Rich", card = card, cardTitle = title)
+
+    private val convs = listOf(
+        Conversation(gile, listOf(
+            b("The radio player is fixed", "2026-10-01T10:00:00Z", "AIG-1", "💬 Player"),
+            b("Café menu is next", "2026-10-03T10:00:00Z", "AIG-2", "💬 Menu"),
+        )),
+        Conversation(radio, listOf(b("New station list uploaded", "2026-10-02T10:00:00Z", "LOC-9", "💬 Stations"))),
+        Conversation(ann, listOf(b("See you at the cafe", "2026-10-04T10:00:00Z", author = "Ann"))),
+    )
+
+    @Test fun chatNamesComeFirstThenMessagesNewestFirst() {
+        val hits = Search.run("radio", listOf(gile, radio, ann), convs)
+        assertEquals("loco-radio", hits[0].ref.id); assertNull(hits[0].bubble)
+        assertEquals(listOf("AIG-1"), hits.drop(1).map { it.bubble?.card })
+        assertEquals(listOf("AIG-2", "LOC-9", "AIG-1"), Search.run("is", listOf(), convs).map { it.bubble?.card })
+    }
+
+    @Test fun ignoresCaseAndAccents() {
+        val hits = Search.run("CAFE", listOf(gile, radio, ann), convs)
+        assertEquals(listOf("friend:a", "lead:ai-gile"), hits.map { it.ref.key })
+        assertTrue(Search.run("café", listOf(gile, radio, ann), convs).size == 2)
+    }
+
+    @Test fun matchesCardTitlesAndAuthors() {
+        assertEquals("LOC-9", Search.run("stations", listOf(radio), convs).single().bubble?.card)
+        assertEquals("friend:a", Search.run("ann", listOf(gile, radio), convs).last().ref.key)
+    }
+
+    @Test fun tooShortOrBlankFindsNothing() {
+        assertTrue(Search.run(" ", listOf(gile), convs).isEmpty())
+        assertTrue(Search.run("a", listOf(gile), convs).isEmpty())
+    }
+
+    @Test fun snippetCutsAroundTheMatchOnOneLine() {
+        val long = "start " + "x".repeat(100) + " needle\nhere " + "y".repeat(100)
+        val s = Search.snippet(long, "needle")
+        assertTrue(s, s.startsWith("…") && s.endsWith("…") && "needle here" in s && '\n' !in s)
+        assertEquals("short needle", Search.snippet("short needle", "needle"))
+    }
+
+    @Test fun capsTheNumberOfHits() {
+        val many = Conversation(gile, (1..300).map { b("ping $it", "2026-10-01T10:%02d:00Z".format(it % 60), "AIG-$it") })
+        assertEquals(Search.MAX_HITS, Search.run("ping", listOf(gile), listOf(many)).size)
+    }
+}

@@ -24,6 +24,7 @@ import com.smizflark.aigile.messenger.ui.ChatsScreen
 import com.smizflark.aigile.messenger.ui.ConnectScreen
 import com.smizflark.aigile.messenger.ui.MessengerTheme
 import com.smizflark.aigile.messenger.ui.NewMessageScreen
+import com.smizflark.aigile.messenger.ui.SearchScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
 import com.smizflark.aigile.messenger.work.CheckWorker
 
@@ -54,7 +55,10 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("chats") {
                         ChatsScreen(repo, onOpen = { nav.openChat(it.key) }, onNew = { nav.navigate("new") },
-                            onSettings = { nav.navigate("settings") })
+                            onSettings = { nav.navigate("settings") }, onSearch = { nav.navigate("search") })
+                    }
+                    composable("search") {
+                        SearchScreen(repo, onOpen = { nav.openChat(it.key) }, onBack = { nav.popBackStack() })
                     }
                     // A chat, or one card of it (?card=AIG-12, AII-28).
                     composable("chat/{key}?card={card}", arguments = listOf(navArgument("card") { type = NavType.StringType; nullable = true })) { e ->

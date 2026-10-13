@@ -69,6 +69,9 @@ class Repo(context: Context) {
         return c
     }
 
+    /** Every chat's conversation as last fetched, for search (AII-30). */
+    fun cachedConversations(chats: List<ChatRef>) = chats.mapNotNull { store.cachedConversation(it.key) }
+
     /* ---------- sending through the outbox: nothing typed is lost ---------- */
 
     fun queue(ref: ChatRef, text: String, target: String?, files: List<String> = emptyList()): Pending {

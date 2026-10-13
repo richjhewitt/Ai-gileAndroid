@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.DropdownMenu
@@ -63,7 +64,7 @@ import kotlinx.coroutines.launch
 /** Journey 2: every chat in one list. Shows the last list at once, then fetches. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit) {
+fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit, onSearch: () -> Unit = {}) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var seen by remember { mutableStateOf(repo.store.seen()) }
     fun counts() = chats.associate { it.key to News.unread(it, seen[it.key], repo.store.cachedConversation(it.key)) }
@@ -106,6 +107,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
             TopAppBar(
                 title = { Text((if (repo.store.demo) "Messages · demo" else "Messages") + if (total > 0) " ($total)" else "") },
                 actions = {
+                    IconButton(onClick = onSearch, modifier = Modifier.testTag("open-search")) { Icon(Icons.Default.Search, "Search") }
                     if (chats.any { News.fresh(it, seen[it.key]) })
                         IconButton(onClick = { markRead(chats) }, Modifier.testTag("readAll")) { Icon(Icons.Default.DoneAll, "Mark all as read") }
                     IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "Settings") }
