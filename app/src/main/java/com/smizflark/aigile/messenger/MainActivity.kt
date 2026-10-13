@@ -28,6 +28,7 @@ import com.smizflark.aigile.messenger.ui.Lock
 import com.smizflark.aigile.messenger.ui.LockedScreen
 import com.smizflark.aigile.messenger.ui.MessengerTheme
 import com.smizflark.aigile.messenger.ui.NewMessageScreen
+import com.smizflark.aigile.messenger.ui.PictureHost
 import com.smizflark.aigile.messenger.ui.SearchScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
 import com.smizflark.aigile.messenger.ui.Shortcuts
@@ -60,7 +61,7 @@ class MainActivity : FragmentActivity() {
             MessengerTheme(repo.store) {
                 val nav = rememberNavController()
                 val start = if (repo.store.connected) "chats" else "connect"
-                NavHost(nav, startDestination = start) {
+                PictureHost { NavHost(nav, startDestination = start) {
                     composable("connect") {
                         ConnectScreen(repo, pairing) {
                             pairing = null
@@ -97,7 +98,7 @@ class MainActivity : FragmentActivity() {
                             nav.navigate("connect") { popUpTo(0) { inclusive = true } }
                         })
                     }
-                }
+                } }
                 // A new pairing link while running: back to Connect, filled in.
                 LaunchedEffect(pairing) { if (pairing != null && nav.currentDestination?.route != "connect") nav.navigate("connect") }
                 // Shared from another app: straight to New message (after Connect if not signed in yet).

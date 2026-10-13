@@ -69,7 +69,8 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onClose: () -> Unit) {
             }
             Text(stringResource(R.string.chat_pictures), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
             if (info.pictures.isEmpty()) Text(stringResource(R.string.no_chat_pictures), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            else MessagePictures(info.pictures, repo)
+            // The sheet is its own window and would cover the full screen picture, so it closes first (AII-93).
+            else MessagePictures(info.pictures, repo, onOpened = onClose)
             Spacer(Modifier.size(24.dp))
         }
     }

@@ -4,10 +4,19 @@ import com.smizflark.aigile.messenger.R
 
 import androidx.compose.ui.res.stringResource
 
+import android.app.Activity
 import android.content.ClipDescription
 import android.content.ClipboardManager
+import android.content.ContextWrapper
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.key
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -59,8 +68,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import coil.compose.SubcomposeAsyncImage
@@ -86,8 +97,8 @@ private fun request(pic: Pic, repo: Repo): ImageRequest {
 /** The pictures on a message, inside its bubble. Tap one to see it full screen; other files show as a 📎 line. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun MessagePictures(pics: List<Pic>, repo: Repo) {
-    var open by remember { mutableStateOf<Pic?>(null) }
+fun MessagePictures(pics: List<Pic>, repo: Repo, onOpened: () -> Unit = {}) {
+    val show = LocalShowPicture.current
     val images = pics.filter { it.image }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.padding(bottom = 6.dp)) {
@@ -98,7 +109,7 @@ fun MessagePictures(pics: List<Pic>, repo: Repo) {
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.widthIn(max = if (pics.size == 1) 260.dp else 126.dp)
                         .heightIn(min = 80.dp, max = if (pics.size == 1) 320.dp else 126.dp)
-                        .clip(RoundedCornerShape(12.dp)).clickable { open = p }.testTag("pic"),
+                        .clip(RoundedCornerShape(12.dp)).clickable { show?.invoke(Shown(images, images.indexOf(p).coerceAtLeast(0), repo)); onOpened() }.testTag("pic"),
                     loading = { Box(Modifier.size(126.dp).background(MaterialTheme.colorScheme.surfaceVariant)) },
                     error = { Missing(p) },
                 )
@@ -106,7 +117,40 @@ fun MessagePictures(pics: List<Pic>, repo: Repo) {
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
-    open?.let { p -> FullPicture(images, images.indexOf(p).coerceAtLeast(0), repo) { open = null } }
+}
+
+/* ---------- full screen picture, over the whole app (AII-93) ---------- */
+
+/** A dialog window stops where the phone's bars were, so the picture is drawn over the app itself instead. */
+private class Shown(val pics: List<Pic>, val start: Int, val repo: Repo)
+private val LocalShowPicture = staticCompositionLocalOf<((Shown) -> Unit)?> { null }
+
+/** Wraps the app: a tapped picture opens full screen on top of everything in it. */
+@Composable
+fun PictureHost(content: @Composable () -> Unit) {
+    var shown by remember { mutableStateOf<Shown?>(null) }
+    val show = remember { { s: Shown -> shown = s } }
+    CompositionLocalProvider(LocalShowPicture provides show) {
+        Box(Modifier.fillMaxSize()) {
+            content()
+            shown?.let { s -> key(s) { FullPicture(s.pics, s.start, s.repo) { shown = null } } }
+        }
+    }
+}
+
+/** Hides the status and nav bars while shown; a swipe from the edge brings them back for a moment. */
+@Composable
+private fun HideSystemBars() {
+    val view = LocalView.current
+    DisposableEffect(view) {
+        var c = view.context
+        while (c !is Activity && c is ContextWrapper) c = c.baseContext
+        val window = (c as? Activity)?.window ?: return@DisposableEffect onDispose {}
+        val bars = WindowCompat.getInsetsController(window, view)
+        bars.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        bars.hide(WindowInsetsCompat.Type.systemBars())
+        onDispose { bars.show(WindowInsetsCompat.Type.systemBars()) }
+    }
 }
 
 @Composable
@@ -123,16 +167,19 @@ private fun Missing(p: Pic) {
 private fun FullPicture(pics: List<Pic>, start: Int, repo: Repo, onClose: () -> Unit) {
     val pager = rememberPagerState(initialPage = start) { pics.size }
     var zoomed by remember { mutableStateOf(false) }   // AII-90: while zoomed in, a drag looks around instead of swiping
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(Modifier.fillMaxSize().background(Color.Black).testTag("full-pic"), contentAlignment = Alignment.Center) {
-            HorizontalPager(pager, Modifier.fillMaxSize().testTag("full-pic-pager"), userScrollEnabled = !zoomed) { i ->
-                ZoomablePicture(pics[i], repo, onTap = onClose, onZoom = { if (i == pager.currentPage) zoomed = it })
-            }
-            if (pics.size > 1) Text("${pager.currentPage + 1} / ${pics.size}", color = Color.White, style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp).testTag("full-pic-count"))
-            IconButton(onClick = onClose, modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)) {
-                Icon(Icons.Default.Close, "Close", tint = Color.White)
-            }
+    BackHandler(onBack = onClose)
+    HideSystemBars()
+    // Swallows taps and drags that miss the picture, so nothing reaches the chat underneath.
+    Box(Modifier.fillMaxSize().background(Color.Black).pointerInput(Unit) { detectTapGestures { } }.testTag("full-pic"),
+        contentAlignment = Alignment.Center) {
+        HorizontalPager(pager, Modifier.fillMaxSize().testTag("full-pic-pager"), userScrollEnabled = !zoomed) { i ->
+            ZoomablePicture(pics[i], repo, onTap = onClose, onZoom = { if (i == pager.currentPage) zoomed = it })
+        }
+        val cutout = Modifier.windowInsetsPadding(WindowInsets.displayCutout)
+        if (pics.size > 1) Text("${pager.currentPage + 1} / ${pics.size}", color = Color.White, style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.align(Alignment.BottomCenter).then(cutout).padding(24.dp).testTag("full-pic-count"))
+        IconButton(onClick = onClose, modifier = Modifier.align(Alignment.TopEnd).then(cutout).padding(16.dp)) {
+            Icon(Icons.Default.Close, "Close", tint = Color.White)
         }
     }
 }
