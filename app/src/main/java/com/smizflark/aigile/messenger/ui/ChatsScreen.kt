@@ -6,6 +6,7 @@ import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.Pause
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -140,12 +141,14 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
         }
     }
 
+    val list = androidx.compose.foundation.lazy.rememberLazyListState()
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     // AII-84: one line, so the four buttons never push it onto two; the demo note sits small underneath.
-                    Column {
+                    // AII-122: tap the title to jump back to the first chat.
+                    Column(Modifier.clickable(onClickLabel = stringResource(R.string.to_top)) { scope.launch { list.animateScrollToItem(0) } }.testTag("chats-title")) {
                         Text(stringResource(R.string.chats_title) + if (total > 0) " ($total)" else "", maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (repo.store.demo) Text(stringResource(R.string.chats_title_demo), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -177,7 +180,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
             onRefresh = { scope.launch { refreshing = true; load(); refreshing = false } },
             modifier = Modifier.fillMaxSize().padding(pad),
         ) {
-            LazyColumn(Modifier.fillMaxSize()) {
+            LazyColumn(Modifier.fillMaxSize().testTag("chats-list"), state = list) {
                 if (Pause.paused(Now.millis(), pausedUntil)) item {
                     val at = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
                         .format(java.time.Instant.ofEpochMilli(pausedUntil).atZone(java.time.ZoneId.systemDefault()))

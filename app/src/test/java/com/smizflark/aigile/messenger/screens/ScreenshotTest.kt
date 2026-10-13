@@ -19,6 +19,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.smizflark.aigile.messenger.data.ChatRef
@@ -216,6 +217,18 @@ class ScreenshotTest {
         rule.mainClock.advanceTimeBy(1_000)
         rule.onRoot().captureRoboImage("../docs/shots/chat_quote_jump_light.png")
         rule.mainClock.autoAdvance = true
+    }
+    /** AII-122: on a short screen, scroll to the bottom of the chats, tap the title: back at the first chat. */
+    @Test @Config(qualifiers = "w411dp-h300dp-xxhdpi") fun titleTapGoesToTop() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        val first = "chat:${chats.first().key}"
+        rule.onNodeWithTag("chats-list").performScrollToIndex(chats.size)
+        rule.waitForIdle()
+        org.junit.Assert.assertTrue(rule.onAllNodesWithTag(first).fetchSemanticsNodes().none { n -> n.boundsInRoot.bottom > 0f && n.boundsInRoot.top < rule.onRoot().fetchSemanticsNode().size.height })
+        rule.onNodeWithTag("chats-title").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag(first).assertIsDisplayed()
     }
     /** AII-121: hold a message, Share: the phone's share menu gets the message text. */
     @Test fun shareMessage() {
