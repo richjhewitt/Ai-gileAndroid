@@ -15,6 +15,7 @@
     <string name="copied">Gekopieerd</string>
     <string name="empty_chats">Nog geen chats</string>
     <string name="empty_chats_new">Nieuw bericht</string>
+    <string name="empty_unread">Geen ongelezen chats</string>
     <string name="empty_waiting">Niets wacht op jou</string>
     <string name="empty_teams">Nog geen teamchats</string>
     <string name="empty_friends">Nog geen vrienden</string>
@@ -96,6 +97,7 @@
     <string name="waiting">%1$d wachtend</string>
     <string name="new_messages">Nieuwe berichten</string>
     <string name="filter_all">Alles</string>
+    <string name="filter_unread">Ongelezen</string>
     <string name="filter_waiting">Wacht op mij</string>
     <string name="filter_teams">Teams</string>
     <string name="filter_friends">Vrienden</string>

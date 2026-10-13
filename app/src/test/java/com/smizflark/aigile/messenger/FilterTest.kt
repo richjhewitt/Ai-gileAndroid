@@ -19,4 +19,6 @@ class FilterTest {
     @Test fun waitingOnlyWhereAQuestionWaits() = assertEquals(listOf(lead), of(ChatFilter.WAITING))
     @Test fun teamsAreLeadsAndTheScrumMaster() = assertEquals(listOf(lead, quiet, watch), of(ChatFilter.TEAMS))
     @Test fun friendsOnlyFriends() = assertEquals(listOf(friend), of(ChatFilter.FRIENDS))
+    @Test fun unreadOnlyWhereABadgeShows() = assertEquals(listOf(quiet, friend), all.filter { ChatFilter.UNREAD.keep(it, it == quiet || it == friend) })
+    @Test fun unreadComesRightAfterAll() = assertEquals(ChatFilter.UNREAD, ChatFilter.entries[1])
 }

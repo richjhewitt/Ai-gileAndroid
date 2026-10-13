@@ -210,9 +210,10 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         }
                     }
                 }
-                val shown = chats.filter(filter::keep)
+                val shown = chats.filter { filter.keep(it, News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0) }
                 if (chats.isNotEmpty() && shown.isEmpty()) item {
                     EmptyState(androidx.compose.ui.res.stringResource(when (filter) {
+                        ChatFilter.UNREAD -> R.string.empty_unread
                         ChatFilter.WAITING -> R.string.empty_waiting
                         ChatFilter.TEAMS -> R.string.empty_teams
                         ChatFilter.FRIENDS -> R.string.empty_friends
