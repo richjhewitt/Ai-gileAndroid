@@ -93,7 +93,7 @@ private fun rows(c: Conversation?, pending: List<Pending>, owner: String): List<
     }
     pending.forEach { p ->
         out += Row.Msg("p:${p.id}", Bubble("p:${p.id}", owner, p.text, p.at, true, p.target,
-            state = if (p.failed) SendState.FAILED else SendState.SENDING), p)
+            state = if (p.failed && !p.offline) SendState.FAILED else SendState.SENDING), p)   // offline ones go by themselves (AII-55)
     }
     return out
 }
@@ -143,7 +143,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(ref.key) {
         // Anything left from last time goes first (it was saved before sending, so nothing is lost).
-        repo.pendingFor(ref.key).filter { !it.failed }.forEach { deliver(it) }
+        repo.pendingFor(ref.key).filter { !it.failed || it.offline }.forEach { deliver(it) }
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) { load(); delay(6_000) }
         }

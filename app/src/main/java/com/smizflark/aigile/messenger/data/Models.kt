@@ -144,4 +144,6 @@ data class Pending(
     val target: String?,
     val at: String,
     val failed: Boolean = false,
+    /** Failed only for want of a connection: it goes by itself when the phone is back online (AII-55). */
+    val offline: Boolean = false,
 )
