@@ -226,7 +226,7 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
                     style = MaterialTheme.typography.bodyMedium,
                     color = when {
                         waiting == null -> MaterialTheme.colorScheme.onSurfaceVariant
-                        unsent.any { it.failed } -> MaterialTheme.colorScheme.error
+                        unsent.any { it.failed && !it.offline } -> MaterialTheme.colorScheme.error
                         else -> MaterialTheme.colorScheme.primary
                     },
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
@@ -246,6 +246,6 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
 /** What a chat row says about messages typed on the phone that haven't reached the board (AII-52); null when none. */
 fun unsentLabel(unsent: List<Pending>): String? {
     if (unsent.isEmpty()) return null
-    val failed = unsent.count { it.failed }
+    val failed = unsent.count { it.failed && !it.offline }   // offline ones still go by themselves (AII-55)
     return if (failed > 0) "⚠️ $failed not sent: tap to retry" else "⏳ ${unsent.size} waiting to send"
 }
