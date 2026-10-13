@@ -134,3 +134,14 @@ fun EmptyState(line: String, modifier: Modifier = Modifier, button: String? = nu
         if (button != null) androidx.compose.material3.OutlinedButton(onClick = onButton, modifier = Modifier.padding(top = 12.dp)) { Text(button) }
     }
 }
+
+/** Copies text with a short "Copied" note (Android 13+ shows its own); for tapping a ``` block (AII-115). */
+@androidx.compose.runtime.Composable
+fun rememberCopy(): (String) -> Unit {
+    val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    return androidx.compose.runtime.remember(clipboard, ctx) { { text ->
+        clipboard.setText(androidx.compose.ui.text.AnnotatedString(text))
+        if (android.os.Build.VERSION.SDK_INT < 33) android.widget.Toast.makeText(ctx, com.smizflark.aigile.messenger.R.string.copied, android.widget.Toast.LENGTH_SHORT).show()
+    } }
+}

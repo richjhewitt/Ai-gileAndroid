@@ -16,6 +16,7 @@ import androidx.compose.ui.text.withStyle
  * The little markdown the board uses: "- " bullets, **bold**, `code`, ``` blocks ```, links,
  * and card ids (AIG-464) that open the card in the app when it is one of the chat's (AII-28).
  * Blank lines between bullets are squeezed to keep bubbles compact.
+ * With [onCode], tapping a ``` block hands over its whole text, to copy it (AII-115).
  */
 object Markdown {
     private val inline = Regex("""\*\*(.+?)\*\*|`([^`]+)`|(https?://[^\s)>\]]+)""")
@@ -31,23 +32,42 @@ object Markdown {
         override fun removeEldestEntry(e: MutableMap.MutableEntry<Triple<String, Color, Color>, AnnotatedString>) = size > 400
     }
 
-    fun render(text: String, codeBg: Color, link: Color, cards: Set<String> = emptySet(), onCard: (String) -> Unit = {}): AnnotatedString =
-        if (cards.isEmpty()) synchronized(cache) { cache.getOrPut(Triple(text, codeBg, link)) { build(text, codeBg, link, cards, onCard) } }
-        else build(text, codeBg, link, cards, onCard)   // card links carry a click: not cached
+    fun render(text: String, codeBg: Color, link: Color, cards: Set<String> = emptySet(), onCard: (String) -> Unit = {}, onCode: ((String) -> Unit)? = null): AnnotatedString =
+        if (cards.isEmpty() && (onCode == null || "```" !in text)) synchronized(cache) { cache.getOrPut(Triple(text, codeBg, link)) { build(text, codeBg, link, cards, onCard, null) } }
+        else build(text, codeBg, link, cards, onCard, onCode)   // card and code links carry a click: not cached
 
-    private fun build(text: String, codeBg: Color, link: Color, cards: Set<String>, onCard: (String) -> Unit): AnnotatedString = buildAnnotatedString {
+    /** The text of each ``` block, by the line its opening fence is on. */
+    fun codeBlocks(lines: List<String>): Map<Int, String> {
+        val out = mutableMapOf<Int, String>()
+        var open = -1
+        lines.forEachIndexed { i, l ->
+            if (!l.trimStart().startsWith("```")) return@forEachIndexed
+            if (open < 0) open = i else { out[open] = lines.subList(open + 1, i).joinToString("\n"); open = -1 }
+        }
+        if (open >= 0) out[open] = lines.subList(open + 1, lines.size).joinToString("\n")   // never closed: runs to the end
+        return out
+    }
+
+    private fun build(text: String, codeBg: Color, link: Color, cards: Set<String>, onCard: (String) -> Unit, onCode: ((String) -> Unit)?): AnnotatedString = buildAnnotatedString {
         val lines = squeeze(text).lines()
+        val blocks = if (onCode != null) codeBlocks(lines) else emptyMap()
         var inCode = false
+        var block = ""
+        var first = true   // a newline goes before each shown line, so a closing fence leaves no blank line below
         lines.forEachIndexed { i, raw ->
-            if (raw.trimStart().startsWith("```")) { inCode = !inCode; return@forEachIndexed }
+            if (raw.trimStart().startsWith("```")) { inCode = !inCode; block = blocks[i] ?: ""; return@forEachIndexed }
+            if (!first) append('\n')
+            first = false
             if (inCode) {
-                withStyle(SpanStyle(fontFamily = FontFamily.Monospace, background = codeBg)) { append(raw) }
+                withStyle(SpanStyle(fontFamily = FontFamily.Monospace, background = codeBg)) {
+                    if (onCode != null && raw.isNotEmpty()) { val b = block; withLink(LinkAnnotation.Clickable("code:$i") { onCode(b) }) { append(raw) } }
+                    else append(raw)
+                }
             } else {
                 val bullet = bulletRe.find(raw)
                 if (bullet != null) { append("•  "); inlines(raw.substring(bullet.range.last + 1), codeBg, link, cards, onCard) }
                 else inlines(raw, codeBg, link, cards, onCard)
             }
-            if (i < lines.lastIndex) append('\n')
         }
     }
 

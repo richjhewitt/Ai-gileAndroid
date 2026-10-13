@@ -30,6 +30,7 @@ class DemoSource : ChatSource {
             slug = "tunio", name = "Tunio", emoji = "🎵", color = "#ca8a04", lead = "Lead",
             messages = mutableListOf(
                 WireMsg("TUN-7", "💬 Playlist export", "Rich", "Export playlists as M3U please", ago(300), mine = true),
+                WireMsg("TUN-7", "💬 Playlist export", "Lead", "- Try it on the PC first:\n\n```\ntunio export --all --format m3u\n```", ago(260)),   // AII-115: a command box to tap
                 WireMsg("TUN-7", "💬 Playlist export", "Lead", "- Done: **Export** button on each playlist\n\n- It's in For you to test", ago(240)),
             ),
             cards = mapOf("TUN-7" to CardInfo("💬 Playlist export", "idea")),

@@ -140,7 +140,8 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
         else -> cs.surfaceContainerHigh
     }
     val fg = if (b.mine) cs.onPrimaryContainer else cs.onSurface
-    val shown = Markdown.render(b.text, cs.surfaceVariant, cs.primary, cards, onCard)
+    val copy = rememberCopy()   // AII-115: tap a ``` block to copy it
+    val shown = Markdown.render(b.text, cs.surfaceVariant, cs.primary, cards, onCard, copy)
     // AII-43: long-press a bubble to copy what it shows (without the ** marks).
     var menu by remember { mutableStateOf(false) }
     var showTime by remember { mutableStateOf(false) }   // AII-51: tap a bubble for its exact time
@@ -210,8 +211,8 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 // AII-99: tapping the quote jumps to the message it quotes.
                 if (quoted != null) QuoteBar(Markdown.render(quoted, cs.surfaceVariant, cs.primary), fg,
                     Modifier.clickable(onClickLabel = stringResource(R.string.show_quoted)) { onQuote(quoted) }.testTag("quote"))
-                if (quoted != null && rest.isNotEmpty()) Text(Markdown.render(rest, cs.surfaceVariant, cs.primary, cards, onCard), style = MaterialTheme.typography.bodyLarge, color = fg)
-                else if (quoted == null && body.isNotEmpty()) Text(if (forwarded) Markdown.render(body, cs.surfaceVariant, cs.primary, cards, onCard) else shown, style = MaterialTheme.typography.bodyLarge, color = fg)
+                if (quoted != null && rest.isNotEmpty()) Text(Markdown.render(rest, cs.surfaceVariant, cs.primary, cards, onCard, copy), style = MaterialTheme.typography.bodyLarge, color = fg)
+                else if (quoted == null && body.isNotEmpty()) Text(if (forwarded) Markdown.render(body, cs.surfaceVariant, cs.primary, cards, onCard, copy) else shown, style = MaterialTheme.typography.bodyLarge, color = fg)
                 Text(
                     when (b.state) {
                         SendState.SENDING -> stringResource(R.string.sending)

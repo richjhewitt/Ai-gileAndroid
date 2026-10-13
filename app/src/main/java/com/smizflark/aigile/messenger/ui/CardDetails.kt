@@ -24,16 +24,17 @@ fun statusLabel(status: String) = Words.status[status] ?: status.replaceFirstCha
 @Composable
 fun CardDetails(c: CardDetail) {
     val cs = MaterialTheme.colorScheme
+    val copy = rememberCopy()
     Surface(color = cs.surfaceContainer, shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp).testTag("card-details")) {
         Column(Modifier.padding(14.dp)) {
             Text(statusLabel(c.status) + if (c.assignee.isNotBlank()) " · ${c.assignee}" else "",
                 style = MaterialTheme.typography.labelMedium, color = cs.primary)
-            if (c.description.isNotBlank()) Text(Markdown.render(c.description.trim(), cs.surfaceVariant, cs.primary),
+            if (c.description.isNotBlank()) Text(Markdown.render(c.description.trim(), cs.surfaceVariant, cs.primary, onCode = copy),
                 style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 6.dp))
             if (c.testSteps.isNotBlank()) {
                 Text(stringResource(R.string.card_to_test), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 10.dp))
-                Text(Markdown.render(c.testSteps.trim(), cs.surfaceVariant, cs.primary), style = MaterialTheme.typography.bodyMedium)
+                Text(Markdown.render(c.testSteps.trim(), cs.surfaceVariant, cs.primary, onCode = copy), style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
