@@ -200,4 +200,8 @@
         <item quantity="one">Adding %1$d picture…</item>
         <item quantity="other">Adding %1$d pictures…</item>
     </plurals>
+    <string name="open_cards">Open cards</string>
+    <string name="no_open_cards">Nothing is waiting on you.</string>
+    <string name="chat_pictures">Pictures in this chat</string>
+    <string name="no_chat_pictures">No pictures yet.</string>
 </resources>

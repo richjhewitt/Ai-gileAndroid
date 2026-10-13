@@ -2,6 +2,7 @@ package com.smizflark.aigile.messenger.screens
 
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -83,6 +84,15 @@ class ScreenshotTest {
         rule.onNodeWithTag("find-field").performTextInput("phone")
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("../docs/shots/chat_find_light.png")
+    }
+    /** AII-80: tap the chat name; the details sheet opens (dark, as the phone shows it at night). */
+    @Test fun chatDetailsDark() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+night")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onNodeWithTag("chat-title").performClick()
+        rule.onNodeWithTag("details-pin").fetchSemanticsNode()
+        rule.waitForIdle()
+        rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_dark.png")   // the sheet is its own window
     }
     @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
