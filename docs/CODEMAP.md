@@ -27,7 +27,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Search.kt: search results (chats and messages).
 - data/Share.kt: text shared in from other apps.
 - data/Source.kt: chat source, the real board or the demo.
-- data/Store.kt: on-disk storage of settings, key and drafts.
+- data/Store.kt: on-disk storage: pairing in the "messenger" prefs (not backed up), settings in the "settings" prefs (backed up, AII-81), drafts and cache.
 - data/Swipe.kt: what a swipe on a chat row does.
 
 ## ui/ (Compose screens)
@@ -62,3 +62,6 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 ## Other
 - tools/: release.ps1 (release build script) and emulator/ (emulator helpers).
 - docs/shots: reference screenshots (Roborazzi) for each screen and theme.
+
+## res/xml backup (AII-81)
+- res/xml/backup_rules.xml and res/xml/data_extraction_rules.xml: backup takes only settings.xml (look, text size, pins, mutes, quiet hours); keys, board address, drafts and outbox stay out.

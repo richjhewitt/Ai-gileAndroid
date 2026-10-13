@@ -1,6 +1,7 @@
 package com.smizflark.aigile.messenger.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -48,7 +49,10 @@ object Vault {
 /* ---------- connection and settings ---------- */
 
 class Store(context: Context) {
+    /** Pairing: board address, sealed keys. Never backed up (AII-81). */
     private val prefs = context.getSharedPreferences("messenger", Context.MODE_PRIVATE)
+    /** Settings that follow you to a new phone (AII-81): look, text size, pins, mutes, quiet hours. */
+    private val settings = context.getSharedPreferences(SETTINGS, Context.MODE_PRIVATE).also { moveSettings(prefs, it) }
     private val dir = File(context.filesDir, "cache").apply { mkdirs() }
 
     var url: String
@@ -75,8 +79,8 @@ class Store(context: Context) {
     val connected get() = demo || url.isNotBlank()
 
     var alerts: Boolean
-        get() = prefs.getBoolean("alerts", true)
-        set(v) = prefs.edit().putBoolean("alerts", v).apply()
+        get() = settings.getBoolean("alerts", true)
+        set(v) = settings.edit().putBoolean("alerts", v).apply()
 
     /** Ask for fingerprint, face or PIN when the app opens (AII-63). */
     var lock: Boolean
@@ -84,12 +88,12 @@ class Store(context: Context) {
         set(v) = prefs.edit().putBoolean("lock", v).apply()
 
     var quietFrom: Int
-        get() = prefs.getInt("quietFrom", 22)
-        set(v) = prefs.edit().putInt("quietFrom", v).apply()
+        get() = settings.getInt("quietFrom", 22)
+        set(v) = settings.edit().putInt("quietFrom", v).apply()
 
     var quietTo: Int
-        get() = prefs.getInt("quietTo", 7)
-        set(v) = prefs.edit().putInt("quietTo", v).apply()
+        get() = settings.getInt("quietTo", 7)
+        set(v) = settings.edit().putInt("quietTo", v).apply()
 
     /** Alerts paused until this time, epoch millis; 0 = not paused (AII-77). */
     var pausedUntil: Long
@@ -97,28 +101,28 @@ class Store(context: Context) {
         set(v) = prefs.edit().putLong("pausedUntil", v).apply()
 
     var quietOn: Boolean
-        get() = prefs.getBoolean("quietOn", true)
-        set(v) = prefs.edit().putBoolean("quietOn", v).apply()
+        get() = settings.getBoolean("quietOn", true)
+        set(v) = settings.edit().putBoolean("quietOn", v).apply()
 
     /** Look: system, light, dark or black (pure black for OLED screens). */
     var look: String
-        get() = prefs.getString("look", "system") ?: "system"
-        set(v) = prefs.edit().putString("look", v).apply()
+        get() = settings.getString("look", "system") ?: "system"
+        set(v) = settings.edit().putString("look", v).apply()
 
     /** Use the phone's own colours (Material You, Android 12+). */
     var phoneColours: Boolean
-        get() = prefs.getBoolean("phoneColours", true)
-        set(v) = prefs.edit().putBoolean("phoneColours", v).apply()
+        get() = settings.getBoolean("phoneColours", true)
+        set(v) = settings.edit().putBoolean("phoneColours", v).apply()
 
     /** Text size (AII-66): small, normal, large or huge. */
     var textSize: String
-        get() = prefs.getString("textSize", "normal") ?: "normal"
-        set(v) = prefs.edit().putString("textSize", v).apply()
+        get() = settings.getString("textSize", "normal") ?: "normal"
+        set(v) = settings.edit().putString("textSize", v).apply()
 
     /** Chats pinned to the top of the list (AII-47), by chat key. */
     var pinned: Set<String>
-        get() = prefs.getStringSet("pinned", emptySet())?.toSet() ?: emptySet()
-        set(v) = prefs.edit().putStringSet("pinned", v).apply()
+        get() = settings.getStringSet("pinned", emptySet())?.toSet() ?: emptySet()
+        set(v) = settings.edit().putStringSet("pinned", v).apply()
 
     var lastSync: Long
         get() = prefs.getLong("lastSync", 0)
@@ -126,6 +130,7 @@ class Store(context: Context) {
 
     fun signOut() {
         prefs.edit().clear().apply()
+        settings.edit().clear().apply()
         clearCache()
     }
 
@@ -142,9 +147,9 @@ class Store(context: Context) {
 
     /* ---------- muted chats: no alerts from them (AII-48) ---------- */
 
-    fun muted(): Set<String> = prefs.getStringSet("muted", null)?.toSet() ?: emptySet()
+    fun muted(): Set<String> = settings.getStringSet("muted", null)?.toSet() ?: emptySet()
     fun setMuted(chat: String, on: Boolean) =
-        prefs.edit().putStringSet("muted", if (on) muted() + chat else muted() - chat).apply()
+        settings.edit().putStringSet("muted", if (on) muted() + chat else muted() - chat).apply()
 
     /* ---------- seen: the newest message from them you have looked at, per chat ---------- */
 
@@ -178,5 +183,30 @@ class Store(context: Context) {
     private inline fun <reified T> write(name: String, v: T) {
         val f = File(dir, name); val tmp = File(dir, "$name.tmp")
         tmp.writeText(json.encodeToString(v)); java.nio.file.Files.move(tmp.toPath(), f.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    }
+
+    companion object {
+        const val SETTINGS = "settings"
+        /** The preferences that go into backup. Everything else stays in the "messenger" file. */
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "quietOn", "look", "phoneColours", "textSize", "pinned", "muted")
+
+        /** One-time move of the settings out of the pairing file, so the pairing file can stay out of backup. */
+        fun moveSettings(from: SharedPreferences, to: SharedPreferences) {
+            val old = BACKED_UP.filter { from.contains(it) }
+            if (old.isEmpty()) return
+            val e = to.edit(); val r = from.edit()
+            for (k in old) {
+                if (!to.contains(k)) when (val v = from.all[k]) {
+                    is String -> e.putString(k, v)
+                    is Boolean -> e.putBoolean(k, v)
+                    is Int -> e.putInt(k, v)
+                    is Long -> e.putLong(k, v)
+                    is Float -> e.putFloat(k, v)
+                    is Set<*> -> e.putStringSet(k, v.filterIsInstance<String>().toSet())
+                }
+                r.remove(k)
+            }
+            e.apply(); r.apply()
+        }
     }
 }
