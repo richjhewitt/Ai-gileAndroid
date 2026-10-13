@@ -20,6 +20,8 @@ data class ChatSummary(
     val unread: Int = 0,
     val last: String? = null,
     val watchman: Boolean = false,
+    /** The board's read mark for a lead chat (AII-44): newest message time read, on the PC or a phone. */
+    val seen: String? = null,
 )
 
 @Serializable
@@ -121,6 +123,8 @@ data class ChatRef(
     val lastIn: String? = null,
     /** Unread messages as the board counts them (the Lead Scrum Master): read on the PC = read here. */
     val unread: Int = 0,
+    /** The board's read mark (leads, AII-44). */
+    val seen: String? = null,
 ) {
     val key get() = "${kind.name.lowercase()}:$id"
 }

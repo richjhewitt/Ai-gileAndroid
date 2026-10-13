@@ -182,7 +182,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             if (before != null && now != null && now > before) tick()
             convo = c; error = null
             if (!picked && focus == null) target = c.defaultTarget
-            repo.store.markSeen(ref.key, c.bubbles.lastOrNull()?.at)
+            repo.seen(ref, c.bubbles.lastOrNull()?.at)
             return changed
         } catch (e: Exception) { error = e.message; return false }
     }

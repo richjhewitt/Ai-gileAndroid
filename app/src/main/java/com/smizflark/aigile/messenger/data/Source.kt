@@ -37,6 +37,8 @@ interface ChatSource {
     suspend fun newMessage(slug: String, text: String, files: List<Upload> = emptyList()): String?
     /** One card of a lead's chat (AII-45); null where the board can't say. */
     suspend fun card(slug: String, id: String): CardDetail? = null
+    /** Tells the board a lead chat is read up to [at] (AII-44); boards without read marks just ignore it. */
+    suspend fun markSeen(slug: String, at: String) {}
 }
 
 /** A picture or file to send with a message. */
@@ -202,6 +204,10 @@ class BoardSource(
         json.decodeFromString<CardDetail>(call("GET", "/api/projects/$slug/cards/$id"))
     } catch (e: BoardError) {
         if (e.code == 404) null else throw e   // 404: a board from before AII-45, the view just shows the messages
+    }
+
+    override suspend fun markSeen(slug: String, at: String) {
+        call("POST", "/api/chats/$slug/seen", buildJsonObject { put("at", at) })
     }
 
     /** Full URL for a board picture path like /api/avatars/x.png. */

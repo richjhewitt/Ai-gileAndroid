@@ -14,7 +14,7 @@ object Mapper {
                 kind = Kind.LEAD, id = s.slug, name = s.name.ifBlank { s.slug },
                 subtitle = s.lead ?: "Lead", emoji = s.emoji ?: "🗂️", color = s.color,
                 pic = s.leadPic?.takeIf { it.isNotBlank() } ?: s.logo?.takeIf { it.isNotBlank() },
-                waiting = s.unread, last = s.last,
+                waiting = s.unread, last = s.last, seen = s.seen?.takeIf { it.isNotBlank() },
             )
         }
         val friends = contacts.filter { !it.blocked }.sortedByDescending { it.last ?: "" }.map { c ->

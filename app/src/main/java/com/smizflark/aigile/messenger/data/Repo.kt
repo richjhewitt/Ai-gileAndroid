@@ -62,13 +62,23 @@ class Repo(context: Context) {
         l.filter { it.kind == Kind.WATCHMAN && it.unread == 0 }.forEach { store.markSeen(it.key, it.last) }
         LatestWidget.refresh(app)
         Shortcuts.update(app, l)   // hold the app icon: your newest chats (AII-53)
+        // ...and so are lead chats (AII-44): the board keeps one read mark per chat, set by the PC or this phone.
+        l.filter { it.kind == Kind.LEAD }.forEach { store.markSeen(it.key, it.seen) }
         return l
     }
 
     /** Mark as read (AII-25). Opening the Lead Scrum Master's chat is what reads it on the board, so that one is fetched. */
     suspend fun markRead(ref: ChatRef) {
         val saved = if (ref.kind == Kind.WATCHMAN) runCatching { conversation(ref) }.getOrNull() else store.cachedConversation(ref.key)
-        store.markSeen(ref.key, News.readUpTo(ref, saved))
+        seen(ref, News.readUpTo(ref, saved))
+    }
+
+    /** Read up to [at] here, and on the board for a lead chat (AII-44). Only a mark that moved on is sent. */
+    suspend fun seen(ref: ChatRef, at: String?) {
+        if (at == null) return
+        val moved = at > (store.seen()[ref.key] ?: "")
+        store.markSeen(ref.key, at)
+        if (moved && ref.kind == Kind.LEAD && !store.demo) runCatching { source.markSeen(ref.id, at) }   // offline or an older board: kept here
     }
 
     suspend fun conversation(ref: ChatRef): Conversation {
