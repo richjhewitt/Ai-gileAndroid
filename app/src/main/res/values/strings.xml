@@ -5,6 +5,8 @@
     <string name="widget_connect">Open the app to connect to your board</string>
     <string name="widget_no_chats">No chats yet</string>
     <string name="copy">Copy</string>
+    <string name="select_text">Select text</string>
+    <string name="done">Done</string>
     <string name="reply">Reply</string>
     <string name="show_quoted">Show the quoted message</string>
     <string name="forward">Forward</string>

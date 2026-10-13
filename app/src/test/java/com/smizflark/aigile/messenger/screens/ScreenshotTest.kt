@@ -231,6 +231,18 @@ class ScreenshotTest {
         rule.onRoot().captureRoboImage("../docs/shots/chat_quote_jump_light.png")
         rule.mainClock.autoAdvance = true
     }
+    /** AII-127: hold a message, Select text: the message opens on its own, ready to select. */
+    @Test fun selectTextLight() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onAllNodesWithTag("theirs").onLast().performTouchInput { longClick() }
+        rule.onNodeWithTag("select").performClick()
+        rule.onNodeWithTag("select-text").assertExists()
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chat_select_text_light.png")   // the dialog is its own window
+        rule.onNodeWithText("Done").performClick()
+        rule.onAllNodesWithTag("select-text").assertCountEquals(0)
+    }
     /** AII-126: with Enter key sends on, the keyboard's Send key sends the message; off, it doesn't. */
     @Test fun enterSends() {
         val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }; prime(c)
