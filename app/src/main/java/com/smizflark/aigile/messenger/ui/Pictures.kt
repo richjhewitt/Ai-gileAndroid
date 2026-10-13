@@ -8,7 +8,11 @@ import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,12 +42,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -113,12 +122,11 @@ private fun Missing(p: Pic) {
 @Composable
 private fun FullPicture(pics: List<Pic>, start: Int, repo: Repo, onClose: () -> Unit) {
     val pager = rememberPagerState(initialPage = start) { pics.size }
+    var zoomed by remember { mutableStateOf(false) }   // AII-90: while zoomed in, a drag looks around instead of swiping
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(Modifier.fillMaxSize().background(Color.Black).clickable(onClick = onClose).testTag("full-pic"), contentAlignment = Alignment.Center) {
-            HorizontalPager(pager, Modifier.fillMaxSize().testTag("full-pic-pager")) { i ->
-                val p = pics[i]
-                SubcomposeAsyncImage(model = request(p, repo), contentDescription = p.name, contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize(), error = { Missing(p) })
+        Box(Modifier.fillMaxSize().background(Color.Black).testTag("full-pic"), contentAlignment = Alignment.Center) {
+            HorizontalPager(pager, Modifier.fillMaxSize().testTag("full-pic-pager"), userScrollEnabled = !zoomed) { i ->
+                ZoomablePicture(pics[i], repo, onTap = onClose, onZoom = { if (i == pager.currentPage) zoomed = it })
             }
             if (pics.size > 1) Text("${pager.currentPage + 1} / ${pics.size}", color = Color.White, style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp).testTag("full-pic-count"))
@@ -126,6 +134,23 @@ private fun FullPicture(pics: List<Pic>, start: Int, repo: Repo, onClose: () -> 
                 Icon(Icons.Default.Close, "Close", tint = Color.White)
             }
         }
+    }
+}
+
+/** AII-90: pinch to zoom, drag to look around, double tap to zoom in and back out. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ZoomablePicture(p: Pic, repo: Repo, onTap: () -> Unit, onZoom: (Boolean) -> Unit) {
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    fun set(s: Float, o: Offset) { scale = s; offset = if (s <= 1f) Offset.Zero else o; onZoom(s > 1f) }
+    val zoom = rememberTransformableState { z, pan, _ -> set((scale * z).coerceIn(1f, 5f), offset + pan * scale) }
+    Box(Modifier.fillMaxSize().clipToBounds()
+        .pointerInput(Unit) { detectTapGestures(onTap = { onTap() }, onDoubleTap = { set(if (scale > 1f) 1f else 2.5f, Offset.Zero) }) }
+        .transformable(zoom, canPan = { scale > 1f })) {
+        SubcomposeAsyncImage(model = request(p, repo), contentDescription = p.name, contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = scale; scaleY = scale; translationX = offset.x; translationY = offset.y },
+            error = { Missing(p) })
     }
 }
 
