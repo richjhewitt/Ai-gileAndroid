@@ -272,6 +272,10 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
             DropdownMenuItem(text = { Text(stringResource(R.string.mark_read)) }, enabled = fresh, onClick = { menu = false; onRead() })
             DropdownMenuItem(text = { Text(stringResource(if (pinned) R.string.unpin else R.string.pin)) }, leadingIcon = { Icon(Icons.Default.PushPin, null) },
                 onClick = { menu = false; onPin() }, modifier = Modifier.testTag("pin"))
+            // AII-103: mute here too, not only on the swipe.
+            DropdownMenuItem(text = { Text(stringResource(if (muted) R.string.unmute else R.string.mute)) },
+                leadingIcon = { Icon(if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff, null) },
+                onClick = { menu = false; onMute(!muted) }, modifier = Modifier.testTag("menu-mute"))
         }
         Avatar(c, repo)
         Spacer(Modifier.width(12.dp))
