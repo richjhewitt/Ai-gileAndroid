@@ -162,7 +162,7 @@ private fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus:
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}) {
+fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}, openAt: String? = null) {
     var convo by remember { mutableStateOf(repo.store.cachedConversation(ref.key)) }
     val seenAtOpen = rememberSaveable(ref.key) { mutableStateOf(repo.store.seen()[ref.key]) }.value   // AII-100: the "New messages" line stays put while you read
     var pending by remember { mutableStateOf(repo.pendingFor(ref.key)) }
@@ -290,7 +290,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val atBottom by remember { derivedStateOf { list.firstVisibleItemIndex <= 1 } }
     // AII-72: coming back, the chat opens where you left it; the 'N new' pill counts from what you had seen.
     val placeKey = ref.key + (focus?.let { "/$it" } ?: "")
-    val place = remember(placeKey) { ScrollPlaces.get(placeKey) }
+    val place = remember(placeKey) { if (openAt != null) null else ScrollPlaces.get(placeKey) }   // a search result wins (AII-105)
     var restoring by remember(placeKey) { mutableStateOf(place != null) }
     var seenNewest by rememberSaveable { mutableStateOf(place?.seen) }
     val newest = convo?.bubbles?.lastOrNull()?.key
@@ -313,7 +313,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
     // AII-102: more new messages than fit on screen? Open at the "New messages" line, not the bottom.
     LaunchedEffect(placeKey) {
-        if (place != null) return@LaunchedEffect
+        if (place != null || openAt != null) return@LaunchedEffect
         val i = snapshotFlow { latestItems.indexOfFirst { it is Row.New } }.first { it >= 0 } + 1   // +1: the spacer at the bottom
         val info = snapshotFlow { list.layoutInfo }.first { it.totalItemsCount > i && it.visibleItemsInfo.isNotEmpty() }
         if (list.firstVisibleItemIndex > 1 || info.visibleItemsInfo.any { it.index == i }) return@LaunchedEffect
@@ -328,6 +328,12 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         val i = Quote.source(quoted, items.indexOfFirst { it.id == from }, items.map { (it as? Row.Msg)?.b }, owner) ?: return
         val id = items[i].id
         scope.launch { list.animateScrollToItem(i + 1); flash = id; delay(1500); if (flash == id) flash = null }   // +1: the spacer at the bottom
+    }
+    // AII-105: opened from a search result: scroll to that message and outline it.
+    LaunchedEffect(openAt) {
+        if (openAt == null) return@LaunchedEffect
+        val i = snapshotFlow { latestItems.indexOfFirst { it.id == openAt } }.first { it >= 0 }
+        list.scrollToItem(i + 1); flash = openAt; delay(1500); if (flash == openAt) flash = null   // +1: the spacer at the bottom
     }
 
     if (details) ChatDetails(ref, repo, chatInfo(convo)) { details = false; muted = ref.key in repo.store.muted() }

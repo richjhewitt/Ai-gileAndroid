@@ -3,6 +3,7 @@ package com.smizflark.aigile.messenger.screens
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.swipeRight
@@ -139,6 +140,15 @@ class ScreenshotTest {
         val line = rule.onNodeWithTag("new-line").fetchSemanticsNode().boundsInRoot
         val screen = rule.onRoot().fetchSemanticsNode().boundsInRoot
         org.junit.Assert.assertTrue("line at ${line.top} of ${screen.height}", line.top in 0f..screen.height / 3)
+    }
+    /** AII-105: a search result opens the chat at that message, even far up a long chat. */
+    @Config(sdk = [34], qualifiers = "w411dp-h480dp-xxhdpi")
+    @Test fun opensAtSearchResult() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        val first = repo.store.cachedConversation(lead().key)!!.bubbles.first()
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}, openAt = first.key) } }
+        rule.waitForIdle()
+        rule.onNodeWithText(first.text.lines().first().trim(), substring = true).assertIsDisplayed()
     }
     /** AII-101: drag a message to the right and let go: the reply bar shows its quote. */
     @Test fun swipeReplyLight() {
