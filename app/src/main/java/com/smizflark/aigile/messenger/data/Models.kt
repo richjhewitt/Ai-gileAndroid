@@ -28,6 +28,8 @@ data class ChatSummary(
     val lastMine: Boolean? = null,
     /** The team is at work right now (AII-111; older boards don't say). */
     val working: Boolean? = null,
+    /** What the team at work is on, like "AII-5 Title" (AII-113). */
+    val task: String? = null,
 )
 
 @Serializable
@@ -137,6 +139,8 @@ data class ChatRef(
     val previewMine: Boolean = false,
     /** The team is at work right now: "working…" under the name (AII-112). */
     val working: Boolean = false,
+    /** The card the team at work is on, like "AII-5" (AII-113). */
+    val workingOn: String? = null,
 ) {
     val key get() = "${kind.name.lowercase()}:$id"
 }

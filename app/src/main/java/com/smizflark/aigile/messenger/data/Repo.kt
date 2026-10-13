@@ -67,8 +67,8 @@ class Repo(context: Context) {
         return l
     }
 
-    /** Is this team at work right now (AII-112)? Null when the board can't be reached. */
-    suspend fun working(ref: ChatRef): Boolean? = runCatching { source.chats().firstOrNull { it.key == ref.key }?.working }.getOrNull()
+    /** This chat as the chats list has it now: is the team at work, and on which card (AII-112/113)? Null when the board can't be reached. */
+    suspend fun fresh(ref: ChatRef): ChatRef? = runCatching { source.chats().firstOrNull { it.key == ref.key } }.getOrNull()
 
     /** Mark as read (AII-25). Opening the Lead Scrum Master's chat is what reads it on the board, so that one is fetched. */
     suspend fun markRead(ref: ChatRef) {
