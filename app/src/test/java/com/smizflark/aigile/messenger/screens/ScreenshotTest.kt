@@ -87,7 +87,21 @@ class ScreenshotTest {
         shot("chats_draft", false) { ChatsScreen(repo, {}, {}, {}) }
         repo.store.saveDraft(lead().key, "")
     }
-    @Test fun chatsDark() =shot("chats", true) { ChatsScreen(repo, {}, {}, {}) }
+    /** AII-103: hold a chat: Mute sits in the menu, and tapping it again unmutes. */
+    @Test fun muteFromMenuLight() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        rule.onNodeWithTag("chat:${c.key}").performTouchInput { longClick() }
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_menu_light.png")   // the menu is its own window: shoot the whole screen
+        rule.onNodeWithTag("menu-mute").performClick()
+        org.junit.Assert.assertTrue(c.key in repo.store.muted())
+        rule.onNodeWithTag("chat:${c.key}").performTouchInput { longClick() }
+        rule.onNodeWithTag("menu-mute").performClick()
+        org.junit.Assert.assertFalse(c.key in repo.store.muted())
+    }
+    @Test fun chatsDark() = shot("chats", true) { ChatsScreen(repo, {}, {}, {}) }
     @Test fun chatLight() { prime(lead()); shot("chat", false) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatHuge() {
