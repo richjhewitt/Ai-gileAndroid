@@ -49,6 +49,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Repo
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.FilterChip
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.smizflark.aigile.messenger.data.ChatFilter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -61,6 +66,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     var error by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
+    var filter by rememberSaveable { mutableStateOf(ChatFilter.ALL) }
     val scope = rememberCoroutineScope()
 
     suspend fun load() {
@@ -104,11 +110,25 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         )
                     }
                 }
+                if (chats.isNotEmpty()) item {
+                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ChatFilter.entries.forEach { f ->
+                            FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(f.label) },
+                                modifier = Modifier.testTag("filter:${f.name.lowercase()}"))
+                        }
+                    }
+                }
+                val shown = chats.filter(filter::keep)
+                if (chats.isNotEmpty() && shown.isEmpty()) item {
+                    Text(if (filter == ChatFilter.WAITING) "Nothing waiting on you." else "No chats here yet.", Modifier.padding(24.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 if (loaded && chats.isEmpty() && error == null) item {
                     Text("No chats yet. Tap New message to write to a team.", Modifier.padding(24.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                items(chats, key = { it.key }) { c ->
+                items(shown, key = { it.key }) { c ->
                     val fresh = c.last != null && c.last > (seen[c.key] ?: "")
                     ChatRow(c, repo, fresh) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
