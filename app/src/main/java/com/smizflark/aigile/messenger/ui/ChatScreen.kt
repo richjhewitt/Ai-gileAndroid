@@ -4,6 +4,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -80,6 +84,7 @@ import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
+import com.smizflark.aigile.messenger.data.Quote
 import com.smizflark.aigile.messenger.data.Pic
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.SendState
@@ -156,6 +161,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var picNote by remember { mutableStateOf<String?>(null) }
     var detail by remember { mutableStateOf<CardDetail?>(null) }
     if (focus != null && ref.kind == Kind.LEAD) LaunchedEffect(focus) { detail = repo.card(ref, focus) }
+    var quoting by rememberSaveable { mutableStateOf<String?>(null) }   // AII-60: the quoted line of the message being answered
     var error by remember { mutableStateOf<String?>(null) }
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     val scope = rememberCoroutineScope()
@@ -297,7 +303,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 onOpen = if (focus == null && ref.kind == Kind.LEAD) { { onOpenCard(r.card) } } else null) {
                                 if (targets.any { it.id == r.card }) { target = r.card; picked = true }
                             }
-                            is Row.Msg -> MessageBubble(r, ref, repo, if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onOpenCard,
+                            is Row.Msg -> MessageBubble(r, ref, repo, onReply = { q ->
+                                quoting = Quote.of(if (q.mine) owner else q.author, q.text, q.pics.size)
+                                // A reply to a team message goes to its card, like answering it on the board.
+                                if (ref.kind == Kind.LEAD && focus == null && q.card != null && targets.any { it.id == q.card }) { target = q.card; picked = true }
+                            }, if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onOpenCard,
                                 onOption = { send(it, r.b.card) },
                                 onRetry = { p -> deliver(p) },
                                 onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) })
@@ -316,8 +326,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 onAttach = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 onRemovePic = { f -> pics = pics - f; File(f).delete() },
                 onPasteCopied = if (copied.available && pics.size < MAX_PICS) ::pasteCopied else null,
+                quote = quoting, onClearQuote = { quoting = null },
             ) {
-                send(text, if (ref.kind == Kind.LEAD) focus ?: target else null, pics); text = ""; pics = emptyList(); picNote = null
+                send(Quote.with(quoting, text.trim()).takeIf { text.isNotBlank() } ?: text, if (ref.kind == Kind.LEAD) focus ?: target else null, pics); text = ""; pics = emptyList(); picNote = null; quoting = null
             }
         }
     }
@@ -357,7 +368,7 @@ private fun CardHeader(r: Row.Card, chosen: Boolean, onOpen: (() -> Unit)?, onCl
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
+private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -380,6 +391,8 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<Strin
                 .combinedClickable(onClick = { showTime = !showTime }, onLongClick = { menu = true }),
         ) {
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                if (b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(R.string.reply)) }, modifier = Modifier.testTag("reply"),
+                    onClick = { menu = false; onReply(b) })
                 DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
                     menu = false
                     clipboard.setText(AnnotatedString(shown.text))
@@ -392,7 +405,10 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<Strin
                     Text(b.author, style = MaterialTheme.typography.labelMedium, color = cs.primary)
                 }
                 if (b.pics.isNotEmpty()) MessagePictures(b.pics, repo)
-                if (b.text.isNotEmpty()) Text(shown, style = MaterialTheme.typography.bodyLarge, color = fg)
+                val (quoted, rest) = Quote.split(b.text)
+                if (quoted != null) QuoteBar(Markdown.render(quoted, cs.surfaceVariant, cs.primary), fg)
+                if (quoted != null && rest.isNotEmpty()) Text(Markdown.render(rest, cs.surfaceVariant, cs.primary, cards, onCard), style = MaterialTheme.typography.bodyLarge, color = fg)
+                else if (quoted == null && b.text.isNotEmpty()) Text(shown, style = MaterialTheme.typography.bodyLarge, color = fg)
                 Text(
                     when (b.state) {
                         SendState.SENDING -> "Sending…"
@@ -424,6 +440,7 @@ private fun Composer(
     targets: List<Pair<String?, String>>, target: String?, onTarget: (String?) -> Unit,
     pics: List<String> = emptyList(), picNote: String? = null, onAttach: () -> Unit = {}, onRemovePic: (String) -> Unit = {},
     onPasteCopied: (() -> Unit)? = null,
+    quote: String? = null, onClearQuote: () -> Unit = {},
     onSend: () -> Unit,
 ) {
     Surface(tonalElevation = 2.dp) {
@@ -446,6 +463,10 @@ private fun Composer(
                 }
             }
             picNote?.let { PictureNote(it) }
+            if (quote != null) Row(Modifier.fillMaxWidth().padding(bottom = 6.dp).testTag("quoting"), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) { QuoteBar(Markdown.render(Quote.split(quote).first ?: quote, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.primary), MaterialTheme.colorScheme.onSurface) }
+                IconButton(onClick = onClearQuote, modifier = Modifier.size(40.dp)) { Icon(Icons.Default.Close, "Don't reply to this") }
+            }
             if (onPasteCopied != null) AssistChip(
                 onClick = onPasteCopied, label = { Text("Paste copied picture") },
                 leadingIcon = { Icon(Icons.Default.ContentPaste, null) }, modifier = Modifier.testTag("paste-pic"),
@@ -473,3 +494,13 @@ private fun Composer(
 
 /** Pictures on one message: plenty for screenshots, and well inside the board's 20 files a comment. */
 private const val MAX_PICS = 6
+
+/** A quoted line (AII-60): a coloured bar, then the quote, a little quieter than the message. */
+@Composable
+private fun QuoteBar(text: AnnotatedString, fg: androidx.compose.ui.graphics.Color) {
+    Row(Modifier.padding(bottom = 4.dp).height(androidx.compose.foundation.layout.IntrinsicSize.Min)) {
+        Box(Modifier.width(3.dp).fillMaxHeight().background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = fg.copy(alpha = 0.75f), maxLines = 3,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp))
+    }
+}
