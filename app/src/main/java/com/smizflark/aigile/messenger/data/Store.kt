@@ -99,6 +99,12 @@ class Store(context: Context) {
     var phoneColours: Boolean
         get() = prefs.getBoolean("phoneColours", true)
         set(v) = prefs.edit().putBoolean("phoneColours", v).apply()
+
+    /** Text size (AII-66): small, normal, large or huge. */
+    var textSize: String
+        get() = prefs.getString("textSize", "normal") ?: "normal"
+        set(v) = prefs.edit().putString("textSize", v).apply()
+
     /** Chats pinned to the top of the list (AII-47), by chat key. */
     var pinned: Set<String>
         get() = prefs.getStringSet("pinned", emptySet())?.toSet() ?: emptySet()

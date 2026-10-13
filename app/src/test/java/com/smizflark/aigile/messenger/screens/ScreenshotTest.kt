@@ -11,6 +11,8 @@ import com.smizflark.aigile.messenger.ui.ChatScreen
 import com.smizflark.aigile.messenger.ui.ChatsScreen
 import com.smizflark.aigile.messenger.ui.ConnectScreen
 import com.smizflark.aigile.messenger.ui.MessengerTheme
+import com.smizflark.aigile.messenger.ui.Appearance
+import com.smizflark.aigile.messenger.ui.TextSize
 import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
 import kotlinx.coroutines.runBlocking
@@ -55,6 +57,10 @@ class ScreenshotTest {
     @Test fun chatsDark() = shot("chats", true) { ChatsScreen(repo, {}, {}, {}) }
     @Test fun chatLight() { prime(lead()); shot("chat", false) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead(), onBack = {}) } }
+    @Test fun chatHuge() {
+        prime(lead()); Appearance.textSize = TextSize.Huge
+        try { shot("chat_huge", false) { ChatScreen(repo, lead(), onBack = {}) } } finally { Appearance.textSize = TextSize.Normal }
+    }
     @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun settingsLight() = shot("settings", false) { SettingsScreen(repo, {}, {}) }

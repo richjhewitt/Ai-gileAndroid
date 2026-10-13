@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -32,6 +33,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.smizflark.aigile.messenger.data.Store
@@ -66,11 +69,38 @@ enum class Look(val id: String, val label: String) {
 object Appearance {
     var look by mutableStateOf<Look?>(null)
     var phoneColours by mutableStateOf(true)
+    var textSize by mutableStateOf(TextSize.Normal)
 
     fun load(store: Store) {
-        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours }
+        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize) }
     }
 }
+
+/* ---------- text size ---------- */
+
+/** The text sizes in Settings (AII-66); [id] is what the Store keeps. */
+enum class TextSize(val id: String, val label: String, val scale: Float) {
+    Small("small", "Small", 0.85f),
+    Normal("normal", "Normal", 1f),
+    Large("large", "Large", 1.15f),
+    Huge("huge", "Huge", 1.3f);
+
+    companion object { fun of(id: String) = entries.firstOrNull { it.id == id } ?: Normal }
+}
+
+private fun TextStyle.times(k: Float) = copy(
+    fontSize = if (fontSize.isSpecified) fontSize * k else fontSize,
+    lineHeight = if (lineHeight.isSpecified) lineHeight * k else lineHeight,
+)
+
+/** Every text style grown or shrunk by [k], so chats, messages and the rest of the app follow the setting. */
+fun scaled(t: Typography, k: Float): Typography = if (k == 1f) t else t.copy(
+    displayLarge = t.displayLarge.times(k), displayMedium = t.displayMedium.times(k), displaySmall = t.displaySmall.times(k),
+    headlineLarge = t.headlineLarge.times(k), headlineMedium = t.headlineMedium.times(k), headlineSmall = t.headlineSmall.times(k),
+    titleLarge = t.titleLarge.times(k), titleMedium = t.titleMedium.times(k), titleSmall = t.titleSmall.times(k),
+    bodyLarge = t.bodyLarge.times(k), bodyMedium = t.bodyMedium.times(k), bodySmall = t.bodySmall.times(k),
+    labelLarge = t.labelLarge.times(k), labelMedium = t.labelMedium.times(k), labelSmall = t.labelSmall.times(k),
+)
 
 fun isDark(look: Look, systemDark: Boolean) = when (look) {
     Look.System -> systemDark
@@ -115,7 +145,7 @@ fun MessengerTheme(store: Store? = null, content: @Composable () -> Unit) {
         }
         window.decorView.setBackgroundColor(scheme.background.toArgb())
     }
-    MaterialTheme(colorScheme = scheme, content = content)
+    MaterialTheme(colorScheme = scheme, typography = scaled(Typography(), Appearance.textSize.scale), content = content)
 }
 
 /* ---------- Settings: Look ---------- */
@@ -147,5 +177,21 @@ fun AppearanceSettings(store: Store) {
         }
         Switch(checked = Appearance.phoneColours, onCheckedChange = { Appearance.phoneColours = it; store.phoneColours = it },
             modifier = Modifier.testTag("phoneColours"))
+    }
+    Text("Text size", style = MaterialTheme.typography.titleMedium)
+    Column(Modifier.selectableGroup()) {
+        TextSize.entries.forEach { t ->
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                    .selectable(selected = Appearance.textSize == t, role = Role.RadioButton) {
+                        Appearance.textSize = t; store.textSize = t.id
+                    }
+                    .testTag("textSize:${t.id}"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = Appearance.textSize == t, onClick = null)
+                Text(t.label, Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
+            }
+        }
     }
 }
