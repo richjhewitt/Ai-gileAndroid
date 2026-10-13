@@ -88,7 +88,7 @@ private val dayMonth = DateTimeFormatter.ofPattern("d MMM")
 fun instant(iso: String?): Instant? = runCatching { Instant.parse(iso) }.getOrNull()
 
 /** Chat list time: "now", "5m", "14:02", "Yesterday", "3 Oct". */
-fun shortTime(iso: String?, now: Instant = Instant.now()): String {
+fun shortTime(iso: String?, now: Instant = com.smizflark.aigile.messenger.data.Now.instant()): String {
     val t = instant(iso) ?: return ""
     val zone = ZoneId.systemDefault()
     val mins = ChronoUnit.MINUTES.between(t, now)
@@ -110,7 +110,7 @@ fun fullTime(iso: String?, zone: ZoneId = ZoneId.systemDefault()): String =
 fun clock(iso: String?): String = instant(iso)?.let { hm.format(it.atZone(ZoneId.systemDefault())) } ?: ""
 
 /** Day separator in a chat: "Today", "Yesterday", "Mon 3 Oct". */
-fun dayLabel(iso: String?, today: LocalDate = LocalDate.now()): String {
+fun dayLabel(iso: String?, today: LocalDate = com.smizflark.aigile.messenger.data.Now.today()): String {
     val d = instant(iso)?.atZone(ZoneId.systemDefault())?.toLocalDate() ?: return ""
     return when (d) {
         today -> Words.today

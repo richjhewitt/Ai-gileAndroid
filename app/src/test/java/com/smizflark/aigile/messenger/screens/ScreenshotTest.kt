@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.smizflark.aigile.messenger.data.ChatRef
+import com.smizflark.aigile.messenger.data.Now
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.ui.ChatScreen
 import com.smizflark.aigile.messenger.ui.ChatsScreen
@@ -25,6 +26,7 @@ import com.smizflark.aigile.messenger.ui.EmptyState
 import com.smizflark.aigile.messenger.ui.LockedScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -44,10 +46,15 @@ class ScreenshotTest {
     private lateinit var chats: List<ChatRef>
 
     @Before fun setUp() {
+        // AII-82: same time and place on every run, so a shot only changes when the screen does.
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Europe/London"))
+        Now.clock = java.time.Clock.fixed(java.time.Instant.parse("2026-10-13T13:00:00Z"), java.time.ZoneId.of("Europe/London"))
         repo = Repo(ApplicationProvider.getApplicationContext<Application>())
         repo.startDemo()
         chats = runBlocking { repo.chats() }
     }
+
+    @After fun tearDown() { Now.clock = java.time.Clock.systemDefaultZone() }
 
     private fun shot(name: String, dark: Boolean, content: @androidx.compose.runtime.Composable () -> Unit) {
         RuntimeEnvironment.setQualifiers(if (dark) "+night" else "+notnight")
@@ -64,7 +71,7 @@ class ScreenshotTest {
     @Test fun connectDark() = shot("connect", true) { ConnectScreen(repo, null) {} }
     @Test fun chatsLight() = shot("chats", false) { ChatsScreen(repo, {}, {}, {}) }
     @Test fun pausedLight() {
-        repo.store.pausedUntil = java.time.LocalDate.now().plusDays(1).atTime(8, 0).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        repo.store.pausedUntil = Now.today().plusDays(1).atTime(8, 0).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         shot("chats_paused", false) { ChatsScreen(repo, {}, {}, {}) }
         repo.store.pausedUntil = 0L
     }

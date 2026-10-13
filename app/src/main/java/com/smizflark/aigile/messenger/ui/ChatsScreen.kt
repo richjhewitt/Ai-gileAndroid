@@ -74,6 +74,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.News
+import com.smizflark.aigile.messenger.data.Now
 import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Repo
@@ -147,7 +148,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     Box {
                         IconButton(onClick = { pauseMenu = true }, modifier = Modifier.testTag("pause")) { Icon(Icons.Default.NotificationsOff, stringResource(R.string.pause_alerts)) }
                         DropdownMenu(expanded = pauseMenu, onDismissRequest = { pauseMenu = false }) {
-                            val now = System.currentTimeMillis()
+                            val now = Now.millis()
                             listOf(R.string.pause_1h to Pause.oneHour(now), R.string.pause_4h to Pause.fourHours(now), R.string.pause_tomorrow to Pause.untilTomorrow(now)).forEach { (label, end) ->
                                 DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = { pauseMenu = false; pausedUntil = end; repo.store.pausedUntil = end })
                             }
@@ -168,7 +169,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
             modifier = Modifier.fillMaxSize().padding(pad),
         ) {
             LazyColumn(Modifier.fillMaxSize()) {
-                if (Pause.paused(System.currentTimeMillis(), pausedUntil)) item {
+                if (Pause.paused(Now.millis(), pausedUntil)) item {
                     val at = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
                         .format(java.time.Instant.ofEpochMilli(pausedUntil).atZone(java.time.ZoneId.systemDefault()))
                     Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer).padding(start = 16.dp, end = 8.dp).testTag("pausedBanner"),
