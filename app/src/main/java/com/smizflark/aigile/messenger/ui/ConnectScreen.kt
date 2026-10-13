@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,11 +31,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import com.smizflark.aigile.messenger.data.Mapper
@@ -49,6 +53,10 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
     var busy by rememberSaveable { mutableStateOf(false) }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    // Something copied? Only its type is checked here (no "pasted" notice); the text is read when you tap the button.
+    val clipboard = LocalClipboardManager.current
+    var hasClip by rememberSaveable { mutableStateOf(false) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { hasClip = clipboard.hasText() }
 
     fun connect() {
         if (url.isBlank()) { error = "Type your board's address first."; return }
@@ -84,6 +92,16 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
         ) {
             Icon(Icons.Default.QrCodeScanner, null); Spacer(Modifier.size(8.dp)); Text("Scan QR code")
         }
+        if (hasClip) OutlinedButton(
+            onClick = {
+                val pair = pairingIn(clipboard.getText()?.text)
+                if (pair == null) error = "What you copied isn't a pairing link. Copy it again from the board's Setup > Phones."
+                else { url = pair.first; key = pair.second; connect() }
+            },
+            modifier = Modifier.fillMaxWidth().height(52.dp).testTag("paste-link"), enabled = !busy,
+        ) {
+            Icon(Icons.Default.ContentPaste, null); Spacer(Modifier.size(8.dp)); Text("Use copied link")
+        }
         Text("Or type it in:", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         OutlinedTextField(
             value = url, onValueChange = { url = it; error = null },
@@ -110,4 +128,10 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
             Text("Try the demo (no board needed)")
         }
     }
+}
+
+/** A pairing link anywhere in copied text (on its own, or inside a message): address to key, or null (AII-54). */
+fun pairingIn(text: String?): Pair<String, String>? {
+    val link = Regex("(?i)aigile://pair\\?\\S+").find(text ?: return null)?.value ?: return null
+    return Mapper.parsePairing(link.trimEnd('.', ',', ')', '>', '"', '\''))
 }
