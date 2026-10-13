@@ -63,6 +63,7 @@ import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.Pace
+import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.work.CheckWorker
 import com.smizflark.aigile.messenger.data.pinFirst
@@ -84,6 +85,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     fun counts() = chats.associate { it.key to News.unread(it, seen[it.key], repo.store.cachedConversation(it.key)) }
     var unread by remember { mutableStateOf(counts()) }
     val muted = remember { repo.store.muted() }
+    var outbox by remember { mutableStateOf(repo.store.outbox()) }
     var error by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
@@ -96,9 +98,10 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     /** Fetches the list; true when a chat changed. */
     suspend fun load(): Boolean {
         val before = chats
+        outbox = repo.store.outbox()   // first, so it shows at once even with no signal
         try { chats = repo.chats(); error = null }
         catch (e: Exception) { error = e.message }
-        seen = repo.store.seen(); unread = counts(); loaded = true
+        seen = repo.store.seen(); unread = counts(); outbox = repo.store.outbox(); loaded = true
         return chats != before
     }
 
@@ -170,8 +173,10 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     Text("No chats yet. Tap New message to write to a team.", Modifier.padding(24.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                val unsent = outbox.groupBy { it.chat }
                 items(pinFirst(shown, pinned), key = { it.key }) { c ->
-                    ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, onRead = { markRead(listOf(c)) },
+                    ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, unsent[c.key].orEmpty(),
+                        onRead = { markRead(listOf(c)) },
                         onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned }) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
@@ -184,7 +189,8 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
 /** One chat; long-press for Mark as read and Pin to top (AII-25, AII-47). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, onRead: () -> Unit, onPin: () -> Unit, onClick: () -> Unit) {
+private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>,
+                    onRead: () -> Unit, onPin: () -> Unit, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     Row(
         Modifier.fillMaxWidth().combinedClickable(onClickLabel = "Open chat", role = Role.Button, onClick = onClick,
@@ -212,9 +218,15 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
                     color = if (fresh) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val waiting = unsentLabel(unsent)
                 Text(
-                    c.subtitle,
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    waiting ?: c.subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = when {
+                        waiting == null -> MaterialTheme.colorScheme.onSurfaceVariant
+                        unsent.any { it.failed } -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.primary
+                    },
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
                 )
                 if (c.waiting > 0) Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
@@ -227,4 +239,11 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
             }
         }
     }
+}
+
+/** What a chat row says about messages typed on the phone that haven't reached the board (AII-52); null when none. */
+fun unsentLabel(unsent: List<Pending>): String? {
+    if (unsent.isEmpty()) return null
+    val failed = unsent.count { it.failed }
+    return if (failed > 0) "⚠️ $failed not sent: tap to retry" else "⏳ ${unsent.size} waiting to send"
 }
