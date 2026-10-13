@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 /* ---------- wire: what the board's API returns (unknown fields are ignored) ---------- */
 
 @Serializable
-data class Meta(val owner: String = "Owner")
+data class Meta(val owner: String = "Owner", val sealed: Int = 0)
 
 /** One row of GET /api/chats: a project's lead, or the 🧭 Lead Scrum Master (watchman = true). */
 @Serializable

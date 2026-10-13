@@ -26,17 +26,18 @@ class Repo(context: Context) {
     private val sending = Mutex()
 
     val source: ChatSource
-        get() = if (store.demo) demo else board?.takeIf { it.base == store.url } ?: BoardSource(store.url, store.key).also { board = it }
+        get() = if (store.demo) demo else board?.takeIf { it.base == store.url } ?: BoardSource(store.url, store.key, deviceId = store.device).also { board = it }
 
     /** The board connection (for pictures), or null in the demo. */
     val boardSource: BoardSource? get() = if (store.demo) null else source as? BoardSource
 
-    /** Checks an address and key by asking the board who owns it; saves them when it answers. */
-    suspend fun connect(url: String, key: String): String {
-        val b = BoardSource(Mapper.normaliseUrl(url), key.trim())
+    /** Checks an address and key ("id:key" from a sealed pairing) by asking the board who owns it; saves them when it answers. */
+    suspend fun connect(url: String, credential: String): String {
+        val (device, key) = Mapper.splitCredential(credential)
+        val b = BoardSource(Mapper.normaliseUrl(url), key, deviceId = device)
         val owner = b.owner()
         b.chats()   // a board that answers /api/meta but refuses chats would only fail later
-        store.demo = false; store.url = b.base; store.key = key.trim(); store.owner = owner
+        store.demo = false; store.url = b.base; store.key = key; store.device = device; store.owner = owner
         board = b
         return owner
     }

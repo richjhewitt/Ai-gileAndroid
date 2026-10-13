@@ -119,7 +119,10 @@ object Mapper {
     /** Did a change in Settings move the phone to another board (so the old board's cache must go)? */
     fun boardChanged(wasDemo: Boolean, oldUrl: String, newUrl: String) = wasDemo || oldUrl != newUrl
 
-    /** aigile://pair?url=...&key=... (the board's pairing QR) -> url to key. */
+    /**
+     * The board's pairing QR -> url to credential. aigile://pair?url=&id=&key= (sealed, AII-19) gives "id:key";
+     * the older aigile://pair?url=&key= gives the key alone.
+     */
     fun parsePairing(text: String): Pair<String, String>? {
         val t = text.trim()
         if (!t.startsWith("aigile://pair", ignoreCase = true)) return null
@@ -130,6 +133,16 @@ object Mapper {
         }.toMap()
         val url = params["url"] ?: return null
         val key = params["key"] ?: params["token"] ?: return null
-        return normaliseUrl(url) to key
+        return normaliseUrl(url) to credential(params["id"], key)
+    }
+
+    /** One string for the key box: "id:key" when the board gave a device id. */
+    fun credential(id: String?, key: String): String = if (id.isNullOrBlank()) key else "${id.trim()}:$key"
+
+    /** "id:key" -> device id to key; a plain key -> "" to key. Device ids are hex, keys base64url, so ':' never clashes. */
+    fun splitCredential(text: String): Pair<String, String> {
+        val t = text.trim()
+        val id = t.substringBefore(':', "")
+        return if (id.isNotEmpty() && Regex("^[0-9A-Fa-f]+$").matches(id)) id to t.substringAfter(':') else "" to t
     }
 }

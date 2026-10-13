@@ -4,6 +4,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -49,7 +51,10 @@ class BoardSource(
     client: OkHttpClient? = null,
     /** Header sent to a board on this PC in tests; the board only answers to "localhost". */
     private val hostHeader: String? = null,
+    deviceId: String = "",
 ) : ChatSource {
+
+    companion object { const val SEALED = "/api/phone/sealed" }
 
     val http: OkHttpClient = client ?: OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
@@ -58,12 +63,53 @@ class BoardSource(
 
     private var ownerName: String? = null
 
-    private suspend fun call(method: String, path: String, body: JsonObject? = null): String = withContext(Dispatchers.IO) {
+    /** Device id from the pairing QR; with it the link is sealed once /api/meta says "sealed": 1. */
+    private val deviceId: String = deviceId.trim()
+    private val link: SealedLink? = if (this.deviceId.isNotEmpty() && key.isNotBlank())
+        runCatching { SealedLink(this.deviceId, key) }.getOrNull() else null
+    /** null until asked: does this board take sealed calls? */
+    @Volatile private var sealedOn: Boolean? = if (link == null) false else null
+    private val probe = Mutex()
+
+    /** True when calls go through POST /api/phone/sealed. */
+    suspend fun sealed(): Boolean {
+        sealedOn?.let { return it }
+        return probe.withLock {
+            sealedOn ?: run {
+                // Ask /api/meta sealed first so the key never travels; an older board has no sealed endpoint (404).
+                val on = try {
+                    val meta = json.decodeFromString<Meta>(sealedCall("GET", "/api/meta", null))
+                    meta.sealed == 1
+                } catch (e: BoardError) { if (e.code == 404 || e.code == 405) false else throw e }
+                sealedOn = on
+                on
+            }
+        }
+    }
+
+    private suspend fun call(method: String, path: String, body: JsonObject? = null): String =
+        if (sealed()) sealedCall(method, path, body) else plainCall(method, path, body)
+
+    private suspend fun plainCall(method: String, path: String, body: JsonObject?): String = exchange(method, path, body?.toString(), bearer = true)
+
+    /** One inner call, sealed with S: only the device id travels in the clear. */
+    private suspend fun sealedCall(method: String, path: String, body: JsonObject?): String {
+        val l = link ?: throw BoardError("This phone has no sealed pairing. Pair the phone again.")
+        val text = exchange("POST", SEALED, l.request(method, path, body), bearer = false)
+        val inner = try { l.response(text) }
+            catch (e: Exception) { throw BoardError("The board's answer didn't open with this phone's key. Pair the phone again.") }
+        val b = inner.body.toString()
+        if (inner.status !in 200..299) throw BoardError(explain(inner.status, b), inner.status)
+        return b
+    }
+
+    private suspend fun exchange(method: String, path: String, body: String?, bearer: Boolean): String = withContext(Dispatchers.IO) {
         val rb = Request.Builder().url(base + path)
-        if (key.isNotBlank()) rb.header("Authorization", "Bearer $key")
+        if (bearer && key.isNotBlank()) rb.header("Authorization", "Bearer $key")
+        if (!bearer) link?.let { rb.header("X-Aigile-Device", it.deviceId) }
         hostHeader?.let { rb.header("Host", it) }
         rb.header("Accept", "application/json")
-        if (body != null) rb.method(method, body.toString().toRequestBody("application/json".toMediaType()))
+        if (body != null) rb.method(method, body.toRequestBody("application/json".toMediaType()))
         else rb.method(method, null)
         try {
             http.newCall(rb.build()).execute().use { r ->
