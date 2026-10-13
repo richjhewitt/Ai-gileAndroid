@@ -106,6 +106,14 @@ class Store(context: Context) {
 
     /** Saved chats, seen marks and the outbox: they belong to one board. Settings stay. */
     fun clearCache() { dir.listFiles()?.forEach { it.delete() } }
+    /* ---------- drafts: half-typed replies, per chat ---------- */
+
+    fun draft(chat: String): String = read<Map<String, String>>("drafts.json")?.get(chat) ?: ""
+    fun saveDraft(chat: String, text: String) {
+        val all = read<Map<String, String>>("drafts.json") ?: emptyMap()
+        val next = Drafts.put(all, chat, text)
+        if (next != all) write("drafts.json", next)
+    }
 
     /* ---------- seen: the newest message from them you have looked at, per chat ---------- */
 
