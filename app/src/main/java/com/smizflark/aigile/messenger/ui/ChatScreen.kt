@@ -266,7 +266,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         list.scrollToItem(i + 1); flash = openAt; delay(1500); if (flash == openAt) flash = null   // +1: the spacer at the bottom
     }
 
-    if (details) ChatDetails(ref, repo, chatInfo(convo)) { details = false; muted = ref.key in repo.store.muted() }
+    if (details) ChatDetails(ref, repo, chatInfo(convo), onFind = { details = false; finding = true }) { details = false; muted = ref.key in repo.store.muted() }
     Scaffold(
         topBar = {
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },

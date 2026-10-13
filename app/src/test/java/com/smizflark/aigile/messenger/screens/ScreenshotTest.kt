@@ -296,6 +296,16 @@ class ScreenshotTest {
         rule.waitForIdle()
         rule.onNodeWithTag("details-pin").fetchSemanticsNode()
     }
+    /** AII-128: chat details, Find in this chat: the sheet closes and the find bar opens. */
+    @Test fun detailsFindOpensTheFindBar() {
+        prime(lead())
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onAllNodes(androidx.compose.ui.test.hasText("AI-gile"), useUnmergedTree = true).onFirst().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("details-find").performClick()
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("chat-details").fetchSemanticsNodes().isEmpty() }
+        rule.onNodeWithContentDescription("Close find").assertExists()
+    }
     /** AII-80: tap the chat name; the details sheet opens (dark, as the phone shows it at night). */
     @Test fun chatDetailsDark() {
         prime(lead()); RuntimeEnvironment.setQualifiers("+night")

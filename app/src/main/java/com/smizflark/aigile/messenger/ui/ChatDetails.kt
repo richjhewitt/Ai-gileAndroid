@@ -1,5 +1,9 @@
 package com.smizflark.aigile.messenger.ui
 
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,7 +42,7 @@ import kotlinx.coroutines.launch
 /** Tap the chat name (AII-80): the team, its open cards, the pictures sent here, and the Mute and Pin switches. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onClose: () -> Unit) {
+fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, onClose: () -> Unit) {
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var pinned by remember { mutableStateOf(ref.key in repo.store.pinned) }
     var shown by remember { mutableStateOf<CardDetail?>(null) }   // AII-85: the open card tapped, shown under its row
@@ -52,6 +56,10 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onClose: () -> Unit) {
                     Text(ref.name, style = MaterialTheme.typography.titleLarge)
                     Text(ref.subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
+            // AII-128: straight to the find bar from here.
+            if (onFind != null) OutlinedButton(onClick = onFind, modifier = Modifier.padding(top = 12.dp).testTag("details-find")) {
+                Icon(Icons.Default.Search, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.find_in_chat))
             }
             SwitchRow(stringResource(R.string.mute_alerts), muted, "details-mute") {
                 muted = it; repo.store.setMuted(ref.key, it)
