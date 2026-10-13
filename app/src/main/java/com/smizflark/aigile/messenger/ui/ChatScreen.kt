@@ -149,7 +149,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
         }
     }
 
-    val items = rows(convo, pending, owner).asReversed()
+    val items = remember(convo, pending, owner) { rows(convo, pending, owner).asReversed() }
     val targets = convo?.targets.orEmpty()
 
     Scaffold(
