@@ -34,6 +34,9 @@
             </intent-filter>
         </activity>
 
+        <!-- Reply button on message alerts (AII-24) -->
+        <receiver android:name=".work.ReplyReceiver" android:exported="false" />
+
         <!-- QR scanner in portrait (the library defaults to landscape) -->
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
