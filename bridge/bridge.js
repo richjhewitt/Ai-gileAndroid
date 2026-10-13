@@ -23,7 +23,8 @@ const ROUTES = [
   ['POST', `/api/dms/contacts/${SEG}/messages`],
   ['POST', `/api/projects/${SEG}/cards`],
   ['POST', `/api/projects/${SEG}/cards/${SEG}/comments`],
-  ['GET', `/api/avatars/(badge/)?[A-Za-z0-9_.-]+`],
+  ['GET', `/api/avatars/(badge(/${SEG})+|[A-Za-z0-9_.-]+)`],
+  ['GET', `/api/projects/${SEG}/logo`],
 ].map(([method, p]) => ({ method, re: new RegExp(`^${p}$`) }));
 
 function allowed(method, pathname) {

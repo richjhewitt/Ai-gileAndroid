@@ -51,7 +51,10 @@ test('only Messenger routes are allowed', () => {
   assert.ok(allowed('GET', '/api/meta'));
   assert.ok(allowed('GET', '/api/chats/idea-playground'));
   assert.ok(allowed('POST', '/api/projects/ai-gile/cards/AIG-1/comments'));
-  assert.ok(allowed('GET', '/api/avatars/badge/fox.svg'));
+  assert.ok(allowed('GET', '/api/avatars/fox.png'));
+  assert.ok(allowed('GET', '/api/avatars/badge/cat/teal/headphones'));
+  assert.ok(allowed('GET', '/api/projects/tunio/logo'));
+  assert.ok(!allowed('POST', '/api/projects/tunio/logo'));
   assert.ok(!allowed('DELETE', '/api/dms/contacts/abc'));
   assert.ok(!allowed('POST', '/api/chats/idea-playground'));
   assert.ok(!allowed('GET', '/api/projects'));
