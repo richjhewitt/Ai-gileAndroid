@@ -19,6 +19,7 @@ const ROUTES = [
   ['GET', '/api/chats'],
   ['GET', `/api/chats/${SEG}`],
   ['POST', '/api/chats/_watchman'],
+  ['POST', `/api/chats/${SEG}/seen`],   // read marks shared with the board (AII-44)
   ['GET', '/api/dms/contacts'],
   ['GET', `/api/dms/contacts/${SEG}/messages`],
   ['POST', `/api/dms/contacts/${SEG}/messages`],

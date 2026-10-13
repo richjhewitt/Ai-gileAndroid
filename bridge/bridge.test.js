@@ -62,6 +62,8 @@ test('only Messenger routes are allowed', () => {
   assert.ok(!allowed('PATCH', '/api/projects/x/cards/X-1'));
   assert.ok(allowed('GET', '/api/projects/ai-gile/cards/AIG-12'));   // one card (AII-45)
   assert.ok(!allowed('GET', '/api/projects/ai-gile/cards'));
+  assert.ok(allowed('POST', '/api/chats/ai-gile/seen'));   // read marks (AII-44)
+  assert.ok(!allowed('GET', '/api/chats/ai-gile/seen'));
   // pictures (AII-27)
   assert.ok(allowed('POST', '/api/projects/ai-gile/attachments'));
   assert.ok(allowed('POST', '/api/projects/_watchman/attachments'));
