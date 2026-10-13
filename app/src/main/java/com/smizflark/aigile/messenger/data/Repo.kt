@@ -75,6 +75,7 @@ class Repo(context: Context) {
 
     /** Read up to [at] here, and on the board for a lead chat (AII-44). Only a mark that moved on is sent. */
     suspend fun seen(ref: ChatRef, at: String?) {
+        com.smizflark.aigile.messenger.work.ChatNotifier.clear(app, ref.key)   // opened or read: its notification goes (AII-65)
         if (at == null) return
         val moved = at > (store.seen()[ref.key] ?: "")
         store.markSeen(ref.key, at)
