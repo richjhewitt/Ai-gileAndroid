@@ -58,4 +58,6 @@
     <string name="time_minutes">%1$d min</string>
     <string name="today">Vandaag</string>
     <string name="yesterday">Gisteren</string>
+    <string name="copy">Kopiëren</string>
+    <string name="copied">Gekopieerd</string>
 </resources>

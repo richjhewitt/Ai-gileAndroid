@@ -59,4 +59,6 @@
     <string name="time_minutes">%1$dm</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
+    <string name="copy">Copy</string>
+    <string name="copied">Copied</string>
 </resources>

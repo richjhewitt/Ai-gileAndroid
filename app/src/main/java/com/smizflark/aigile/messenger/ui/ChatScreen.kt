@@ -67,6 +67,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import com.smizflark.aigile.messenger.R
+import android.os.Build
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 
 private sealed interface Row {
     val id: String
@@ -221,7 +228,7 @@ private fun CardHeader(r: Row.Card, chosen: Boolean, onClick: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun MessageBubble(r: Row.Msg, ref: ChatRef, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
     val b = r.b
@@ -232,17 +239,31 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, onOption: (String) -> Unit, 
         else -> cs.surfaceContainerHigh
     }
     val fg = if (b.mine) cs.onPrimaryContainer else cs.onSurface
+    val shown = Markdown.render(b.text, cs.surfaceVariant, cs.primary)
+    // AII-43: long-press a bubble to copy what it shows (without the ** marks).
+    var menu by remember { mutableStateOf(false) }
+    val clipboard = LocalClipboardManager.current
+    val ctx = LocalContext.current
     Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalAlignment = if (b.mine) Alignment.End else Alignment.Start) {
         Surface(
             color = bg,
             shape = RoundedCornerShape(18.dp, 18.dp, if (b.mine) 4.dp else 18.dp, if (b.mine) 18.dp else 4.dp),
-            modifier = Modifier.widthIn(max = 320.dp).testTag(if (b.mine) "mine" else "theirs"),
+            modifier = Modifier.widthIn(max = 320.dp).testTag(if (b.mine) "mine" else "theirs")
+                .combinedClickable(onClick = {}, onLongClick = { menu = true }),
         ) {
+            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
+                    menu = false
+                    clipboard.setText(AnnotatedString(shown.text))
+                    // Android 13+ shows its own "copied" note; a toast as well would say it twice.
+                    if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
+                })
+            }
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
                 if (!b.mine && ref.kind != Kind.FRIEND && b.author.isNotBlank()) {
                     Text(b.author, style = MaterialTheme.typography.labelMedium, color = cs.primary)
                 }
-                Text(Markdown.render(b.text, cs.surfaceVariant, cs.primary), style = MaterialTheme.typography.bodyLarge, color = fg)
+                Text(shown, style = MaterialTheme.typography.bodyLarge, color = fg)
                 Text(
                     when (b.state) {
                         SendState.SENDING -> stringResource(R.string.sending)
