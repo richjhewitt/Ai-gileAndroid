@@ -119,6 +119,12 @@ class Store(context: Context) {
         if (next != all) write("drafts.json", next)
     }
 
+    /* ---------- muted chats: no alerts from them (AII-48) ---------- */
+
+    fun muted(): Set<String> = prefs.getStringSet("muted", null)?.toSet() ?: emptySet()
+    fun setMuted(chat: String, on: Boolean) =
+        prefs.edit().putStringSet("muted", if (on) muted() + chat else muted() - chat).apply()
+
     /* ---------- seen: the newest message from them you have looked at, per chat ---------- */
 
     fun seen(): Map<String, String> = read("seen.json") ?: emptyMap()
