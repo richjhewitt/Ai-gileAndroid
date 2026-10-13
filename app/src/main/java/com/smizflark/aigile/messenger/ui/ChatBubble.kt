@@ -119,7 +119,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -179,7 +179,9 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 val (forwarded, body) = Forward.split(b.text)
                 if (forwarded) Text(stringResource(R.string.forwarded_label), style = MaterialTheme.typography.labelSmall, color = fg.copy(alpha = 0.6f), modifier = Modifier.testTag("forwarded"))
                 val (quoted, rest) = Quote.split(body)
-                if (quoted != null) QuoteBar(Markdown.render(quoted, cs.surfaceVariant, cs.primary), fg)
+                // AII-99: tapping the quote jumps to the message it quotes.
+                if (quoted != null) QuoteBar(Markdown.render(quoted, cs.surfaceVariant, cs.primary), fg,
+                    Modifier.clickable(onClickLabel = stringResource(R.string.show_quoted)) { onQuote(quoted) }.testTag("quote"))
                 if (quoted != null && rest.isNotEmpty()) Text(Markdown.render(rest, cs.surfaceVariant, cs.primary, cards, onCard), style = MaterialTheme.typography.bodyLarge, color = fg)
                 else if (quoted == null && body.isNotEmpty()) Text(if (forwarded) Markdown.render(body, cs.surfaceVariant, cs.primary, cards, onCard) else shown, style = MaterialTheme.typography.bodyLarge, color = fg)
                 Text(

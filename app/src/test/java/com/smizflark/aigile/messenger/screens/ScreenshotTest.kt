@@ -3,6 +3,9 @@ package com.smizflark.aigile.messenger.screens
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -97,6 +100,21 @@ class ScreenshotTest {
         rule.onNodeWithTag("find-field").performTextInput("phone")
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("../docs/shots/chat_find_light.png")
+    }
+    /** AII-99: reply to a message, then tap the quote: the quoted message gets outlined. */
+    @Test fun quoteJumpLight() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onAllNodesWithTag("theirs").onLast().performTouchInput { longClick() }
+        rule.onNodeWithTag("reply").performClick()
+        rule.onNodeWithTag("input").performTextInput("Yes, thanks")
+        rule.onNodeWithTag("send").performClick()
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("quote", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        rule.mainClock.autoAdvance = false
+        rule.onAllNodesWithTag("quote", useUnmergedTree = true).onFirst().performClick()
+        rule.mainClock.advanceTimeBy(1_000)
+        rule.onRoot().captureRoboImage("../docs/shots/chat_quote_jump_light.png")
+        rule.mainClock.autoAdvance = true
     }
     /** AII-80: tap the chat name; the details sheet opens (dark, as the phone shows it at night). */
     @Test fun chatDetailsDark() {

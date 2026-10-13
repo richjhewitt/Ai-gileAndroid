@@ -6,6 +6,7 @@
     <string name="widget_no_chats">Nog geen chats</string>
     <string name="copy">Kopiëren</string>
     <string name="reply">Antwoorden</string>
+    <string name="show_quoted">Toon het geciteerde bericht</string>
     <string name="forward">Doorsturen</string>
     <string name="forward_to">Doorsturen naar…</string>
     <string name="forward_search">Chats zoeken</string>

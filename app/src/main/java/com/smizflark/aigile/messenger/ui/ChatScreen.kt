@@ -306,6 +306,13 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         }
     }
     val unread = if (atBottom) 0 else unreadBelow(convo?.bubbles.orEmpty(), seenNewest)
+    // AII-99: tap a quote, the chat scrolls to the quoted message and outlines it for a moment.
+    var flash by remember { mutableStateOf<String?>(null) }
+    fun jumpToQuote(quoted: String, from: String) {
+        val i = Quote.source(quoted, items.indexOfFirst { it.id == from }, items.map { (it as? Row.Msg)?.b }, owner) ?: return
+        val id = items[i].id
+        scope.launch { list.animateScrollToItem(i + 1); flash = id; delay(1500); if (flash == id) flash = null }   // +1: the spacer at the bottom
+    }
 
     if (details) ChatDetails(ref, repo, chatInfo(convo)) { details = false; muted = ref.key in repo.store.muted() }
     Scaffold(
@@ -361,14 +368,15 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 onOpen = if (focus == null && ref.kind == Kind.LEAD) { { onOpenCard(r.card) } } else null) {
                                 if (targets.any { it.id == r.card }) { target = r.card; picked = true }
                             }
-                            is Row.Msg -> MessageBubble(r, ref, repo, mark = if (r.id !in hitIds) 0 else if (hitIds.getOrNull(current) == r.id) 2 else 1, onReply = { q ->
+                            is Row.Msg -> MessageBubble(r, ref, repo, mark = if (r.id == flash) 2 else if (r.id !in hitIds) 0 else if (hitIds.getOrNull(current) == r.id) 2 else 1, onReply = { q ->
                                 quoting = Quote.of(if (q.mine) owner else q.author, q.text, q.pics.size)
                                 // A reply to a team message goes to its card, like answering it on the board.
                                 if (ref.kind == Kind.LEAD && focus == null && q.card != null && targets.any { it.id == q.card }) { target = q.card; picked = true }
                             }, onForward = { forwarding = it.text }, cards = if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onCard = onOpenCard,
                                 onOption = { send(it, r.b.card) },
                                 onRetry = { p -> deliver(p) },
-                                onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) })
+                                onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) },
+                                onQuote = { q -> jumpToQuote(q, r.id) })
                         }
                     }
                     if (convo == null && error == null) item { Text(stringResource(R.string.loading), Modifier.padding(24.dp)) }

@@ -176,8 +176,8 @@ internal fun CardHeader(r: Row.Card, chosen: Boolean, onOpen: (() -> Unit)?, onC
 
 /** A quoted line (AII-60): a coloured bar, then the quote, a little quieter than the message. */
 @Composable
-internal fun QuoteBar(text: AnnotatedString, fg: androidx.compose.ui.graphics.Color) {
-    Row(Modifier.padding(bottom = 4.dp).height(androidx.compose.foundation.layout.IntrinsicSize.Min)) {
+internal fun QuoteBar(text: AnnotatedString, fg: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier) {
+    Row(modifier.padding(bottom = 4.dp).height(androidx.compose.foundation.layout.IntrinsicSize.Min)) {
         Box(Modifier.width(3.dp).fillMaxHeight().background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
         Text(text, style = MaterialTheme.typography.bodyMedium, color = fg.copy(alpha = 0.75f), maxLines = 3,
             overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp))
