@@ -15,6 +15,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Mapper.kt: turns the board's answers into what the screens show.
 - data/Models.kt: data classes for the board's chats and messages.
 - data/News.kt: what is new since you last looked, and quiet hours.
+- data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
 - data/Outbox.kt: outbox state changes (retry / delete failed messages).
 - data/Pace.kt: pacing of sends / checks.
 - data/Pause.kt: pause alerts for a while.

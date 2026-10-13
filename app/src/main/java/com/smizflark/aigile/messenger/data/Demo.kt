@@ -6,7 +6,7 @@ import java.time.temporal.ChronoUnit
 
 /** Try the app with no board: a few made-up chats that answer back. Nothing leaves the phone. */
 class DemoSource : ChatSource {
-    private fun ago(min: Long) = Instant.now().minus(min, ChronoUnit.MINUTES).toString()
+    private fun ago(min: Long) = Now.instant().minus(min, ChronoUnit.MINUTES).toString()
 
     private val threads = mutableMapOf(
         "ai-gile" to WireThread(
@@ -73,7 +73,7 @@ class DemoSource : ChatSource {
 
     override suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload>): String? {
         delay(300)
-        val now = Instant.now().toString()
+        val now = Now.instant().toString()
         // No board here: the demo keeps sent pictures as files on the phone so they still show.
         val att = files.map { f ->
             val out = java.io.File.createTempFile("demo-", "-" + f.name).apply { writeBytes(f.bytes) }
@@ -89,7 +89,7 @@ class DemoSource : ChatSource {
         val msgs = t.messages.toMutableList()
         msgs += WireMsg(card, title, "Rich", text, now, mine = true, attachments = att)
         // The demo lead answers at once, so you can see a reply arrive.
-        msgs += WireMsg(card, title, t.lead ?: "🧭 Lead Scrum Master", if (ref.kind == Kind.WATCHMAN) "- Passed on to the AI-gile team" else "- Got it: on it now", Instant.now().plusSeconds(1).toString())
+        msgs += WireMsg(card, title, t.lead ?: "🧭 Lead Scrum Master", if (ref.kind == Kind.WATCHMAN) "- Passed on to the AI-gile team" else "- Got it: on it now", Now.instant().plusSeconds(1).toString())
         threads[ref.id] = t.copy(
             messages = msgs,
             open = t.open.filter { it.id != card },
