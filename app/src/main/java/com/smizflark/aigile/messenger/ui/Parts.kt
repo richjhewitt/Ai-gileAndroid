@@ -2,6 +2,8 @@ package com.smizflark.aigile.messenger.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -94,3 +96,16 @@ fun dayLabel(iso: String?, today: LocalDate = LocalDate.now()): String {
 }
 
 fun dayOf(iso: String?): LocalDate? = instant(iso)?.atZone(ZoneId.systemDefault())?.toLocalDate()
+
+/** An empty list (AII-73): one plain line, and a button only where it helps. */
+@Composable
+fun EmptyState(line: String, modifier: Modifier = Modifier, button: String? = null, onButton: () -> Unit = {}) {
+    androidx.compose.foundation.layout.Column(
+        modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(line, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        if (button != null) androidx.compose.material3.OutlinedButton(onClick = onButton, modifier = Modifier.padding(top = 12.dp)) { Text(button) }
+    }
+}

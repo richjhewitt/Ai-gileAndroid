@@ -12,6 +12,7 @@ import com.smizflark.aigile.messenger.ui.ChatsScreen
 import com.smizflark.aigile.messenger.ui.ConnectScreen
 import com.smizflark.aigile.messenger.ui.MessengerTheme
 import com.smizflark.aigile.messenger.ui.NewMessageScreen
+import com.smizflark.aigile.messenger.ui.EmptyState
 import com.smizflark.aigile.messenger.ui.SettingsScreen
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -57,6 +58,8 @@ class ScreenshotTest {
     @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
+    @Test fun emptyChatsLight() = shot("empty_chats", false) { EmptyState("No chats yet", button = "New message") }
+    @Test fun emptySearchDark() = shot("empty_search", true) { EmptyState("No results for “zebra”", button = "Clear search") }
     @Test fun settingsLight() = shot("settings", false) { SettingsScreen(repo, {}, {}) }
     @Test fun settingsDark() = shot("settings", true) { SettingsScreen(repo, {}, {}) }
 }

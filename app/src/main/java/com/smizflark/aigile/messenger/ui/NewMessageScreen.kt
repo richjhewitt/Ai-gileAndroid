@@ -1,5 +1,6 @@
 package com.smizflark.aigile.messenger.ui
 
+import com.smizflark.aigile.messenger.R
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Column
@@ -63,6 +64,7 @@ fun NewMessageScreen(repo: Repo, draft: String = "", onBack: () -> Unit, onSent:
         Column(Modifier.fillMaxSize().padding(pad).imePadding().padding(horizontal = 16.dp)) {
             Text("To", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             LazyColumn(Modifier.weight(1f).selectableGroup()) {
+                if (chats.isEmpty()) item { EmptyState(androidx.compose.ui.res.stringResource(R.string.empty_pick_team)) }
                 items(chats, key = { it.key }) { c ->
                     Row(
                         Modifier.fillMaxWidth().selectable(pick == c.key, role = Role.RadioButton) { pick = c.key }.padding(vertical = 6.dp).testTag("to:${c.key}"),
