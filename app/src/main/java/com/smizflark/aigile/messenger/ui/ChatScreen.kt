@@ -95,6 +95,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import android.view.HapticFeedbackConstants
+import androidx.compose.ui.platform.LocalView
 
 private sealed interface Row {
     val id: String
@@ -154,6 +156,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
+    // AII-49: a little tick on send and when a reply lands. performHapticFeedback follows the phone's touch feedback setting.
+    val view = LocalView.current
+    fun tick() = view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
     val owner = repo.store.owner.ifBlank { "You" }
 
     // Keep the half-typed reply (AII-42): saved a moment after typing stops, and on the way out.
@@ -168,6 +173,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         try {
             val c = repo.conversation(ref)
             val changed = c.bubbles != convo?.bubbles
+            val before = convo?.bubbles?.lastOrNull { !it.mine }?.at
+            val now = c.bubbles.lastOrNull { !it.mine }?.at
+            if (before != null && now != null && now > before) tick()
             convo = c; error = null
             if (!picked && focus == null) target = c.defaultTarget
             repo.store.markSeen(ref.key, c.bubbles.lastOrNull()?.at)
@@ -191,6 +199,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
 
     fun send(body: String, to: String?, files: List<String> = emptyList()) {
         val t = body.trim(); if (t.isEmpty() && files.isEmpty()) return
+        tick()
         deliver(repo.queue(ref, t, to, files))
     }
 
