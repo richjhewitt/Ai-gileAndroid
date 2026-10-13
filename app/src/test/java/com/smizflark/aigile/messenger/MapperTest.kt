@@ -101,4 +101,14 @@ class MapperTest {
         assertEquals("💬 ".length + 80, Mapper.quickTitle("x".repeat(200)).length)
         assertEquals("Phone app", Mapper.clean("💬 Phone app"))
     }
+
+    @Test fun `AII-64 initials when a chat has no picture or emoji`() {
+        assertEquals("TD", Mapper.initials("Tunio Discord"))
+        assertEquals("AG", Mapper.initials("AI-gile"))
+        assertEquals("R", Mapper.initials("rich"))
+        assertEquals("?", Mapper.initials("  "))
+        val r = Mapper.chats(listOf(ChatSummary("x", "X")), listOf(Contact(id = "d", name = "Davy")))
+        assertEquals("", r[0].emoji)
+        assertEquals("", r[1].emoji)
+    }
 }

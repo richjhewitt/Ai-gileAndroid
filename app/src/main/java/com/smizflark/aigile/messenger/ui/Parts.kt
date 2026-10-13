@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.smizflark.aigile.messenger.data.ChatRef
+import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Repo
 import java.time.Instant
 import java.time.LocalDate
@@ -33,13 +35,15 @@ fun parseColor(hex: String?): Color? = runCatching {
     Color(("ff" + if (h.length == 3) h.map { "$it$it" }.joinToString("") else h).toLong(16))
 }.getOrNull()
 
-/** The lead's picture from the board, else the project's emoji on its colour. */
+/** The lead's picture from the board, else the project's emoji on its colour, else initials (AII-64). */
 @Composable
 fun Avatar(ref: ChatRef, repo: Repo, size: Dp = 48.dp) {
     val bg = parseColor(ref.color)?.copy(alpha = 0.18f) ?: MaterialTheme.colorScheme.secondaryContainer
     val fallback = @Composable {
         Box(Modifier.size(size).clip(CircleShape).background(bg).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
-            Text(ref.emoji, fontSize = (size.value * 0.45f).sp)
+            if (ref.emoji.isNotBlank()) Text(ref.emoji, fontSize = (size.value * 0.45f).sp)
+            else Text(Mapper.initials(ref.name), fontSize = (size.value * 0.36f).sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
     }
     val board = repo.boardSource
