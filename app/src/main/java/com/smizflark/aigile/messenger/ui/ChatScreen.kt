@@ -39,6 +39,10 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.ContentPaste
@@ -175,6 +179,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
+    var finding by rememberSaveable { mutableStateOf(false) }   // AII-78: the find bar
+    var query by rememberSaveable { mutableStateOf("") }
+    var at by rememberSaveable { mutableStateOf(0) }   // which match, 0 = the newest
     // AII-49: a little tick on send and when a reply lands. performHapticFeedback follows the phone's touch feedback setting.
     val view = LocalView.current
     fun tick() = view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
@@ -270,6 +277,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
 
     val items = remember(convo, pending, owner, focus) { rows(convo, pending, owner, focus).asReversed() }
+    val hits = remember(items, query, finding) { if (finding) Find.matches(items.map { (it as? Row.Msg)?.b?.text.orEmpty() }, query) else emptyList() }
+    val hitIds = remember(hits, items) { hits.map { items[it].id } }
+    LaunchedEffect(query) { at = 0 }
+    val current = at.coerceIn(0, (hits.size - 1).coerceAtLeast(0))
+    LaunchedEffect(finding, query, hits.size, current) { if (hits.isNotEmpty()) list.animateScrollToItem(hits[current] + 1) }   // +1: the spacer at the bottom
     val targets = if (focus != null) emptyList() else convo?.targets.orEmpty()
     // Card ids in messages open that card, when it is one of this chat's (AII-28).
     val known = convo?.bubbles.orEmpty().mapNotNull { it.card }.toSet()
@@ -318,6 +330,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 },
                 actions = {
                     var menu by remember { mutableStateOf(false) }
+                    IconButton(onClick = { finding = true }) { Icon(Icons.Default.Search, stringResource(R.string.find_in_chat)) }
                     IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.more)) }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         DropdownMenuItem(
@@ -336,6 +349,10 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 Text(it, color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer).padding(10.dp).testTag("error"))
             }
+            if (finding) FindBar(query, { query = it }, hits.size, current,
+                onUp = { if (hits.isNotEmpty()) at = (current + 1) % hits.size },   // older
+                onDown = { if (hits.isNotEmpty()) at = (current - 1 + hits.size) % hits.size },   // newer
+                onClose = { finding = false; query = "" })
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 LazyColumn(Modifier.fillMaxSize(), state = list, reverseLayout = true,
                     verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -348,7 +365,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 onOpen = if (focus == null && ref.kind == Kind.LEAD) { { onOpenCard(r.card) } } else null) {
                                 if (targets.any { it.id == r.card }) { target = r.card; picked = true }
                             }
-                            is Row.Msg -> MessageBubble(r, ref, repo, onReply = { q ->
+                            is Row.Msg -> MessageBubble(r, ref, repo, mark = if (r.id !in hitIds) 0 else if (hitIds.getOrNull(current) == r.id) 2 else 1, onReply = { q ->
                                 quoting = Quote.of(if (q.mine) owner else q.author, q.text, q.pics.size)
                                 // A reply to a team message goes to its card, like answering it on the board.
                                 if (ref.kind == Kind.LEAD && focus == null && q.card != null && targets.any { it.id == q.card }) { target = q.card; picked = true }
@@ -376,6 +393,22 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 send(Quote.with(quoting, text.trim()).takeIf { text.isNotBlank() } ?: text, if (ref.kind == Kind.LEAD) focus ?: target else null, pics); text = ""; pics = emptyList(); picNote = null; quoting = null
             }
         }
+    }
+}
+
+/** AII-78: the find bar: a text field, "2 of 5", previous / next match and close. */
+@Composable
+private fun FindBar(query: String, onQuery: (String) -> Unit, count: Int, current: Int, onUp: () -> Unit, onDown: () -> Unit, onClose: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp).testTag("find-bar"), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(query, onQuery, Modifier.weight(1f).testTag("find-field"), singleLine = true,
+            placeholder = { Text(stringResource(R.string.find_hint)) })
+        Text(
+            if (query.trim().length < Find.MIN_LETTERS) "" else if (count == 0) stringResource(R.string.find_none) else stringResource(R.string.find_count, current + 1, count),
+            style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 8.dp).testTag("find-count"),
+        )
+        IconButton(onClick = onUp, enabled = count > 0) { Icon(Icons.Default.KeyboardArrowUp, stringResource(R.string.find_previous)) }
+        IconButton(onClick = onDown, enabled = count > 0) { Icon(Icons.Default.KeyboardArrowDown, stringResource(R.string.find_next)) }
+        IconButton(onClick = onClose) { Icon(Icons.Default.Close, stringResource(R.string.find_close)) }
     }
 }
 
@@ -413,7 +446,7 @@ private fun CardHeader(r: Row.Card, chosen: Boolean, onOpen: (() -> Unit)?, onCl
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
+private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -448,6 +481,7 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onReply: (Bubble
         }
         Surface(
             color = bg,
+            border = when (mark) { 2 -> BorderStroke(3.dp, cs.tertiary); 1 -> BorderStroke(1.5.dp, cs.tertiary.copy(alpha = 0.6f)); else -> null },   // AII-78: find matches
             shape = RoundedCornerShape(18.dp, 18.dp, if (b.mine) 4.dp else 18.dp, if (b.mine) 18.dp else 4.dp),
             modifier = Modifier.widthIn(max = 320.dp).semantics(mergeDescendants = true) {}.testTag(if (b.mine) "mine" else "theirs")
                 .combinedClickable(onClick = { showTime = !showTime }, onLongClick = { menu = true }),
