@@ -118,6 +118,7 @@ import androidx.compose.runtime.snapshotFlow
 import com.smizflark.aigile.messenger.data.ScrollPlace
 import com.smizflark.aigile.messenger.data.ScrollPlaces
 import kotlinx.coroutines.flow.first
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.ui.platform.LocalView
 
 /** Bubbles, pending messages, day lines and card headers, oldest first. */
@@ -309,6 +310,16 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             else (list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == i }?.key as? String)
                 ?.let { ScrollPlaces.save(placeKey, ScrollPlace(it, off, latestSeen)) }
         }
+    }
+    // AII-102: more new messages than fit on screen? Open at the "New messages" line, not the bottom.
+    LaunchedEffect(placeKey) {
+        if (place != null) return@LaunchedEffect
+        val i = snapshotFlow { latestItems.indexOfFirst { it is Row.New } }.first { it >= 0 } + 1   // +1: the spacer at the bottom
+        val info = snapshotFlow { list.layoutInfo }.first { it.totalItemsCount > i && it.visibleItemsInfo.isNotEmpty() }
+        if (list.firstVisibleItemIndex > 1 || info.visibleItemsInfo.any { it.index == i }) return@LaunchedEffect
+        list.scrollToItem(i)
+        val line = list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == i }?.size ?: 0
+        list.scrollBy(-(info.viewportEndOffset - info.viewportStartOffset - line).toFloat())
     }
     val unread = if (atBottom) 0 else unreadBelow(convo?.bubbles.orEmpty(), seenNewest)
     // AII-99: tap a quote, the chat scrolls to the quoted message and outlines it for a moment.

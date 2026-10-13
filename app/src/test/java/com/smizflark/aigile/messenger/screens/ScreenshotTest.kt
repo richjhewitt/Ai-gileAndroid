@@ -114,6 +114,18 @@ class ScreenshotTest {
         shot("chat_new_line", false) { ChatScreen(repo, c, onBack = {}) }
         rule.onNodeWithTag("new-line").assertExists()
     }
+    /** AII-102: with more new messages than fit, the chat opens with the "New messages" line near the top. */
+    @Config(sdk = [34], qualifiers = "w411dp-h480dp-xxhdpi")   // a short screen, so the new messages don't all fit
+    @Test fun opensAtNewLine() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        val all = repo.store.cachedConversation(lead().key)!!.bubbles
+        repo.store.markSeen(lead().key, java.time.Instant.parse(all.first().at).minusSeconds(1).toString())
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.waitForIdle()
+        val line = rule.onNodeWithTag("new-line").fetchSemanticsNode().boundsInRoot
+        val screen = rule.onRoot().fetchSemanticsNode().boundsInRoot
+        org.junit.Assert.assertTrue("line at ${line.top} of ${screen.height}", line.top in 0f..screen.height / 3)
+    }
     /** AII-101: drag a message to the right and let go: the reply bar shows its quote. */
     @Test fun swipeReplyLight() {
         val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
