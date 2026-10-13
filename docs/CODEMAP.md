@@ -47,7 +47,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/Markdown.kt: renders message markdown.
 - ui/NewMessageScreen.kt: a new message to any team.
 - ui/Parts.kt: small shared UI helpers (colour parsing and similar).
-- ui/Pictures.kt: loads a message's pictures.
+- ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
 - ui/SearchScreen.kt: search across all chats.
 - ui/SettingsScreen.kt: settings.
 - ui/Shortcuts.kt: app icon shortcuts (New message, recent chats).
