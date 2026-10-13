@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -23,17 +24,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,6 +45,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,6 +79,13 @@ private sealed interface Row {
 }
 
 /** Bubbles, pending messages, day lines and card headers, oldest first. */
+/** Messages from them after the newest one you saw at the bottom of the chat (AII-46). */
+internal fun unreadBelow(bubbles: List<Bubble>, seen: String?): Int {
+    val at = bubbles.indexOfLast { it.key == seen }
+    if (seen == null || at < 0) return 0
+    return bubbles.subList(at + 1, bubbles.size).count { !it.mine }
+}
+
 private fun rows(c: Conversation?, pending: List<Pending>, owner: String): List<Row> {
     val out = mutableListOf<Row>()
     val bubbles = c?.bubbles.orEmpty()
@@ -151,6 +163,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
 
     val items = rows(convo, pending, owner).asReversed()
     val targets = convo?.targets.orEmpty()
+    val atBottom by remember { derivedStateOf { list.firstVisibleItemIndex <= 1 } }
+    var seenNewest by rememberSaveable { mutableStateOf<String?>(null) }
+    val newest = convo?.bubbles?.lastOrNull()?.key
+    LaunchedEffect(atBottom, newest) { if (atBottom) seenNewest = newest }
+    val unread = if (atBottom) 0 else unreadBelow(convo?.bubbles.orEmpty(), seenNewest)
 
     Scaffold(
         topBar = {
@@ -175,31 +192,46 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
                 Text(it, color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer).padding(10.dp).testTag("error"))
             }
-            LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = list, reverseLayout = true,
-                verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                item { Spacer(Modifier.size(8.dp)) }
-                items(items, key = { it.id }) { r ->
-                    when (r) {
-                        is Row.Day -> Text(r.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                        is Row.Card -> CardHeader(r, chosen = target == r.card) {
-                            if (targets.any { it.id == r.card }) { target = r.card; picked = true }
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                LazyColumn(Modifier.fillMaxSize(), state = list, reverseLayout = true,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    item { Spacer(Modifier.size(8.dp)) }
+                    items(items, key = { it.id }) { r ->
+                        when (r) {
+                            is Row.Day -> Text(r.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            is Row.Card -> CardHeader(r, chosen = target == r.card) {
+                                if (targets.any { it.id == r.card }) { target = r.card; picked = true }
+                            }
+                            is Row.Msg -> MessageBubble(r, ref,
+                                onOption = { send(it, r.b.card) },
+                                onRetry = { p -> deliver(p) },
+                                onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) })
                         }
-                        is Row.Msg -> MessageBubble(r, ref,
-                            onOption = { send(it, r.b.card) },
-                            onRetry = { p -> deliver(p) },
-                            onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) })
+                    }
+                    if (convo == null && error == null) item { Text("Loading…", Modifier.padding(24.dp)) }
+                    if (convo != null && convo!!.bubbles.isEmpty() && pending.isEmpty()) item {
+                        Text("No messages yet. Say hello below.", Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                if (convo == null && error == null) item { Text("Loading…", Modifier.padding(24.dp)) }
-                if (convo != null && convo!!.bubbles.isEmpty() && pending.isEmpty()) item {
-                    Text("No messages yet. Say hello below.", Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+                JumpToNewest(show = !atBottom && convo != null, unread = unread) { scope.launch { list.animateScrollToItem(0) } }
             }
             Composer(ref, text, { text = it }, targets.map { it.id to it.label }, target, { target = it; picked = true }) {
                 send(text, if (ref.kind == Kind.LEAD) target else null); text = ""
             }
         }
+    }
+}
+
+/** Scrolled up: a small arrow back to the newest message, or "N new" when replies came in meanwhile. */
+@Composable
+private fun BoxScope.JumpToNewest(show: Boolean, unread: Int, onClick: () -> Unit) {
+    if (!show) return
+    if (unread > 0) ExtendedFloatingActionButton(
+        onClick = onClick, icon = { Icon(Icons.Default.ArrowDownward, null) }, text = { Text("$unread new") },
+        modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp).testTag("jump"),
+    ) else SmallFloatingActionButton(onClick = onClick, modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp).testTag("jump")) {
+        Icon(Icons.Default.ArrowDownward, "Jump to newest")
     }
 }
 
