@@ -32,6 +32,14 @@ object Markdown {
         override fun removeEldestEntry(e: MutableMap.MutableEntry<Triple<String, Color, Color>, AnnotatedString>) = size > 400
     }
 
+    /** The web links a rendered message shows, first three, for Copy link in its menu (AII-129). */
+    fun links(shown: AnnotatedString): List<String> =
+        shown.getLinkAnnotations(0, shown.length).mapNotNull { (it.item as? LinkAnnotation.Url)?.url }.distinct().take(3)
+
+    /** A link short enough for a menu line: no https://, at most [max] letters. */
+    fun shortLink(url: String, max: Int = 32): String =
+        url.removePrefix("https://").removePrefix("http://").let { if (it.length > max) it.take(max - 1) + "…" else it }
+
     fun render(text: String, codeBg: Color, link: Color, cards: Set<String> = emptySet(), onCard: (String) -> Unit = {}, onCode: ((String) -> Unit)? = null): AnnotatedString =
         if (cards.isEmpty() && (onCode == null || "```" !in text)) synchronized(cache) { cache.getOrPut(Triple(text, codeBg, link)) { build(text, codeBg, link, cards, onCard, null) } }
         else build(text, codeBg, link, cards, onCard, onCode)   // card and code links carry a click: not cached

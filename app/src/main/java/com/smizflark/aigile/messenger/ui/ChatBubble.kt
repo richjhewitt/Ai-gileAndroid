@@ -206,6 +206,16 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 })
                 if (shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.select_text)) }, modifier = Modifier.testTag("select"),
                     onClick = { menu = false; selecting = true })
+                // AII-129: copy a link in the message on its own; several links get one line each.
+                val links = Markdown.links(shown)
+                links.forEach { url ->
+                    DropdownMenuItem(text = { Text(if (links.size == 1) stringResource(R.string.copy_link) else stringResource(R.string.copy_link_named, Markdown.shortLink(url)), maxLines = 1) },
+                        modifier = Modifier.testTag("copy-link"), onClick = {
+                            menu = false
+                            clipboard.setText(AnnotatedString(url))
+                            if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
+                        })
+                }
                 // AII-121: out to another app (email, notes...) through the phone's share menu.
                 if (shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, modifier = Modifier.testTag("share"), onClick = {
                     menu = false
