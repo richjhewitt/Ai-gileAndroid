@@ -68,6 +68,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -296,6 +297,16 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val known = convo?.bubbles.orEmpty().mapNotNull { it.card }.toSet()
     val focusBubble = focus?.let { f -> convo?.bubbles?.lastOrNull { it.card == f } }
     val atBottom by remember { derivedStateOf { list.firstVisibleItemIndex <= 1 } }
+    // AII-117: while you scroll by hand, the day of the topmost row floats at the top, and fades a little after.
+    // Jumps (newest, a quote, a find hit) don't show it.
+    val days = remember(items) { daysAbove(items) }
+    val topDay by remember(days) { derivedStateOf { list.layoutInfo.visibleItemsInfo.maxOfOrNull { it.index }?.let { days.getOrNull(it - 1) } } }   // index 0 is the spacer
+    val dragged by list.interactionSource.collectIsDraggedAsState()
+    var scrolling by remember { mutableStateOf(false) }
+    LaunchedEffect(dragged, list.isScrollInProgress) {
+        if (dragged) scrolling = true
+        else if (scrolling && !list.isScrollInProgress) { delay(1200); scrolling = false }   // a fling after the drag keeps it up
+    }
     // AII-72: coming back, the chat opens where you left it; the 'N new' pill counts from what you had seen.
     val placeKey = ref.key + (focus?.let { "/$it" } ?: "")
     val place = remember(placeKey) { if (openAt != null) null else ScrollPlaces.get(placeKey) }   // a search result wins (AII-105)
@@ -425,6 +436,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                         Text(stringResource(R.string.chat_empty), Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
+                DayPill(if (scrolling) topDay else null)
                 JumpToNewest(show = !atBottom && convo != null, unread = unread) { scope.launch { list.animateScrollToItem(0) } }
             }
             Composer(ref, text, { text = it }, targets.map { it.id to it.label }, target, { target = it; picked = true },
