@@ -10,6 +10,7 @@ object Mapper {
                 kind = Kind.WATCHMAN, id = "_watchman", name = "Lead Scrum Master",
                 subtitle = "Passes your message to the right team", emoji = s.emoji ?: "🧭",
                 color = s.color, last = s.last, unread = s.unread,
+                preview = s.lastText?.let { plainLine(it) }?.takeIf { it.isNotEmpty() }, previewMine = s.lastMine == true,   // AII-108
             ) else ChatRef(
                 kind = Kind.LEAD, id = s.slug, name = s.name.ifBlank { s.slug },
                 subtitle = s.lead ?: "Lead", emoji = s.emoji.orEmpty(), color = s.color,
