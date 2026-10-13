@@ -67,7 +67,7 @@
     <string name="picture_to_send">Foto om te versturen</string>
     <string name="remove_picture">Foto verwijderen</string>
     <string name="chats_title">Berichten</string>
-    <string name="chats_title_demo">Berichten · demo</string>
+    <string name="chats_title_demo">Demo</string>
     <string name="chats_offline">%1$s\nChats van %2$s.</string>
     <string name="mark_all_read">Alles als gelezen markeren</string>
     <string name="pause_alerts">Meldingen pauzeren</string>

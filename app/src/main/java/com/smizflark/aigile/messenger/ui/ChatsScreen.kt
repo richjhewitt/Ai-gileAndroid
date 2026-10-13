@@ -140,7 +140,13 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(if (repo.store.demo) R.string.chats_title_demo else R.string.chats_title) + if (total > 0) " ($total)" else "") },
+                title = {
+                    // AII-84: one line, so the four buttons never push it onto two; the demo note sits small underneath.
+                    Column {
+                        Text(stringResource(R.string.chats_title) + if (total > 0) " ($total)" else "", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (repo.store.demo) Text(stringResource(R.string.chats_title_demo), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
                 actions = {
                     IconButton(onClick = onSearch, modifier = Modifier.testTag("open-search")) { Icon(Icons.Default.Search, stringResource(R.string.search)) }
                     if (chats.any { News.fresh(it, seen[it.key]) })
