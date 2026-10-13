@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
         read(intent)
         val repo = (application as App).repo
         setContent {
-            MessengerTheme {
+            MessengerTheme(repo.store) {
                 val nav = rememberNavController()
                 val start = if (repo.store.connected) "chats" else "connect"
                 NavHost(nav, startDestination = start) {

@@ -91,6 +91,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
             })
             HorizontalDivider()
 
+            AppearanceSettings(s)
+            HorizontalDivider()
+
             Text("Alerts", style = MaterialTheme.typography.titleMedium)
             Toggle("New message alerts", "Checks about every 15 minutes, one alert per batch", alerts) {
                 alerts = it; s.alerts = it
