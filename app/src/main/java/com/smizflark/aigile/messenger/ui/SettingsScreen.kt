@@ -102,6 +102,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
             HorizontalDivider()
 
             AppearanceSettings(s)
+            Toggle(stringResource(R.string.enter_sends), stringResource(R.string.enter_sends_sub), Appearance.enterSends, Modifier.testTag("enterSends")) {
+                Appearance.enterSends = it; s.enterSends = it
+            }
             HorizontalDivider()
 
             Text(stringResource(R.string.privacy), style = MaterialTheme.typography.titleMedium)
@@ -240,8 +243,8 @@ private fun ChangeBoard(repo: Repo, onSaved: (String) -> Unit) {
 private fun hour(h: Int) = "%02d:00".format(h)
 
 @Composable
-private fun Toggle(title: String, sub: String, on: Boolean, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+private fun Toggle(title: String, sub: String, on: Boolean, modifier: Modifier = Modifier, onChange: (Boolean) -> Unit) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
