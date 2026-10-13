@@ -64,7 +64,8 @@ class DemoSource : ChatSource {
         delay(250)
         val summaries = listOf("ai-gile", "tunio").map { s ->
             val t = threads.getValue(s)
-            ChatSummary(t.slug, t.name, t.emoji, t.color, lead = t.lead, unread = t.open.size, last = t.messages.lastOrNull()?.at)
+            ChatSummary(t.slug, t.name, t.emoji, t.color, lead = t.lead, unread = t.open.size, last = t.messages.lastOrNull()?.at,
+                lastText = t.messages.lastOrNull()?.text, lastMine = t.messages.lastOrNull()?.mine)
         } + ChatSummary("_watchman", "Lead Scrum Master", "🧭", "#3a5a7a", watchman = true, last = threads.getValue("_watchman").messages.last().at,
             unread = if (watchRead) 0 else threads.getValue("_watchman").messages.count { !it.mine })
         val contacts = friends.map { (id, l) -> Contact(id, "Davy", checked = true, last = l.last().at, lastIn = l.last { it.dir == "in" }.at) }

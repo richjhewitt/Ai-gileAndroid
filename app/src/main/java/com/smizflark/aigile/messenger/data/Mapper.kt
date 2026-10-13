@@ -15,6 +15,7 @@ object Mapper {
                 subtitle = s.lead ?: "Lead", emoji = s.emoji.orEmpty(), color = s.color,
                 pic = s.leadPic?.takeIf { it.isNotBlank() } ?: s.logo?.takeIf { it.isNotBlank() },
                 waiting = s.unread, last = s.last, seen = s.seen?.takeIf { it.isNotBlank() },
+                preview = s.lastText?.let { plainLine(it) }?.takeIf { it.isNotEmpty() }, previewMine = s.lastMine == true,
             )
         }
         val friends = contacts.filter { !it.blocked }.sortedByDescending { it.last ?: "" }.map { c ->
@@ -26,6 +27,19 @@ object Mapper {
         }
         return leads + friends
     }
+
+    /** AII-106: an older board doesn't say who wrote the newest message; the chat as last fetched does, if it ends with the same one. */
+    fun mineFromCache(ref: ChatRef, cached: Conversation?): ChatRef {
+        if (ref.preview == null || ref.previewMine) return ref
+        val b = cached?.bubbles?.lastOrNull { it.state == SendState.SENT } ?: return ref
+        val text = plainLine(b.text)
+        val same = b.at == ref.last || text == ref.preview || (ref.preview.length >= 100 && text.startsWith(ref.preview))   // the board cuts it at 120
+        return if (b.mine && same) ref.copy(previewMine = true) else ref
+    }
+
+    /** A message as one plain line for the chats list: no bullets, bold or code marks ("- Done: **Export**" -> "Done: Export"). */
+    fun plainLine(text: String): String = text.replace(Regex("\\s+"), " ").trim()
+        .replace(Regex("^(?:[-*•]|\\d+[.)])\\s+"), "").replace(Regex("\\*\\*|__|`+|^#+\\s*"), "")
 
     /** AII-64: picture fallback when a chat has no picture or emoji: "Tunio Discord" -> "TD", "rich" -> "R". */
     fun initials(name: String): String {
