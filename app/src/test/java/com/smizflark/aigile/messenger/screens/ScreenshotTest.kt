@@ -119,6 +119,16 @@ class ScreenshotTest {
         rule.waitForIdle()
         rule.onNodeWithTag("unread:${c.key}", useUnmergedTree = true).assertExists()
     }
+    /** AII-125: the Unread chip keeps only chats with a badge. */
+    @Test fun unreadChipLight() {
+        val c = lead(); prime(c); runBlocking { repo.markRead(c) }
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        rule.onNodeWithTag("filter:unread").performClick()
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_unread_chip_light.png")
+        org.junit.Assert.assertTrue(rule.onAllNodesWithTag("chat:${c.key}").fetchSemanticsNodes().isEmpty())
+    }
     @Test fun chatsDark() = shot("chats", true) { ChatsScreen(repo, {}, {}, {}) }
     @Test fun chatLight() { prime(lead()); shot("chat", false) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead(), onBack = {}) } }

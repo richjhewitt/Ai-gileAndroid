@@ -15,6 +15,7 @@
     <string name="copied">Copied</string>
     <string name="empty_chats">No chats yet</string>
     <string name="empty_chats_new">New message</string>
+    <string name="empty_unread">No unread chats</string>
     <string name="empty_waiting">Nothing waiting on you</string>
     <string name="empty_teams">No team chats yet</string>
     <string name="empty_friends">No friends yet</string>
@@ -96,6 +97,7 @@
     <string name="waiting">%1$d waiting</string>
     <string name="new_messages">New messages</string>
     <string name="filter_all">All</string>
+    <string name="filter_unread">Unread</string>
     <string name="filter_waiting">Waiting on me</string>
     <string name="filter_teams">Teams</string>
     <string name="filter_friends">Friends</string>
