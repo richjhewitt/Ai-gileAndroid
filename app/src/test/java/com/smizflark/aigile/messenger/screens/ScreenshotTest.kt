@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.swipeRight
@@ -151,6 +152,22 @@ class ScreenshotTest {
         rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}, openAt = first.key) } }
         rule.waitForIdle()
         rule.onNodeWithText(first.text.lines().first().trim(), substring = true).assertIsDisplayed()
+    }
+    /** AII-117: while scrolling, the day floats at the top; it fades a little after you let go. */
+    @Config(sdk = [34], qualifiers = "w411dp-h480dp-xxhdpi")
+    @Test fun dayPillWhileScrolling() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+night")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.waitForIdle()
+        rule.onNodeWithTag("day-pill").assertDoesNotExist()
+        rule.onRoot().performTouchInput { down(center); moveBy(androidx.compose.ui.geometry.Offset(0f, 150f)); moveBy(androidx.compose.ui.geometry.Offset(0f, 150f)) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("day-pill").assertIsDisplayed().assertTextEquals("Today")
+        rule.onRoot().captureRoboImage("../docs/shots/chat_day_pill_dark.png")
+        rule.onRoot().performTouchInput { up() }
+        rule.mainClock.advanceTimeBy(2500)
+        rule.waitForIdle()
+        rule.onNodeWithTag("day-pill").assertDoesNotExist()
     }
     /** AII-104: hold a picture in a chat: Save and Share, without opening it. */
     @Test fun holdPicture() {

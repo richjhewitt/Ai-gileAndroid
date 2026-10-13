@@ -155,6 +155,33 @@ internal fun BoxScope.JumpToNewest(show: Boolean, unread: Int, onClick: () -> Un
     }
 }
 
+/**
+ * For a newest-first list of rows: the day each row sits under (AII-117), from the nearest Day row above it.
+ * Null for a row that is itself a Day row (it already shows its day) or has none above.
+ */
+internal fun daysAbove(rows: List<Row>): List<String?> {
+    val out = arrayOfNulls<String>(rows.size)
+    var day: String? = null
+    for (k in rows.indices.reversed()) {
+        val r = rows[k]
+        if (r is Row.Day) { day = r.label; out[k] = null } else out[k] = day
+    }
+    return out.toList()
+}
+
+/** The floating day pill at the top of a chat while it scrolls (AII-117). */
+@Composable
+internal fun BoxScope.DayPill(label: String?) {
+    androidx.compose.animation.AnimatedVisibility(label != null, Modifier.align(Alignment.TopCenter).padding(top = 8.dp),
+        enter = androidx.compose.animation.fadeIn(), exit = androidx.compose.animation.fadeOut()) {
+        var last by remember { mutableStateOf("") }
+        if (label != null) last = label
+        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.secondaryContainer, shadowElevation = 2.dp) {
+            Text(last, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp).testTag("day-pill"))
+        }
+    }
+}
+
 @Composable
 internal fun CardHeader(r: Row.Card, chosen: Boolean, onOpen: (() -> Unit)?, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.Center,
