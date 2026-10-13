@@ -2,7 +2,7 @@
 
 `powershell -File tools/emulator/smoke.ps1 [-Apk path] [-Avd name] [-KeepAvd]`
 
-Boots a headless emulator (`-no-window -no-audio -no-boot-anim`, hidden process, no window or console),
+Boots a headless emulator (`-no-window -no-audio -no-boot-anim`, hidden process, no window or console), then also opens AI-gile > chat name > hills picture and swipes to the next (AII-92),
 installs `app/build/outputs/apk/debug/app-debug.apk`, taps "Try the demo", opens the Tunio chat,
 sends a unique message, checks it appears via `uiautomator dump`, then kills the emulator and deletes the temp AVD.
 Exit code 0 = pass, 1 = fail.
