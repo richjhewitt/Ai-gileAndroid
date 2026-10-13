@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.smizflark.aigile.messenger.data.Mapper
+import com.smizflark.aigile.messenger.data.Share
 import com.smizflark.aigile.messenger.ui.ChatScreen
 import com.smizflark.aigile.messenger.ui.ChatsScreen
 import com.smizflark.aigile.messenger.ui.ConnectScreen
@@ -27,6 +29,8 @@ class MainActivity : ComponentActivity() {
     /** A pairing link (aigile://pair?...) or a chat to open from an alert. */
     private var pairing by mutableStateOf<Pair<String, String>?>(null)
     private var openChat by mutableStateOf<String?>(null)
+    /** Text shared in from another app, waiting to be sent from New message. */
+    private var shared by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +47,7 @@ class MainActivity : ComponentActivity() {
                             pairing = null
                             if (repo.store.alerts && !repo.store.demo) CheckWorker.schedule(this@MainActivity)
                             nav.navigate("chats") { popUpTo("connect") { inclusive = true } }
+                            if (shared != null) nav.navigate("new")
                         }
                     }
                     composable("chats") {
@@ -56,7 +61,9 @@ class MainActivity : ComponentActivity() {
                         else ChatScreen(repo, ref, onBack = { nav.popBackStack() })
                     }
                     composable("new") {
-                        NewMessageScreen(repo, onBack = { nav.popBackStack() }, onSent = { to ->
+                        // Leaving New message (sent, back button or gesture) drops the shared text.
+                        DisposableEffect(Unit) { onDispose { shared = null } }
+                        NewMessageScreen(repo, draft = shared ?: "", onBack = { nav.popBackStack() }, onSent = { to ->
                             nav.popBackStack(); nav.openChat(to.key)
                         })
                     }
@@ -68,6 +75,10 @@ class MainActivity : ComponentActivity() {
                 }
                 // A new pairing link while running: back to Connect, filled in.
                 LaunchedEffect(pairing) { if (pairing != null && nav.currentDestination?.route != "connect") nav.navigate("connect") }
+                // Shared from another app: straight to New message (after Connect if not signed in yet).
+                LaunchedEffect(shared) {
+                    if (shared != null && repo.store.connected) nav.navigate("new") { launchSingleTop = true }
+                }
                 LaunchedEffect(openChat) {
                     val c = openChat ?: return@LaunchedEffect
                     if (repo.store.connected) nav.openChat(c)
@@ -87,6 +98,8 @@ class MainActivity : ComponentActivity() {
     private fun read(intent: Intent?) {
         intent?.data?.toString()?.let { Mapper.parsePairing(it) }?.let { pairing = it }
         intent?.getStringExtra(CheckWorker.EXTRA_CHAT)?.let { openChat = it }
+        if (intent?.action == Intent.ACTION_SEND)
+            Share.text(intent.getStringExtra(Intent.EXTRA_SUBJECT), intent.getStringExtra(Intent.EXTRA_TEXT))?.let { shared = it }
     }
 
     override fun onStart() { super.onStart(); App.inForeground = true }

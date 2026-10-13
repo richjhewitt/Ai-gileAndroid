@@ -44,10 +44,11 @@ import kotlinx.coroutines.launch
 /** Journey 4: a new 💬 message to any team (or a friend, or the Lead Scrum Master). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewMessageScreen(repo: Repo, onBack: () -> Unit, onSent: (ChatRef) -> Unit) {
+fun NewMessageScreen(repo: Repo, draft: String = "", onBack: () -> Unit, onSent: (ChatRef) -> Unit) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var pick by rememberSaveable { mutableStateOf<String?>(null) }
-    var text by rememberSaveable { mutableStateOf("") }
+    // Starts from text shared in from another app; a new share replaces it.
+    var text by rememberSaveable(draft) { mutableStateOf(draft) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
