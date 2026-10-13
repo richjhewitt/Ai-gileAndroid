@@ -37,8 +37,9 @@ interface ChatSource {
     suspend fun newMessage(slug: String, text: String, files: List<Upload> = emptyList()): String?
     /** One card of a lead's chat (AII-45); null where the board can't say. */
     suspend fun card(slug: String, id: String): CardDetail? = null
-    /** Tells the board a lead chat is read up to [at] (AII-44); boards without read marks just ignore it. */
-    suspend fun markSeen(slug: String, at: String) {}
+    /** Tells the board a lead chat is read up to [at] (AII-44); boards without read marks just ignore it.
+     *  [back]: Mark as unread (AII-119), the mark may move back. */
+    suspend fun markSeen(slug: String, at: String, back: Boolean = false) {}
 }
 
 /** A picture or file to send with a message. */
@@ -206,8 +207,8 @@ class BoardSource(
         if (e.code == 404) null else throw e   // 404: a board from before AII-45, the view just shows the messages
     }
 
-    override suspend fun markSeen(slug: String, at: String) {
-        call("POST", "/api/chats/$slug/seen", buildJsonObject { put("at", at) })
+    override suspend fun markSeen(slug: String, at: String, back: Boolean) {
+        call("POST", "/api/chats/$slug/seen", buildJsonObject { put("at", at); if (back) put("back", true) })
     }
 
     /** Full URL for a board picture path like /api/avatars/x.png. */

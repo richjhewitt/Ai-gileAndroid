@@ -85,6 +85,13 @@ class Repo(context: Context) {
         if (moved && ref.kind == Kind.LEAD && !store.demo) runCatching { source.markSeen(ref.id, at) }   // offline or an older board: kept here
     }
 
+    /** Mark as unread (AII-119): the newest message from them counts as new again, here and on the board for a lead chat. */
+    suspend fun markUnread(ref: ChatRef) {
+        val at = News.unreadMark(ref, store.cachedConversation(ref.key)) ?: return
+        store.unsee(ref.key, at)
+        if (ref.kind == Kind.LEAD && !store.demo) runCatching { source.markSeen(ref.id, at, back = true) }   // offline or an older board: kept here until the next check
+    }
+
     suspend fun conversation(ref: ChatRef): Conversation {
         val c = source.conversation(ref)
         store.cacheConversation(c)

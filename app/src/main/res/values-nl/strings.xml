@@ -83,6 +83,7 @@
     <string name="paused_until">Meldingen gepauzeerd tot %1$s</string>
     <string name="resume">Hervatten</string>
     <string name="mark_read">Als gelezen markeren</string>
+    <string name="mark_unread">Als ongelezen markeren</string>
     <string name="mute">Dempen</string>
     <string name="open_chat">Chat openen</string>
     <string name="options">Opties</string>

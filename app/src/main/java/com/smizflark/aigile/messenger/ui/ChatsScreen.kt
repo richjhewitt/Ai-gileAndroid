@@ -128,6 +128,8 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
         seen = repo.store.seen(); unread = counts()
         if (chats.none { News.fresh(it, seen[it.key]) }) CheckWorker.clearAlert(context)
     }
+    /** Mark as unread (AII-119), from a chat's menu. */
+    fun markUnread(c: ChatRef) = scope.launch { repo.markUnread(c); seen = repo.store.seen(); unread = counts() }
     val total = unread.values.sum()
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -222,7 +224,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 val unsent = outbox.groupBy { it.chat }
                 items(pinFirst(shown, pinned), key = { it.key }) { c ->
                     ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, unsent[c.key].orEmpty(), drafts[c.key],
-                        onRead = { markRead(listOf(c)) },
+                        onRead = { markRead(listOf(c)) }, onUnread = { markUnread(c) },
                         onMute = { on -> repo.store.setMuted(c.key, on); muted = repo.store.muted() },
                         onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned }) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
@@ -233,11 +235,11 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     }
 }
 
-/** One chat; long-press for Mark as read and Pin to top (AII-25, AII-47). */
+/** One chat; long-press for Mark as read (or unread, AII-119) and Pin to top (AII-25, AII-47). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>, draft: String?,
-                    onRead: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClick: () -> Unit) {
+                    onRead: () -> Unit, onUnread: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     // Swipe right = mark read, left = mute/unmute (AII-61). The row always springs back.
     val mutedNow by rememberUpdatedState(muted)
@@ -269,7 +271,9 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(text = { Text(stringResource(R.string.mark_read)) }, enabled = fresh, onClick = { menu = false; onRead() })
+            // Read chats offer Mark as unread instead (AII-119); the Lead Scrum Master goes by the board's count, so it can't.
+            if (fresh || c.kind == Kind.WATCHMAN) DropdownMenuItem(text = { Text(stringResource(R.string.mark_read)) }, enabled = fresh, onClick = { menu = false; onRead() })
+            else DropdownMenuItem(text = { Text(stringResource(R.string.mark_unread)) }, onClick = { menu = false; onUnread() }, modifier = Modifier.testTag("menu-unread"))
             DropdownMenuItem(text = { Text(stringResource(if (pinned) R.string.unpin else R.string.pin)) }, leadingIcon = { Icon(Icons.Default.PushPin, null) },
                 onClick = { menu = false; onPin() }, modifier = Modifier.testTag("pin"))
             // AII-103: mute here too, not only on the swipe.
