@@ -40,11 +40,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -106,11 +108,16 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
     var pending by remember { mutableStateOf(repo.pendingFor(ref.key)) }
     var target by rememberSaveable { mutableStateOf(convo?.defaultTarget) }
     var picked by rememberSaveable { mutableStateOf(false) }
-    var text by rememberSaveable { mutableStateOf("") }
+    var text by rememberSaveable { mutableStateOf(repo.store.draft(ref.key)) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
     val owner = repo.store.owner.ifBlank { "You" }
+
+    // Keep the half-typed reply (AII-42): saved a moment after typing stops, and on the way out.
+    LaunchedEffect(text) { delay(400); repo.store.saveDraft(ref.key, text) }
+    val latest by rememberUpdatedState(text)
+    DisposableEffect(ref.key) { onDispose { repo.store.saveDraft(ref.key, latest) } }
 
     suspend fun load() {
         try {
