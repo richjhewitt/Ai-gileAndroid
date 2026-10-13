@@ -109,6 +109,16 @@ object Mapper {
         return !tailscale && host != "localhost" && host != "127.0.0.1" && host != "10.0.2.2"
     }
 
+    /** The phone key as Settings shows it: only the last 4 characters. */
+    fun maskKey(key: String): String = when {
+        key.isEmpty() -> "none"
+        key.length <= 4 -> "••••"
+        else -> "••••" + key.takeLast(4)
+    }
+
+    /** Did a change in Settings move the phone to another board (so the old board's cache must go)? */
+    fun boardChanged(wasDemo: Boolean, oldUrl: String, newUrl: String) = wasDemo || oldUrl != newUrl
+
     /** aigile://pair?url=...&key=... (the board's pairing QR) -> url to key. */
     fun parsePairing(text: String): Pair<String, String>? {
         val t = text.trim()

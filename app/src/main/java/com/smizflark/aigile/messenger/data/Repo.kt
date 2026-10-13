@@ -36,6 +36,15 @@ class Repo(context: Context) {
         return owner
     }
 
+    /** Settings: a new address and/or key without signing out. A blank key keeps the current one.
+     *  Moving to another board (or out of the demo) clears what was cached for the old one. */
+    suspend fun change(url: String, key: String): String {
+        val wasDemo = store.demo; val old = store.url
+        val owner = connect(url, key.ifBlank { store.key })
+        if (Mapper.boardChanged(wasDemo, old, store.url)) store.clearCache()
+        return owner
+    }
+
     fun startDemo() { store.demo = true; store.owner = "Rich" }
 
     fun signOut() { board = null; store.signOut() }

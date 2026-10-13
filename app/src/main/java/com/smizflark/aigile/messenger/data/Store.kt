@@ -91,8 +91,11 @@ class Store(context: Context) {
 
     fun signOut() {
         prefs.edit().clear().apply()
-        dir.listFiles()?.forEach { it.delete() }
+        clearCache()
     }
+
+    /** Saved chats, seen marks and the outbox: they belong to one board. Settings stay. */
+    fun clearCache() { dir.listFiles()?.forEach { it.delete() } }
 
     /* ---------- seen: the newest message from them you have looked at, per chat ---------- */
 
