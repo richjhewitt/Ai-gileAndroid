@@ -83,4 +83,14 @@ class ScreenshotTest {
     @Test fun chatBlack() { prime(lead()); black("chat") { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun newBlack() = black("new_message") { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun settingsBlack() = black("settings") { SettingsScreen(repo, {}, {}) }
+
+    /** AII-70: the phone set to Dutch. */
+    @Test fun chatsDutch() {
+        RuntimeEnvironment.setQualifiers("+nl-rNL")
+        try { shot("chats_nl", false) { ChatsScreen(repo, {}, {}, {}) } } finally { RuntimeEnvironment.setQualifiers("+en-rUS") }
+    }
+    @Test fun settingsDutch() {
+        RuntimeEnvironment.setQualifiers("+nl-rNL")
+        try { shot("settings_nl", false) { SettingsScreen(repo, {}, {}) } } finally { RuntimeEnvironment.setQualifiers("+en-rUS") }
+    }
 }
