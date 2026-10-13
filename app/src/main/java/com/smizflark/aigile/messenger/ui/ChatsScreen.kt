@@ -39,6 +39,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -122,7 +125,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
 @Composable
 private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
+        Modifier.fillMaxWidth().clickable(onClickLabel = "Open chat", role = Role.Button, onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Avatar(c, repo)
@@ -142,7 +145,8 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, onClick: () -> Unit)
                 )
                 if (c.waiting > 0) Badge(containerColor = MaterialTheme.colorScheme.primary) {
                     Text("${c.waiting} waiting", Modifier.padding(horizontal = 4.dp))
-                } else if (fresh) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
+                } else if (fresh) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .semantics { contentDescription = "New messages" })
             }
         }
     }

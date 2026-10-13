@@ -1,12 +1,13 @@
 package com.smizflark.aigile.messenger.ui
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.smizflark.aigile.messenger.data.ChatRef
@@ -59,13 +61,13 @@ fun NewMessageScreen(repo: Repo, onBack: () -> Unit, onSent: (ChatRef) -> Unit) 
     }) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding().padding(horizontal = 16.dp)) {
             Text("To", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            LazyColumn(Modifier.weight(1f)) {
+            LazyColumn(Modifier.weight(1f).selectableGroup()) {
                 items(chats, key = { it.key }) { c ->
                     Row(
-                        Modifier.fillMaxWidth().clickable { pick = c.key }.padding(vertical = 6.dp).testTag("to:${c.key}"),
+                        Modifier.fillMaxWidth().selectable(pick == c.key, role = Role.RadioButton) { pick = c.key }.padding(vertical = 6.dp).testTag("to:${c.key}"),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        RadioButton(selected = pick == c.key, onClick = { pick = c.key })
+                        RadioButton(selected = pick == c.key, onClick = null)
                         Avatar(c, repo, 36.dp)
                         Spacer(Modifier.size(10.dp))
                         Column {
@@ -94,7 +96,7 @@ fun NewMessageScreen(repo: Repo, onBack: () -> Unit, onSent: (ChatRef) -> Unit) 
                     }
                 },
                 enabled = !busy && text.isNotBlank(),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).height(52.dp).testTag("send"),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).heightIn(min = 52.dp).testTag("send"),
             ) { Text(if (busy) "Sending…" else "Send") }
         }
     }
