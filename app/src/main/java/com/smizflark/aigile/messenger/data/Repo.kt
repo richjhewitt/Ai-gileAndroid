@@ -56,7 +56,7 @@ class Repo(context: Context) {
     fun signOut() { board = null; store.signOut(); LatestWidget.refresh(app); Shortcuts.clear(app) }
 
     suspend fun chats(): List<ChatRef> {
-        val l = source.chats()
+        val l = source.chats().map { Mapper.mineFromCache(it, store.cachedConversation(it.key)) }   // "You:" on the chats list (AII-106)
         store.cacheChats(l); store.lastSync = System.currentTimeMillis()
         // In step with the board (AII-25): the Lead Scrum Master read on the PC counts as read here too.
         l.filter { it.kind == Kind.WATCHMAN && it.unread == 0 }.forEach { store.markSeen(it.key, it.last) }

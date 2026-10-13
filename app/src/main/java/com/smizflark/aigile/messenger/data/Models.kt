@@ -22,6 +22,10 @@ data class ChatSummary(
     val watchman: Boolean = false,
     /** The board's read mark for a lead chat (AII-44): newest message time read, on the PC or a phone. */
     val seen: String? = null,
+    /** The newest message, on one line (the board's preview, AIG-917). */
+    val lastText: String? = null,
+    /** That message is yours, when the board says (older boards don't: the app's own copy of the chat tells, AII-106). */
+    val lastMine: Boolean? = null,
 )
 
 @Serializable
@@ -125,6 +129,10 @@ data class ChatRef(
     val unread: Int = 0,
     /** The board's read mark (leads, AII-44). */
     val seen: String? = null,
+    /** The newest message on one line, shown under the name instead of [subtitle] (AII-106). */
+    val preview: String? = null,
+    /** [preview] is your own message: the row puts "You:" in front. */
+    val previewMine: Boolean = false,
 ) {
     val key get() = "${kind.name.lowercase()}:$id"
 }

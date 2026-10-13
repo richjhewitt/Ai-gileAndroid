@@ -297,7 +297,7 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
                 val waiting = unsentLabel(unsent) ?: draftLabel(draft)
                 val newDesc = stringResource(R.string.new_messages)
                 Text(
-                    waiting ?: c.subtitle,
+                    waiting ?: previewLabel(c),
                     style = MaterialTheme.typography.bodyMedium,
                     color = when {
                         waiting == null -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -325,6 +325,9 @@ fun unsentLabel(unsent: List<Pending>): String? {
     val failed = unsent.count { it.failed && !it.offline }   // offline ones still go by themselves (AII-55)
     return if (failed > 0) Words.unsentFailed.format(failed) else Words.unsentWaiting.format(unsent.size)
 }
+
+/** The line under a chat's name: its newest message ("You: ..." when it is yours, AII-106), else the chat's subtitle. */
+fun previewLabel(c: ChatRef): String = c.preview?.let { if (c.previewMine) Words.you.format(it) else it } ?: c.subtitle
 
 /** "Draft: ..." for a chat with a half-typed reply (AII-98), on one line; null when there is none. */
 fun draftLabel(draft: String?): String? =
