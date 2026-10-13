@@ -26,6 +26,8 @@ data class ChatSummary(
     val lastText: String? = null,
     /** That message is yours, when the board says (older boards don't: the app's own copy of the chat tells, AII-106). */
     val lastMine: Boolean? = null,
+    /** The team is at work right now (AII-111; older boards don't say). */
+    val working: Boolean? = null,
 )
 
 @Serializable
@@ -133,6 +135,8 @@ data class ChatRef(
     val preview: String? = null,
     /** [preview] is your own message: the row puts "You:" in front. */
     val previewMine: Boolean = false,
+    /** The team is at work right now: "working…" under the name (AII-112). */
+    val working: Boolean = false,
 ) {
     val key get() = "${kind.name.lowercase()}:$id"
 }

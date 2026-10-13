@@ -277,6 +277,12 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         }
     }
 
+    // "working…" under the name while the team is at work (AII-112): asked of the chats list every 20 s, only on screen.
+    var working by remember(ref.key) { mutableStateOf(ref.working) }
+    if (ref.kind == Kind.LEAD && focus == null) LaunchedEffect(ref.key) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { while (true) { repo.working(ref)?.let { working = it }; delay(20_000) } }
+    }
+
     val items = remember(convo, pending, owner, focus) { rows(convo, pending, owner, focus, seenAtOpen).asReversed() }
     val hits = remember(items, query, finding) { if (finding) Find.matches(items.map { (it as? Row.Msg)?.b?.text.orEmpty() }, query) else emptyList() }
     val hitIds = remember(hits, items) { hits.map { items[it].id } }
@@ -348,7 +354,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                         Column {
                             Text(if (focus != null) "$focus ${Mapper.clean(focusBubble?.cardTitle ?: "")}" else ref.name,
                                 style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(if (focus == null) ref.subtitle else ref.name + if (focusBubble?.waiting == true) " · ⏳ " + stringResource(R.string.waiting_on_you) else "", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            Text(if (focus == null) (if (working) stringResource(R.string.working) else ref.subtitle) else ref.name + if (focusBubble?.waiting == true) " · ⏳ " + stringResource(R.string.waiting_on_you) else "", style = MaterialTheme.typography.labelMedium,
+                                color = if (focus == null && working) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }

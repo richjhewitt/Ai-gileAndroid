@@ -65,6 +65,15 @@ class PreviewLineTest {
         assertEquals("Passes your message to the right team", previewLabel(Mapper.chats(listOf(ChatSummary("_watchman", watchman = true)), emptyList())[0]))
     }
 
+    // AII-112: "working…" while the team is at work; an older board (no field) never says so.
+    @Test fun busyTeamSaysWorking() {
+        val busy = Mapper.chats(listOf(ChatSummary("x", "X", lead = "Pixel", last = at, lastText = "on it", working = true)), emptyList())[0]
+        assertTrue(busy.working)
+        assertEquals("working…", previewLabel(busy))
+        assertFalse(lead("on it").working)
+        assertEquals("on it", previewLabel(lead("on it")))
+    }
+
     @Test fun friendsKeepTheirLine() {
         val f = ChatRef(Kind.FRIEND, "d", "Davy", "🔒 Private", "")
         assertEquals("🔒 Private", previewLabel(f))

@@ -300,6 +300,7 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
                     waiting ?: previewLabel(c),
                     style = MaterialTheme.typography.bodyMedium,
                     color = when {
+                        waiting == null && c.working -> MaterialTheme.colorScheme.primary
                         waiting == null -> MaterialTheme.colorScheme.onSurfaceVariant
                         unsent.any { it.failed && !it.offline } -> MaterialTheme.colorScheme.error
                         else -> MaterialTheme.colorScheme.primary
@@ -326,8 +327,8 @@ fun unsentLabel(unsent: List<Pending>): String? {
     return if (failed > 0) Words.unsentFailed.format(failed) else Words.unsentWaiting.format(unsent.size)
 }
 
-/** The line under a chat's name: its newest message ("You: ..." when it is yours, AII-106), else the chat's subtitle. */
-fun previewLabel(c: ChatRef): String = c.preview?.let { if (c.previewMine) Words.you.format(it) else it } ?: c.subtitle
+/** The line under a chat's name: "working…" while the team is at work (AII-112), else its newest message ("You: ..." when it is yours, AII-106), else the chat's subtitle. */
+fun previewLabel(c: ChatRef): String = if (c.working) Words.working else c.preview?.let { if (c.previewMine) Words.you.format(it) else it } ?: c.subtitle
 
 /** "Draft: ..." for a chat with a half-typed reply (AII-98), on one line; null when there is none. */
 fun draftLabel(draft: String?): String? =
