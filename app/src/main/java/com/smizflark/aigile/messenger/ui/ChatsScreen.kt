@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,7 +56,7 @@ import kotlinx.coroutines.launch
 /** Journey 2: every chat in one list. Shows the last list at once, then fetches. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit) {
+fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit, onSearch: () -> Unit = {}) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var seen by remember { mutableStateOf(repo.store.seen()) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -80,7 +81,10 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
         topBar = {
             TopAppBar(
                 title = { Text(if (repo.store.demo) "Messages · demo" else "Messages") },
-                actions = { IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "Settings") } },
+                actions = {
+                    IconButton(onClick = onSearch, modifier = Modifier.testTag("open-search")) { Icon(Icons.Default.Search, "Search") }
+                    IconButton(onClick = onSettings) { Icon(Icons.Default.Settings, "Settings") }
+                },
             )
         },
         floatingActionButton = {
