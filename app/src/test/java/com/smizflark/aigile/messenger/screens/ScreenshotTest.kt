@@ -3,6 +3,7 @@ package com.smizflark.aigile.messenger.screens
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.longClick
@@ -149,6 +150,15 @@ class ScreenshotTest {
         rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}, openAt = first.key) } }
         rule.waitForIdle()
         rule.onNodeWithText(first.text.lines().first().trim(), substring = true).assertIsDisplayed()
+    }
+    /** AII-104: hold a picture in a chat: Save and Share, without opening it. */
+    @Test fun holdPicture() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onAllNodesWithTag("pic", useUnmergedTree = true).onFirst().performTouchInput { longClick() }
+        rule.onNodeWithTag("pic-save").assertExists()
+        rule.onNodeWithTag("pic-share").assertExists()
+        rule.onAllNodesWithTag("full-pic").assertCountEquals(0)   // holding doesn't open it full screen
     }
     /** AII-101: drag a message to the right and let go: the reply bar shows its quote. */
     @Test fun swipeReplyLight() {
