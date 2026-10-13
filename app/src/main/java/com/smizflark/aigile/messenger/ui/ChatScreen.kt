@@ -132,7 +132,7 @@ private fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus:
     }
     pending.filter { focus == null || it.target == focus }.forEach { p ->
         out += Row.Msg("p:${p.id}", Bubble("p:${p.id}", owner, p.text, p.at, true, p.target,
-            state = if (p.failed) SendState.FAILED else SendState.SENDING,
+            state = if (p.failed && !p.offline) SendState.FAILED else SendState.SENDING,   // offline ones go by themselves (AII-55)
             pics = p.files.map { Pic(File(it).toURI().toString(), File(it).name, "image/") }), p)
     }
     return out
@@ -217,7 +217,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(ref.key) {
         // Anything left from last time goes first (it was saved before sending, so nothing is lost).
-        repo.pendingFor(ref.key).filter { !it.failed }.forEach { deliver(it) }
+        repo.pendingFor(ref.key).filter { !it.failed || it.offline }.forEach { deliver(it) }
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             // Live: every 3 s while the chat is busy, easing off to 30 s when it is quiet; never in the background.
             while (true) { pace.after(load()); pace.sleep() }

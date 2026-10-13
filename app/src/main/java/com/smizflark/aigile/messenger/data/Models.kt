@@ -164,4 +164,6 @@ data class Pending(
     val failed: Boolean = false,
     /** Pictures waiting to go with it, copied into the app so nothing is lost offline. */
     val files: List<String> = emptyList(),
+    /** Failed only for want of a connection: it goes by itself when the phone is back online (AII-55). */
+    val offline: Boolean = false,
 )

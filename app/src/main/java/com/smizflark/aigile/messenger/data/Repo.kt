@@ -8,6 +8,9 @@ import android.provider.OpenableColumns
 import java.io.File
 import com.smizflark.aigile.messenger.widget.LatestWidget
 import com.smizflark.aigile.messenger.ui.Shortcuts
+import com.smizflark.aigile.messenger.work.SendWorker
+import com.smizflark.aigile.messenger.work.isOffline
+import com.smizflark.aigile.messenger.work.waitingToSend
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
@@ -88,12 +91,29 @@ class Repo(context: Context) {
     suspend fun deliver(ref: ChatRef, p: Pending): Result<String?> = sending.withLock {
         if (store.outbox().none { it.id == p.id }) return Result.success(p.target)   // already sent
         val r = runCatching { source.send(ref, p.text, p.target, p.files.map { upload(it) }) }
+        val offline = r.exceptionOrNull()?.let(::isOffline) == true
         store.saveOutbox(
             if (r.isSuccess) store.outbox().filter { it.id != p.id }
-            else store.outbox().map { if (it.id == p.id) it.copy(failed = true) else it }
+            else store.outbox().map { if (it.id == p.id) it.copy(failed = true, offline = offline) else it }
         )
         if (r.isSuccess) p.files.forEach { File(it).delete() }
+        if (offline && !store.demo) SendWorker.schedule(app)
         r
+    }
+
+    /**
+     * Sends everything still waiting (AII-55). Returns how many are still stuck for want of a connection.
+     * giveUp: the last try; anything still stuck then shows Not sent, with Tap to retry.
+     */
+    suspend fun sendWaiting(giveUp: Boolean = false): Int {
+        val chats = store.cachedChats().orEmpty().associateBy { it.key }
+        for (p in waitingToSend(store.outbox())) {
+            val ref = chats[p.chat] ?: continue   // a chat no longer listed: left for Tap to retry
+            deliver(ref, p)
+        }
+        val stuck = store.outbox().filter { it.offline }
+        if (giveUp) store.saveOutbox(store.outbox().map { it.copy(offline = false) })
+        return stuck.size
     }
 
     fun discard(id: String) {
