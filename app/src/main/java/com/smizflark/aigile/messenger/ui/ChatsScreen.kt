@@ -207,13 +207,15 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    fontWeight = if (fresh) FontWeight.Bold else FontWeight.Medium, modifier = Modifier.weight(1f, fill = false))
-                if (pinned) Icon(Icons.Default.PushPin, "Pinned", Modifier.padding(start = 4.dp).size(14.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (muted) Icon(Icons.Default.NotificationsOff, "Muted", Modifier.padding(start = 4.dp).size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.weight(1f))
+                // Name with its pin and mute icons takes the room; the time stays at the right edge.
+                Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        fontWeight = if (fresh) FontWeight.Bold else FontWeight.Medium, modifier = Modifier.weight(1f, fill = false))
+                    if (pinned) Icon(Icons.Default.PushPin, "Pinned", Modifier.padding(start = 4.dp).size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (muted) Icon(Icons.Default.NotificationsOff, "Muted", Modifier.padding(start = 4.dp).size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 Text(shortTime(c.last), style = MaterialTheme.typography.labelMedium,
                     color = if (fresh) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
