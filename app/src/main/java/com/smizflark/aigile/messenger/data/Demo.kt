@@ -7,6 +7,8 @@ import java.time.temporal.ChronoUnit
 /** Try the app with no board: a few made-up chats that answer back. Nothing leaves the phone. */
 /** AII-86: a made-up photo shipped with the app, so the demo shows a picture with no board. */
 private val DEMO_PICTURE = Attachment("android.resource://${com.smizflark.aigile.messenger.BuildConfig.APPLICATION_ID}/drawable/demo_picture", "hills.png", "image/png")
+/** AII-91: a second one, so swiping between pictures can be tried. */
+private val DEMO_SEA = Attachment("android.resource://${com.smizflark.aigile.messenger.BuildConfig.APPLICATION_ID}/drawable/demo_picture_sea", "sea.png", "image/png")
 
 class DemoSource : ChatSource {
     private fun ago(min: Long) = Now.instant().minus(min, ChronoUnit.MINUTES).toString()
@@ -15,7 +17,8 @@ class DemoSource : ChatSource {
         "ai-gile" to WireThread(
             slug = "ai-gile", name = "AI-gile", emoji = "🗂️", color = "#16a34a", lead = "Lead",
             messages = mutableListOf(
-                WireMsg("AIG-1", "💬 Phone app", "Rich", "Can I read my DMs on the phone yet?", ago(95), mine = true),
+                WireMsg("AIG-1", "💬 Phone app", "Rich", "Can I read my DMs on the phone yet?", ago(95), mine = true,
+                    attachments = listOf(DEMO_SEA)),
                 WireMsg("AIG-1", "💬 Phone app", "Lead", "- Yes: this is the **Messenger** app\n\n- Reply here and it lands on the card", ago(90),
                     attachments = listOf(DEMO_PICTURE)),
                 WireMsg("AIG-2", "Dark mode for the board?", "Lead", "- Dark mode: follow the phone's setting, or always dark?\n\n- I'm assuming **follow the phone**", ago(12), options = listOf("Follow the phone", "Always dark")),
