@@ -82,6 +82,18 @@ data class FriendMsg(
 @Serializable
 data class Created(val id: String? = null)
 
+/** GET /api/projects/<slug>/cards/<id>: one card for the card view (AII-45). */
+@Serializable
+data class CardDetail(
+    val id: String,
+    val title: String = "",
+    val status: String = "",
+    val type: String = "",
+    val description: String = "",
+    val testSteps: String = "",
+    val assignee: String = "",
+)
+
 /* ---------- app: what the screens show ---------- */
 
 enum class Kind { LEAD, WATCHMAN, FRIEND }

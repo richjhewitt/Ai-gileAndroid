@@ -45,6 +45,9 @@ class Repo(context: Context) {
         return c
     }
 
+    /** One card for the card view (AII-45); null if it can't be fetched (the view still shows its messages). */
+    suspend fun card(ref: ChatRef, id: String): CardDetail? = runCatching { source.card(ref.id, id) }.getOrNull()
+
     /* ---------- sending through the outbox: nothing typed is lost ---------- */
 
     fun queue(ref: ChatRef, text: String, target: String?): Pending {

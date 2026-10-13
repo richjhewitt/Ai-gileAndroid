@@ -30,6 +30,8 @@ interface ChatSource {
     suspend fun send(ref: ChatRef, text: String, target: String?): String?
     /** A new 💬 message to a project's team. Returns the new card id. */
     suspend fun newMessage(slug: String, text: String): String?
+    /** One card of a lead's chat (AII-45); null where the board can't say. */
+    suspend fun card(slug: String, id: String): CardDetail? = null
 }
 
 /** A message for the person holding the phone, not a stack trace. */
@@ -115,6 +117,12 @@ class BoardSource(
             put("status", "team"); put("createdBy", owner()); put("quick", JsonPrimitive(true))
         }
         return json.decodeFromString<Created>(call("POST", "/api/projects/$slug/cards", body)).id
+    }
+
+    override suspend fun card(slug: String, id: String): CardDetail? = try {
+        json.decodeFromString<CardDetail>(call("GET", "/api/projects/$slug/cards/$id"))
+    } catch (e: BoardError) {
+        if (e.code == 404) null else throw e   // 404: a board from before AII-45, the view just shows the messages
     }
 
     /** Full URL for a board picture path like /api/avatars/x.png. */
