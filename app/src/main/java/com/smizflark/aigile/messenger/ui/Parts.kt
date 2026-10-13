@@ -69,7 +69,7 @@ object Words {
     var now = "now"; var minutes = "%1\$dm"; var hours = "%1\$dh"; var days = "%1\$dd"; var today = "Today"; var yesterday = "Yesterday"
     var status: Map<String, String> = mapOf("backlog" to "Backlog", "todo" to "To do", "doing" to "In progress", "review" to "Team checking",
         "verify" to "For you to test", "team" to "For the team", "done" to "Done")
-    var unsentFailed = "⚠️ %1\$d not sent: tap to retry"; var unsentWaiting = "⏳ %1\$d waiting to send"; var draft = "Draft: %1\$s"; var you = "You: %1\$s"
+    var unsentFailed = "⚠️ %1\$d not sent: tap to retry"; var unsentWaiting = "⏳ %1\$d waiting to send"; var draft = "Draft: %1\$s"; var you = "You: %1\$s"; var working = "working…"
 
     fun load(ctx: android.content.Context) {
         now = ctx.getString(R.string.time_now); minutes = ctx.getString(R.string.time_minutes)
@@ -79,7 +79,7 @@ object Words {
             "review" to R.string.status_review, "verify" to R.string.status_verify, "team" to R.string.status_team, "done" to R.string.status_done)
             .mapValues { ctx.getString(it.value) }
         unsentFailed = ctx.getString(R.string.unsent_failed); unsentWaiting = ctx.getString(R.string.unsent_waiting); draft = ctx.getString(R.string.draft_label)
-        you = ctx.getString(R.string.you_label)
+        you = ctx.getString(R.string.you_label); working = ctx.getString(R.string.working)
     }
 }
 

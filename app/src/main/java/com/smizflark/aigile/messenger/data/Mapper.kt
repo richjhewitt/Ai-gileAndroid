@@ -17,6 +17,7 @@ object Mapper {
                 pic = s.leadPic?.takeIf { it.isNotBlank() } ?: s.logo?.takeIf { it.isNotBlank() },
                 waiting = s.unread, last = s.last, seen = s.seen?.takeIf { it.isNotBlank() },
                 preview = s.lastText?.let { plainLine(it) }?.takeIf { it.isNotEmpty() }, previewMine = s.lastMine == true,
+                working = s.working == true,   // AII-112
             )
         }
         val friends = contacts.filter { !it.blocked }.sortedByDescending { it.last ?: "" }.map { c ->
