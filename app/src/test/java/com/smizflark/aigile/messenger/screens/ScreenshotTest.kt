@@ -3,6 +3,10 @@ package com.smizflark.aigile.messenger.screens
 import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
@@ -65,6 +69,15 @@ class ScreenshotTest {
     @Test fun chatHuge() {
         prime(lead()); Appearance.textSize = TextSize.Huge
         try { shot("chat_huge", false) { ChatScreen(repo, lead(), onBack = {}) } } finally { Appearance.textSize = TextSize.Normal }
+    }
+    /** AII-78: the find bar open on the lead chat, with a query that matches. */
+    @Test fun findLight() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onNodeWithContentDescription("Find in this chat").performClick()
+        rule.onNodeWithTag("find-field").performTextInput("phone")
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("../docs/shots/chat_find_light.png")
     }
     @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }

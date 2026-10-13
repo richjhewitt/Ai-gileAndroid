@@ -25,6 +25,13 @@
     <string name="back">Terug</string>
     <string name="more">Meer</string>
     <string name="search">Zoeken</string>
+    <string name="find_in_chat">Zoeken in dit gesprek</string>
+    <string name="find_hint">Zoek</string>
+    <string name="find_count">%1$d van %2$d</string>
+    <string name="find_none">Geen resultaten</string>
+    <string name="find_previous">Vorige treffer</string>
+    <string name="find_next">Volgende treffer</string>
+    <string name="find_close">Zoeken sluiten</string>
     <string name="settings">Instellingen</string>
     <string name="send">Versturen</string>
     <string name="cancel">Annuleren</string>
