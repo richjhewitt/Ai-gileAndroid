@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import java.io.File
 import com.smizflark.aigile.messenger.widget.LatestWidget
+import com.smizflark.aigile.messenger.ui.Shortcuts
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
@@ -48,7 +49,7 @@ class Repo(context: Context) {
 
     fun startDemo() { store.demo = true; store.owner = "Rich" }
 
-    fun signOut() { board = null; store.signOut(); LatestWidget.refresh(app) }
+    fun signOut() { board = null; store.signOut(); LatestWidget.refresh(app); Shortcuts.clear(app) }
 
     suspend fun chats(): List<ChatRef> {
         val l = source.chats()
@@ -56,6 +57,7 @@ class Repo(context: Context) {
         // In step with the board (AII-25): the Lead Scrum Master read on the PC counts as read here too.
         l.filter { it.kind == Kind.WATCHMAN && it.unread == 0 }.forEach { store.markSeen(it.key, it.last) }
         LatestWidget.refresh(app)
+        Shortcuts.update(app, l)   // hold the app icon: your newest chats (AII-53)
         return l
     }
 

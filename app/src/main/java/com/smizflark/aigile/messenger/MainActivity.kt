@@ -26,6 +26,7 @@ import com.smizflark.aigile.messenger.ui.MessengerTheme
 import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.SearchScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
+import com.smizflark.aigile.messenger.ui.Shortcuts
 import com.smizflark.aigile.messenger.work.CheckWorker
 
 class MainActivity : ComponentActivity() {
@@ -34,6 +35,8 @@ class MainActivity : ComponentActivity() {
     private var openChat by mutableStateOf<String?>(null)
     /** Text shared in from another app, waiting to be sent from New message. */
     private var shared by mutableStateOf<String?>(null)
+    /** New message from the app icon menu (AII-53). */
+    private var openNew by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,6 +91,12 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(shared) {
                     if (shared != null && repo.store.connected) nav.navigate("new") { launchSingleTop = true }
                 }
+                // New message from the app icon menu (AII-53).
+                LaunchedEffect(openNew) {
+                    if (!openNew) return@LaunchedEffect
+                    if (repo.store.connected) nav.navigate("new") { launchSingleTop = true }
+                    openNew = false
+                }
                 LaunchedEffect(openChat) {
                     val c = openChat ?: return@LaunchedEffect
                     if (repo.store.connected) nav.openChat(c)
@@ -109,6 +118,7 @@ class MainActivity : ComponentActivity() {
         intent?.getStringExtra(CheckWorker.EXTRA_CHAT)?.let { openChat = it }
         if (intent?.action == Intent.ACTION_SEND)
             Share.text(intent.getStringExtra(Intent.EXTRA_SUBJECT), intent.getStringExtra(Intent.EXTRA_TEXT))?.let { shared = it }
+        if (intent?.action == Shortcuts.ACTION_NEW) openNew = true
     }
 
     override fun onStart() { super.onStart(); App.inForeground = true }
