@@ -11,7 +11,7 @@ param(
   [int]$BootSeconds = 300,
   [switch]$KeepAvd
 )
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Continue'   # adb talks on stderr; failures are caught by Fail below
 $env:ANDROID_HOME = $Sdk; $env:ANDROID_SDK_ROOT = $Sdk; $env:JAVA_HOME = $Jdk
 $env:PATH = "$Jdk\bin;$Sdk\cmdline-tools\latest\bin;$Sdk\platform-tools;$env:PATH"
 $adb = "$Sdk/platform-tools/adb.exe"
@@ -20,22 +20,24 @@ $pkg = 'com.smizflark.aigile.messenger'
 $msg = 'smoke' + (Get-Random -Maximum 9999)
 $script:emu = $null
 
-function Fail($m) { Write-Host "FAIL: $m"; Cleanup; exit 1 }
+function Fail($m) { Write-Host "FAIL: $m"; try { (Dump).OuterXml | Out-File (Join-Path $env:TEMP 'smoke-ui.xml') -Encoding utf8; Write-Host "screen saved to TEMP\smoke-ui.xml" } catch {}; Cleanup; exit 1 }
 function Cleanup {
-  try { & $adb -e emu kill 2>$null | Out-Null } catch {}
+  try { & $adb -s emulator-5584 emu kill 2>$null | Out-Null } catch {}
   Start-Sleep 3
   if ($script:emu -and -not $script:emu.HasExited) { Stop-Process -Id $script:emu.Id -Force -ErrorAction SilentlyContinue }
   if (-not $KeepAvd) { try { & avdmanager delete avd -n $Avd 2>$null | Out-Null } catch {} }
 }
 function Dump {
+  # adb writes "null root node" to stderr while the screen is still drawing; that is a retry, not a failure
+  $ErrorActionPreference = 'Continue'
   & $adb shell uiautomator dump /sdcard/ui.xml 2>&1 | Out-Null
-  [xml](& $adb exec-out cat /sdcard/ui.xml)
+  try { [xml](& $adb exec-out cat /sdcard/ui.xml 2>$null) } catch { [xml]'<hierarchy/>' }
 }
 # find a node whose text/desc/resource-id matches, return centre point
 function Find($pattern) {
   $x = Dump
   foreach ($n in $x.SelectNodes('//node')) {
-    if (("$($n.text)|$($n.'content-desc')|$($n.'resource-id')") -match $pattern -and $n.bounds -match '\[(\d+),(\d+)\]\[(\d+),(\d+)\]') {
+    if (@($n.text, $n.'content-desc', $n.'resource-id') -match $pattern -and $n.bounds -match '\[(\d+),(\d+)\]\[(\d+),(\d+)\]') {
       return @([int](([int]$Matches[1]+[int]$Matches[3])/2), [int](([int]$Matches[2]+[int]$Matches[4])/2))
     }
   }
@@ -60,7 +62,8 @@ if (-not (Test-Path "$env:USERPROFILE/.android/avd/$Avd.avd")) {
   'no' | & avdmanager create avd -n $Avd -k "system-images;$api;google_apis;x86_64" -d pixel_6 --force | Out-Null
 }
 Write-Host "starting headless emulator ($Avd, $api)"
-$script:emu = Start-Process $emuExe -ArgumentList @('-avd', $Avd, '-no-window', '-no-audio', '-no-boot-anim', '-no-snapshot', '-gpu', 'swiftshader_indirect') -WindowStyle Hidden -PassThru
+$script:emu = Start-Process $emuExe -ArgumentList @('-avd', $Avd, '-port', '5584', '-no-window', '-no-audio', '-no-boot-anim', '-no-snapshot', '-gpu', 'swiftshader_indirect') -WindowStyle Hidden -PassThru
+$env:ANDROID_SERIAL = 'emulator-5584'   # only ever talk to this emulator, never a plugged-in phone
 & $adb start-server | Out-Null
 & $adb wait-for-device
 $deadline = (Get-Date).AddSeconds($BootSeconds)
@@ -85,5 +88,8 @@ TapWhenFound '^Message$|Message the' 'message field'
 TapWhenFound '^Send$' 'Send'
 Start-Sleep 2
 $ui = (Dump).OuterXml
-if ($ui -match [regex]::Escape($msg)) { Write-Host "PASS: '$msg' shown in chat"; Cleanup; exit 0 }
+if ($ui -match [regex]::Escape($msg)) {
+  & $adb shell screencap -p /sdcard/smoke.png; & $adb pull /sdcard/smoke.png (Join-Path $env:TEMP 'smoke-pass.png') 2>$null | Out-Null
+  Write-Host "PASS: '$msg' shown in chat (screen in TEMP\smoke-pass.png)"; Cleanup; exit 0
+}
 Fail "sent text '$msg' not visible after send"
