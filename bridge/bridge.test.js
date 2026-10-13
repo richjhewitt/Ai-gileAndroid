@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const http = require('http');
-const { createBridge, allowed } = require('./bridge');
+const { createBridge, allowed, bodyLimit } = require('./bridge');
 
 const KEY = 'k'.repeat(40);
 
@@ -60,6 +60,14 @@ test('only Messenger routes are allowed', () => {
   assert.ok(!allowed('GET', '/api/projects'));
   assert.ok(!allowed('GET', '/api/avatars/../settings'));
   assert.ok(!allowed('PATCH', '/api/projects/x/cards/X-1'));
+  // pictures (AII-27)
+  assert.ok(allowed('POST', '/api/projects/ai-gile/attachments'));
+  assert.ok(allowed('POST', '/api/projects/_watchman/attachments'));
+  assert.ok(allowed('GET', '/api/projects/ai-gile/attachments/mg1abc-my%20shot.png'));
+  assert.ok(allowed('GET', '/api/dms/contacts/c1/files/m10-cat.webp'));
+  assert.ok(!allowed('GET', '/api/projects/ai-gile/attachments'));
+  assert.ok(!allowed('DELETE', '/api/projects/ai-gile/attachments/x-a.png'));
+  assert.ok(!allowed('GET', '/api/projects/ai-gile/attachments/..%2f..%2fsettings'));
 });
 
 test('a wrong or missing key gets 401 and never reaches the board', async () => {
@@ -114,6 +122,19 @@ test('a big body is refused', async () => {
     const r = await call(s.port, 'POST', '/api/chats/_watchman', { body: { text: 'x'.repeat(70 * 1024) } }).catch(() => ({ status: 413 }));
     assert.equal(r.status, 413);
     assert.equal(s.board.seen.length, 0);
+  } finally { s.close(); }
+});
+
+test('pictures get a bigger body limit, other calls keep the small one (AII-27)', async () => {
+  assert.equal(bodyLimit('/api/chats/_watchman'), 64 * 1024);
+  assert.equal(bodyLimit('/api/projects/x/cards/X-1/comments'), 64 * 1024);
+  assert.equal(bodyLimit('/api/projects/x/attachments'), 15e6);
+  assert.equal(bodyLimit('/api/dms/contacts/c1/messages'), 15e6);
+  const s = await setup();
+  try {
+    const r = await call(s.port, 'POST', '/api/projects/ai-gile/attachments', { body: { name: 'a.png', type: 'image/png', data: 'A'.repeat(1024 * 1024) } });
+    assert.equal(r.status, 200);
+    assert.equal(JSON.parse(s.board.seen[0].body).data.length, 1024 * 1024);
   } finally { s.close(); }
 });
 

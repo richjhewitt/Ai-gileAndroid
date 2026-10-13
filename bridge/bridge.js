@@ -13,6 +13,7 @@ const path = require('path');
 
 /* ---------- routes ---------- */
 const SEG = '[A-Za-z0-9_-]+';
+const FILE = '[A-Za-z0-9_.%-]+';   // an attachment id: letters, digits, . _ - and %20 for spaces
 const ROUTES = [
   ['GET', '/api/meta'],
   ['GET', '/api/chats'],
@@ -25,6 +26,10 @@ const ROUTES = [
   ['POST', `/api/projects/${SEG}/cards/${SEG}/comments`],
   ['GET', `/api/avatars/(badge(/${SEG})+|[A-Za-z0-9_.-]+)`],
   ['GET', `/api/projects/${SEG}/logo`],
+  // Pictures in chats (AII-27): upload before a message, then read them back
+  ['POST', `/api/projects/${SEG}/attachments`],
+  ['GET', `/api/projects/${SEG}/attachments/${FILE}`],
+  ['GET', `/api/dms/contacts/${SEG}/files/${FILE}`],
 ].map(([method, p]) => ({ method, re: new RegExp(`^${p}$`) }));
 
 function allowed(method, pathname) {
@@ -47,6 +52,9 @@ function loadKey(file) {
 
 /* ---------- bridge ---------- */
 const MAX_BODY = 64 * 1024;
+// Calls that carry pictures (base64) get the board's own bigger limit (AII-27).
+const MAX_FILES_BODY = 15e6;
+const bodyLimit = pathname => /\/attachments$|^\/api\/dms\/contacts\/[^/]+\/messages$/.test(pathname) ? MAX_FILES_BODY : MAX_BODY;
 
 function createBridge({ key, boardPort = 4321, boardHost = '127.0.0.1', maxFails = 10, lockMs = 15 * 60 * 1000, now = Date.now }) {
   if (!key || key.length < 32) throw new Error('phone key must be at least 32 characters');
@@ -73,8 +81,8 @@ function createBridge({ key, boardPort = 4321, boardHost = '127.0.0.1', maxFails
     try { url = new URL(req.url, 'http://bridge'); } catch { return send(res, 400, { error: 'bad address' }); }
     if (!allowed(req.method, url.pathname)) return send(res, 404, { error: 'not available from the phone' });
 
-    const chunks = []; let size = 0;
-    req.on('data', c => { size += c.length; if (size > MAX_BODY) { send(res, 413, { error: 'message too long' }); req.destroy(); } else chunks.push(c); });
+    const chunks = []; let size = 0; const max = bodyLimit(url.pathname);
+    req.on('data', c => { size += c.length; if (size > max) { send(res, 413, { error: 'message too long' }); req.destroy(); } else chunks.push(c); });
     req.on('end', () => {
       if (res.headersSent) return;
       const body = Buffer.concat(chunks);
@@ -106,4 +114,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createBridge, allowed, loadKey };
+module.exports = { createBridge, allowed, loadKey, bodyLimit };
