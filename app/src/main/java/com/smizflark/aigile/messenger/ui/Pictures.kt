@@ -38,6 +38,9 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -113,25 +116,34 @@ private fun request(pic: Pic, repo: Repo): ImageRequest {
     }.build()
 }
 
-/** The pictures on a message, inside its bubble. Tap one to see it full screen; other files show as a 📎 line. */
-@OptIn(ExperimentalLayoutApi::class)
+/** The pictures on a message, inside its bubble. Tap one to see it full screen, hold it to save or share (AII-104); other files show as a 📎 line. */
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun MessagePictures(pics: List<Pic>, repo: Repo, onOpened: () -> Unit = {}) {
     val show = LocalShowPicture.current
     val images = pics.filter { it.image }
+    val actions = rememberPictureActions()
+    var held by remember { mutableStateOf<Pic?>(null) }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.padding(bottom = 6.dp)) {
         pics.forEach { p ->
-            if (p.image) {
+            if (p.image) Box {
+                val req = request(p, repo)
                 SubcomposeAsyncImage(
-                    model = request(p, repo), contentDescription = p.name.ifEmpty { stringResource(R.string.picture) },
+                    model = req, contentDescription = p.name.ifEmpty { stringResource(R.string.picture) },
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.widthIn(max = if (pics.size == 1) 260.dp else 126.dp)
                         .heightIn(min = 80.dp, max = if (pics.size == 1) 320.dp else 126.dp)
-                        .clip(RoundedCornerShape(12.dp)).clickable { show?.invoke(Shown(images, images.indexOf(p).coerceAtLeast(0), repo)); onOpened() }.testTag("pic"),
+                        .clip(RoundedCornerShape(12.dp)).combinedClickable(onLongClick = { held = p }) { show?.invoke(Shown(images, images.indexOf(p).coerceAtLeast(0), repo)); onOpened() }.testTag("pic"),
                     loading = { Box(Modifier.size(126.dp).background(MaterialTheme.colorScheme.surfaceVariant)) },
                     error = { Missing(p) },
                 )
+                DropdownMenu(expanded = held == p, onDismissRequest = { held = null }) {
+                    actions.save?.let { save -> DropdownMenuItem(text = { Text(stringResource(R.string.save_picture)) }, leadingIcon = { Icon(Icons.Default.SaveAlt, null) },
+                        onClick = { held = null; save(req, p.name) }, modifier = Modifier.testTag("pic-save")) }
+                    DropdownMenuItem(text = { Text(stringResource(R.string.share_picture)) }, leadingIcon = { Icon(Icons.Default.Share, null) },
+                        onClick = { held = null; actions.share(req, p.name) }, modifier = Modifier.testTag("pic-share"))
+                }
             } else Text("📎 ${p.name.ifEmpty { stringResource(R.string.file) }}", style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
@@ -200,28 +212,42 @@ private fun FullPicture(pics: List<Pic>, start: Int, repo: Repo, onClose: () -> 
         IconButton(onClick = onClose, modifier = Modifier.align(Alignment.TopEnd).then(cutout).padding(16.dp)) {
             Icon(Icons.Default.Close, "Close", tint = Color.White)
         }
-        val ctx = LocalContext.current
-        val scope = rememberCoroutineScope()
+        val actions = rememberPictureActions()
         val p = pics[pager.currentPage]
         val req = request(p, repo)
         Row(Modifier.align(Alignment.TopStart).then(cutout).padding(16.dp)) {
-            // AII-95: Android 10 and up save without asking for storage access.
-            if (Build.VERSION.SDK_INT >= 29) {
-                val saved = stringResource(R.string.picture_saved)
-                val failed = stringResource(R.string.picture_not_saved)
-                IconButton(onClick = { scope.launch { Toast.makeText(ctx, if (savePicture(ctx, req, p.name)) saved else failed, Toast.LENGTH_SHORT).show() } },
-                    modifier = Modifier.testTag("full-pic-save")) {
+            actions.save?.let { save ->
+                IconButton(onClick = { save(req, p.name) }, modifier = Modifier.testTag("full-pic-save")) {
                     Icon(Icons.Default.SaveAlt, stringResource(R.string.save_picture), tint = Color.White)
                 }
             }
-            // AII-96: Android's share menu
-            val share = stringResource(R.string.share_picture)
-            val failed = stringResource(R.string.picture_not_shared)
-            IconButton(onClick = { scope.launch { if (!sharePicture(ctx, req, p.name, share)) Toast.makeText(ctx, failed, Toast.LENGTH_SHORT).show() } },
-                modifier = Modifier.testTag("full-pic-share")) {
-                Icon(Icons.Default.Share, share, tint = Color.White)
+            IconButton(onClick = { actions.share(req, p.name) }, modifier = Modifier.testTag("full-pic-share")) {
+                Icon(Icons.Default.Share, stringResource(R.string.share_picture), tint = Color.White)
             }
         }
+    }
+}
+
+/** Save (null before Android 10) and Share for a picture, with their notes; used full screen and on a held picture (AII-104). */
+private class PictureActions(val save: ((ImageRequest, String) -> Unit)?, val share: (ImageRequest, String) -> Unit)
+
+@Composable
+private fun rememberPictureActions(): PictureActions {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val saved = stringResource(R.string.picture_saved)
+    val notSaved = stringResource(R.string.picture_not_saved)
+    val title = stringResource(R.string.share_picture)
+    val notShared = stringResource(R.string.picture_not_shared)
+    return remember(ctx, scope, saved, notSaved, title, notShared) {
+        PictureActions(
+            // AII-95: Android 10 and up save without asking for storage access.
+            save = if (Build.VERSION.SDK_INT >= 29) { req, name ->
+                scope.launch { Toast.makeText(ctx, if (savePicture(ctx, req, name)) saved else notSaved, Toast.LENGTH_SHORT).show() }
+            } else null,
+            // AII-96: Android's share menu
+            share = { req, name -> scope.launch { if (!sharePicture(ctx, req, name, title)) Toast.makeText(ctx, notShared, Toast.LENGTH_SHORT).show() } },
+        )
     }
 }
 
