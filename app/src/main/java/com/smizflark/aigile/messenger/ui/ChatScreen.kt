@@ -103,6 +103,10 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import android.view.HapticFeedbackConstants
+import androidx.compose.runtime.snapshotFlow
+import com.smizflark.aigile.messenger.data.ScrollPlace
+import com.smizflark.aigile.messenger.data.ScrollPlaces
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalView
 
 private sealed interface Row {
@@ -250,9 +254,29 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val known = convo?.bubbles.orEmpty().mapNotNull { it.card }.toSet()
     val focusBubble = focus?.let { f -> convo?.bubbles?.lastOrNull { it.card == f } }
     val atBottom by remember { derivedStateOf { list.firstVisibleItemIndex <= 1 } }
-    var seenNewest by rememberSaveable { mutableStateOf<String?>(null) }
+    // AII-72: coming back, the chat opens where you left it; the 'N new' pill counts from what you had seen.
+    val placeKey = ref.key + (focus?.let { "/$it" } ?: "")
+    val place = remember(placeKey) { ScrollPlaces.get(placeKey) }
+    var restoring by remember(placeKey) { mutableStateOf(place != null) }
+    var seenNewest by rememberSaveable { mutableStateOf(place?.seen) }
     val newest = convo?.bubbles?.lastOrNull()?.key
-    LaunchedEffect(atBottom, newest) { if (atBottom) seenNewest = newest }
+    LaunchedEffect(atBottom, newest, restoring) { if (atBottom && !restoring) seenNewest = newest }
+    val latestItems by rememberUpdatedState(items)
+    val latestSeen by rememberUpdatedState(seenNewest)
+    LaunchedEffect(placeKey) {
+        if (place != null) {
+            snapshotFlow { latestItems.size }.first { it > 0 }
+            val at = ScrollPlaces.indexOf(place, latestItems.map { it.id })
+            if (at != null) list.scrollToItem(at + 1, place.offset)   // +1: the spacer at the bottom
+            restoring = false
+        }
+        snapshotFlow { Triple(list.firstVisibleItemIndex, list.firstVisibleItemScrollOffset, latestItems.size) }.collect { (i, off, n) ->
+            if (n == 0) return@collect
+            if (i <= 1) ScrollPlaces.clear(placeKey)
+            else (list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == i }?.key as? String)
+                ?.let { ScrollPlaces.save(placeKey, ScrollPlace(it, off, latestSeen)) }
+        }
+    }
     val unread = if (atBottom) 0 else unreadBelow(convo?.bubbles.orEmpty(), seenNewest)
 
     Scaffold(
