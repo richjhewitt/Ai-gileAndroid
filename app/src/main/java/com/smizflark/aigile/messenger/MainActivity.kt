@@ -21,12 +21,15 @@ import com.smizflark.aigile.messenger.ui.ConnectScreen
 import com.smizflark.aigile.messenger.ui.MessengerTheme
 import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
+import com.smizflark.aigile.messenger.ui.Shortcuts
 import com.smizflark.aigile.messenger.work.CheckWorker
 
 class MainActivity : ComponentActivity() {
     /** A pairing link (aigile://pair?...) or a chat to open from an alert. */
     private var pairing by mutableStateOf<Pair<String, String>?>(null)
     private var openChat by mutableStateOf<String?>(null)
+    /** New message from the app icon menu (AII-53). */
+    private var openNew by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +71,11 @@ class MainActivity : ComponentActivity() {
                 }
                 // A new pairing link while running: back to Connect, filled in.
                 LaunchedEffect(pairing) { if (pairing != null && nav.currentDestination?.route != "connect") nav.navigate("connect") }
+                LaunchedEffect(openNew) {
+                    if (!openNew) return@LaunchedEffect
+                    if (repo.store.connected) nav.navigate("new") { launchSingleTop = true }
+                    openNew = false
+                }
                 LaunchedEffect(openChat) {
                     val c = openChat ?: return@LaunchedEffect
                     if (repo.store.connected) nav.openChat(c)
@@ -87,6 +95,7 @@ class MainActivity : ComponentActivity() {
     private fun read(intent: Intent?) {
         intent?.data?.toString()?.let { Mapper.parsePairing(it) }?.let { pairing = it }
         intent?.getStringExtra(CheckWorker.EXTRA_CHAT)?.let { openChat = it }
+        if (intent?.action == Shortcuts.ACTION_NEW) openNew = true
     }
 
     override fun onStart() { super.onStart(); App.inForeground = true }

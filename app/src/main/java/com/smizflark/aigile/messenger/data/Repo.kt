@@ -1,6 +1,7 @@
 package com.smizflark.aigile.messenger.data
 
 import android.content.Context
+import com.smizflark.aigile.messenger.ui.Shortcuts
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
@@ -8,6 +9,7 @@ import java.util.UUID
 
 /** The one place the screens and the background check get their chats from. */
 class Repo(context: Context) {
+    private val app = context.applicationContext
     val store = Store(context)
     private val demo by lazy { DemoSource() }
     private var board: BoardSource? = null
@@ -31,11 +33,12 @@ class Repo(context: Context) {
 
     fun startDemo() { store.demo = true; store.owner = "Rich" }
 
-    fun signOut() { board = null; store.signOut() }
+    fun signOut() { board = null; store.signOut(); Shortcuts.clear(app) }
 
     suspend fun chats(): List<ChatRef> {
         val l = source.chats()
         store.cacheChats(l); store.lastSync = System.currentTimeMillis()
+        Shortcuts.update(app, l)   // hold the app icon: your newest chats (AII-53)
         return l
     }
 
