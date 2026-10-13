@@ -12,7 +12,7 @@ object Mapper {
                 color = s.color, last = s.last, unread = s.unread,
             ) else ChatRef(
                 kind = Kind.LEAD, id = s.slug, name = s.name.ifBlank { s.slug },
-                subtitle = s.lead ?: "Lead", emoji = s.emoji ?: "🗂️", color = s.color,
+                subtitle = s.lead ?: "Lead", emoji = s.emoji.orEmpty(), color = s.color,
                 pic = s.leadPic?.takeIf { it.isNotBlank() } ?: s.logo?.takeIf { it.isNotBlank() },
                 waiting = s.unread, last = s.last, seen = s.seen?.takeIf { it.isNotBlank() },
             )
@@ -21,10 +21,16 @@ object Mapper {
             ChatRef(
                 kind = Kind.FRIEND, id = c.id, name = c.name.ifBlank { "Friend" },
                 subtitle = if (c.checked) "🔒 Private, safety code checked" else "🔒 Private",
-                emoji = "🔒", last = c.last, lastIn = c.lastIn,
+                emoji = "", last = c.last, lastIn = c.lastIn,
             )
         }
         return leads + friends
+    }
+
+    /** AII-64: picture fallback when a chat has no picture or emoji: "Tunio Discord" -> "TD", "rich" -> "R". */
+    fun initials(name: String): String {
+        val words = name.split(Regex("""[^\p{L}\p{N}]+""")).filter { it.isNotEmpty() }
+        return words.take(2).joinToString("") { it.substring(0, it.offsetByCodePoints(0, 1)) }.uppercase().ifEmpty { "?" }
     }
 
     /** A lead's chat (or the Lead Scrum Master's) as bubbles, plus where a reply can go. */
