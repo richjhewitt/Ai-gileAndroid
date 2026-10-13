@@ -353,6 +353,7 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<Strin
     val shown = Markdown.render(b.text, cs.surfaceVariant, cs.primary, cards, onCard)
     // AII-43: long-press a bubble to copy what it shows (without the ** marks).
     var menu by remember { mutableStateOf(false) }
+    var showTime by remember { mutableStateOf(false) }   // AII-51: tap a bubble for its exact time
     val clipboard = LocalClipboardManager.current
     val ctx = LocalContext.current
     Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalAlignment = if (b.mine) Alignment.End else Alignment.Start) {
@@ -360,7 +361,7 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<Strin
             color = bg,
             shape = RoundedCornerShape(18.dp, 18.dp, if (b.mine) 4.dp else 18.dp, if (b.mine) 18.dp else 4.dp),
             modifier = Modifier.widthIn(max = 320.dp).semantics(mergeDescendants = true) {}.testTag(if (b.mine) "mine" else "theirs")
-                .combinedClickable(onClick = {}, onLongClick = { menu = true }),
+                .combinedClickable(onClick = { showTime = !showTime }, onLongClick = { menu = true }),
         ) {
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                 DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
@@ -388,6 +389,8 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<Strin
                 )
             }
         }
+        if (showTime && b.at.isNotBlank()) Text(fullTime(b.at), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).testTag("fulltime"))
         val p = r.pending
         if (p != null && b.state == SendState.FAILED) Row {
             TextButton(onClick = { onRetry(p) }) { Text("Tap to retry") }
