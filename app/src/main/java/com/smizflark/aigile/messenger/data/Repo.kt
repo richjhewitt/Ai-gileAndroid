@@ -79,6 +79,8 @@ class Repo(context: Context) {
 
     /** Every chat's conversation as last fetched, for search (AII-30). */
     fun cachedConversations(chats: List<ChatRef>) = chats.mapNotNull { store.cachedConversation(it.key) }
+    /** One card for the card view (AII-45); null if it can't be fetched (the view still shows its messages). */
+    suspend fun card(ref: ChatRef, id: String): CardDetail? = runCatching { source.card(ref.id, id) }.getOrNull()
 
     /* ---------- sending through the outbox: nothing typed is lost ---------- */
 

@@ -73,6 +73,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.smizflark.aigile.messenger.data.Bubble
+import com.smizflark.aigile.messenger.data.CardDetail
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Conversation
 import com.smizflark.aigile.messenger.data.Kind
@@ -153,6 +154,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var text by rememberSaveable { mutableStateOf(repo.store.draft(ref.key)) }
     var pics by rememberSaveable { mutableStateOf(listOf<String>()) }
     var picNote by remember { mutableStateOf<String?>(null) }
+    var detail by remember { mutableStateOf<CardDetail?>(null) }
+    if (focus != null && ref.kind == Kind.LEAD) LaunchedEffect(focus) { detail = repo.card(ref, focus) }
     var error by remember { mutableStateOf<String?>(null) }
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     val scope = rememberCoroutineScope()
@@ -301,6 +304,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                         }
                     }
                     if (convo == null && error == null) item { Text("Loading…", Modifier.padding(24.dp)) }
+                    detail?.let { d -> item(key = "card-details") { CardDetails(d) } }   // last item = top of the reversed list
                     if (convo != null && convo!!.bubbles.isEmpty() && pending.isEmpty()) item {
                         Text("No messages yet. Say hello below.", Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }

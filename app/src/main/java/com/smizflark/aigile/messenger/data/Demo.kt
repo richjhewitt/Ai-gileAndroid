@@ -46,6 +46,13 @@ class DemoSource : ChatSource {
 
     override suspend fun owner() = "Rich"
 
+    override suspend fun card(slug: String, id: String): CardDetail? {
+        val t = threads[slug] ?: return null
+        val title = t.cards[id]?.title ?: return null
+        return CardDetail(id, title, if (t.open.any { it.id == id }) "team" else "doing", "task",
+            "- A demo card from **${t.name}**\n\n- On a real board this shows the card's own description", assignee = t.lead ?: "")
+    }
+
     override suspend fun chats(): List<ChatRef> {
         delay(250)
         val summaries = listOf("ai-gile", "tunio").map { s ->
