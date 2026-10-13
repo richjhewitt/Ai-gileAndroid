@@ -8,6 +8,7 @@
     <string name="reply">Reply</string>
     <string name="show_quoted">Show the quoted message</string>
     <string name="forward">Forward</string>
+    <string name="share">Share</string>
     <string name="forward_to">Forward to…</string>
     <string name="forward_search">Search chats</string>
     <string name="copied">Copied</string>
