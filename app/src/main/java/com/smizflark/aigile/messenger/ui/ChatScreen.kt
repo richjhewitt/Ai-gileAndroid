@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -214,6 +215,16 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         }
     }
 
+    // A copied picture (AII-56): offered as a chip above the message box.
+    val copied = rememberCopiedPicture()
+    fun pasteCopied() {
+        val uri = copied.take() ?: run { picNote = "Couldn't read the copied picture."; return }
+        scope.launch {
+            val kept = withContext(Dispatchers.IO) { repo.keepPicture(uri) }
+            if (kept == null) picNote = "Couldn't read the copied picture." else { pics = (pics + kept).take(MAX_PICS); picNote = null }
+        }
+    }
+
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(ref.key) {
         // Anything left from last time goes first (it was saved before sending, so nothing is lost).
@@ -300,6 +311,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 pics = pics, picNote = picNote,
                 onAttach = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 onRemovePic = { f -> pics = pics - f; File(f).delete() },
+                onPasteCopied = if (copied.available && pics.size < MAX_PICS) ::pasteCopied else null,
             ) {
                 send(text, if (ref.kind == Kind.LEAD) focus ?: target else null, pics); text = ""; pics = emptyList(); picNote = null
             }
@@ -407,6 +419,7 @@ private fun Composer(
     ref: ChatRef, text: String, onText: (String) -> Unit,
     targets: List<Pair<String?, String>>, target: String?, onTarget: (String?) -> Unit,
     pics: List<String> = emptyList(), picNote: String? = null, onAttach: () -> Unit = {}, onRemovePic: (String) -> Unit = {},
+    onPasteCopied: (() -> Unit)? = null,
     onSend: () -> Unit,
 ) {
     Surface(tonalElevation = 2.dp) {
@@ -429,6 +442,10 @@ private fun Composer(
                 }
             }
             picNote?.let { PictureNote(it) }
+            if (onPasteCopied != null) AssistChip(
+                onClick = onPasteCopied, label = { Text("Paste copied picture") },
+                leadingIcon = { Icon(Icons.Default.ContentPaste, null) }, modifier = Modifier.testTag("paste-pic"),
+            )
             if (pics.isNotEmpty()) PickedPictures(pics, onRemovePic)
             Row(verticalAlignment = Alignment.Bottom) {
                 IconButton(onClick = onAttach, enabled = pics.size < MAX_PICS, modifier = Modifier.size(52.dp).testTag("attach")) {
