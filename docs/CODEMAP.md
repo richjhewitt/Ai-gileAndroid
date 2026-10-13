@@ -7,6 +7,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - MainActivity.kt: entry point; handles pairing links and chats opened from an alert.
 
 ## data/ (pure logic, mostly unit tested)
+- data/ChatInfo.kt: a chat's open cards and pictures, for the chat details sheet.
 - data/Crash.kt: keeps the last crash and turns it into a bug message for the team.
 - data/Demo.kt: made-up chats that answer back, for trying the app with no board.
 - data/Drafts.kt: half-typed replies, one per chat.
@@ -33,6 +34,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 
 ## ui/ (Compose screens)
 - ui/CardDetails.kt: card detail sheet and the board's column names.
+- ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, pictures, Mute and Pin.
 - ui/ChatScreen.kt: the chat screen itself (list, top bar, find, scrolling).
 - ui/ChatBubble.kt: one message bubble (copy, reply, forward, options, retry).
 - ui/ChatComposer.kt: the message input with pictures, reply and dictation.
