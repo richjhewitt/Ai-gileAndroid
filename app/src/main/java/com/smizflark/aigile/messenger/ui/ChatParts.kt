@@ -122,6 +122,8 @@ internal sealed interface Row {
     data class Day(override val id: String, val label: String) : Row
     data class Card(override val id: String, val card: String, val title: String, val waiting: Boolean) : Row
     data class Msg(override val id: String, val b: Bubble, val pending: Pending? = null, val showOptions: Boolean = false) : Row
+    /** AII-100: the "New messages" line above the first message you hadn't seen. */
+    data object New : Row { override val id = "new" }
 }
 
 

@@ -16,6 +16,14 @@ class NewsTest {
     private val t1 = "2026-10-13T01:00:00Z"
     private val t2 = "2026-10-13T02:00:00Z"
 
+    // AII-100: where the "New messages" line goes.
+    @Test fun newLineGoesAboveTheFirstUnseenFromThem() {
+        val l = listOf(Bubble("a", "Lead", "x", t1, false), Bubble("b", "Rich", "y", t2, true), Bubble("c", "Lead", "z", t2, false))
+        assertEquals("c", News.firstNew(l, t1))
+        assertEquals(null, News.firstNew(l, t2))
+        assertEquals(null, News.firstNew(l, null))   // never opened: no line
+    }
+
     @Test fun firstLookOnlyRecordsNoAlertForOldHistory() {
         val (news, told) = News.diff(listOf(News.Item("lead:a", "A", t1)), emptyMap(), emptyMap())
         assertTrue(news.isEmpty())

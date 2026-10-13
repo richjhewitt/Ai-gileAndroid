@@ -73,6 +73,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material3.HorizontalDivider
+import com.smizflark.aigile.messenger.data.News
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -126,7 +128,7 @@ internal fun unreadBelow(bubbles: List<Bubble>, seen: String?): Int {
     return bubbles.subList(at + 1, bubbles.size).count { !it.mine }
 }
 
-private fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus: String? = null): List<Row> {
+private fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus: String? = null, seenAtOpen: String? = null): List<Row> {
     val out = mutableListOf<Row>()
     val bubbles = c?.bubbles.orEmpty().filter { focus == null || it.card == focus }
     // Answer buttons only under the newest message of a card still waiting on you.
@@ -134,9 +136,11 @@ private fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus:
         .groupBy { it.value.card }.mapNotNull { (_, l) -> l.maxOf { it.index } }.toSet()
     var day: java.time.LocalDate? = null
     var card: String? = null
+    val firstNew = News.firstNew(bubbles, seenAtOpen)
     bubbles.forEachIndexed { i, b ->
         val d = dayOf(b.at)
         if (d != null && d != day) { out += Row.Day("day:$d", dayLabel(b.at)); day = d; card = null }
+        if (b.key == firstNew) out += Row.New
         if (b.card != null && b.card != card) {
             out += Row.Card("card:$i:${b.card}", b.card, Mapper.clean(b.cardTitle ?: ""), b.waiting)
         }
@@ -159,6 +163,7 @@ private fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus:
 @Composable
 fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}) {
     var convo by remember { mutableStateOf(repo.store.cachedConversation(ref.key)) }
+    val seenAtOpen = rememberSaveable(ref.key) { mutableStateOf(repo.store.seen()[ref.key]) }.value   // AII-100: the "New messages" line stays put while you read
     var pending by remember { mutableStateOf(repo.pendingFor(ref.key)) }
     var target by rememberSaveable { mutableStateOf(focus ?: convo?.defaultTarget) }
     var picked by rememberSaveable { mutableStateOf(false) }
@@ -271,7 +276,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         }
     }
 
-    val items = remember(convo, pending, owner, focus) { rows(convo, pending, owner, focus).asReversed() }
+    val items = remember(convo, pending, owner, focus) { rows(convo, pending, owner, focus, seenAtOpen).asReversed() }
     val hits = remember(items, query, finding) { if (finding) Find.matches(items.map { (it as? Row.Msg)?.b?.text.orEmpty() }, query) else emptyList() }
     val hitIds = remember(hits, items) { hits.map { items[it].id } }
     LaunchedEffect(query) { at = 0 }
@@ -364,6 +369,12 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                         when (r) {
                             is Row.Day -> Text(r.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            is Row.New -> Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).testTag("new-line"), verticalAlignment = Alignment.CenterVertically) {
+                                HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.new_messages), Modifier.padding(horizontal = 10.dp), style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary)
+                                HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.primary)
+                            }
                             is Row.Card -> CardHeader(r, chosen = target == r.card && focus == null,
                                 onOpen = if (focus == null && ref.kind == Kind.LEAD) { { onOpenCard(r.card) } } else null) {
                                 if (targets.any { it.id == r.card }) { target = r.card; picked = true }
