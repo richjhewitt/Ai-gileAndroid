@@ -7,6 +7,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -27,10 +30,13 @@ interface ChatSource {
     suspend fun chats(): List<ChatRef>
     suspend fun conversation(ref: ChatRef): Conversation
     /** Sends a reply. Returns the card it landed on (a new 💬 card when target is null), if the board says. */
-    suspend fun send(ref: ChatRef, text: String, target: String?): String?
+    suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload> = emptyList()): String?
     /** A new 💬 message to a project's team. Returns the new card id. */
-    suspend fun newMessage(slug: String, text: String): String?
+    suspend fun newMessage(slug: String, text: String, files: List<Upload> = emptyList()): String?
 }
+
+/** A picture or file to send with a message. */
+class Upload(val name: String, val type: String, val bytes: ByteArray)
 
 /** A message for the person holding the phone, not a stack trace. */
 class BoardError(message: String, val code: Int = 0) : Exception(message)
@@ -99,20 +105,47 @@ class BoardSource(
         else -> Mapper.conversation(ref, json.decodeFromString(call("GET", "/api/chats/${ref.id}")))
     }
 
-    override suspend fun send(ref: ChatRef, text: String, target: String?): String? = when {
-        ref.kind == Kind.FRIEND -> { call("POST", "/api/dms/contacts/${ref.id}/messages", buildJsonObject { put("text", text) }); null }
-        ref.kind == Kind.WATCHMAN -> { call("POST", "/api/chats/_watchman", buildJsonObject { put("text", text) }); null }
+    override suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload>): String? = when {
+        // Friend DMs carry their files inside the sealed message.
+        ref.kind == Kind.FRIEND -> {
+            call("POST", "/api/dms/contacts/${ref.id}/messages", buildJsonObject {
+                put("text", text)
+                if (files.isNotEmpty()) put("attachments", buildJsonArray {
+                    files.forEach { f -> add(buildJsonObject { put("name", f.name); put("type", f.type); put("data", b64(f.bytes)) }) }
+                })
+            }); null
+        }
+        ref.kind == Kind.WATCHMAN -> {
+            val ids = upload("_watchman", files)
+            call("POST", "/api/chats/_watchman", buildJsonObject { put("text", text); if (ids.isNotEmpty()) put("attachments", ids) }); null
+        }
         target != null -> {
-            call("POST", "/api/projects/${ref.id}/cards/$target/comments", buildJsonObject { put("author", owner()); put("text", text) })
+            val ids = upload(ref.id, files)
+            call("POST", "/api/projects/${ref.id}/cards/$target/comments", buildJsonObject {
+                put("author", owner()); put("text", text); if (ids.isNotEmpty()) put("attachments", ids)
+            })
             target
         }
-        else -> newMessage(ref.id, text)
+        else -> newMessage(ref.id, text, files)
     }
 
-    override suspend fun newMessage(slug: String, text: String): String? {
+    /** Board messages take files uploaded first, then named by id (AIG-77). */
+    private suspend fun upload(slug: String, files: List<Upload>): JsonArray = buildJsonArray {
+        for (f in files) {
+            val saved = json.decodeFromString<Attachment>(call("POST", "/api/projects/$slug/attachments",
+                buildJsonObject { put("name", f.name); put("type", f.type); put("data", b64(f.bytes)) }))
+            add(buildJsonObject { put("id", saved.id); put("type", f.type) })
+        }
+    }
+
+    private fun b64(bytes: ByteArray) = java.util.Base64.getEncoder().encodeToString(bytes)
+
+    override suspend fun newMessage(slug: String, text: String, files: List<Upload>): String? {
+        val ids = upload(slug, files)
         val body = buildJsonObject {
-            put("title", Mapper.quickTitle(text)); put("description", text); put("type", "task")
+            put("title", if (text.isBlank()) "💬 📷 Picture" else Mapper.quickTitle(text)); put("description", text); put("type", "task")
             put("status", "team"); put("createdBy", owner()); put("quick", JsonPrimitive(true))
+            if (ids.isNotEmpty()) put("attachments", ids)
         }
         return json.decodeFromString<Created>(call("POST", "/api/projects/$slug/cards", body)).id
     }

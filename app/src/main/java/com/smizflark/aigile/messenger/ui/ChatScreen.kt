@@ -1,5 +1,8 @@
 package com.smizflark.aigile.messenger.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
@@ -61,10 +65,14 @@ import com.smizflark.aigile.messenger.data.Conversation
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Pending
+import com.smizflark.aigile.messenger.data.Pic
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.SendState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 private sealed interface Row {
     val id: String
@@ -93,7 +101,8 @@ private fun rows(c: Conversation?, pending: List<Pending>, owner: String): List<
     }
     pending.forEach { p ->
         out += Row.Msg("p:${p.id}", Bubble("p:${p.id}", owner, p.text, p.at, true, p.target,
-            state = if (p.failed) SendState.FAILED else SendState.SENDING), p)
+            state = if (p.failed) SendState.FAILED else SendState.SENDING,
+            pics = p.files.map { Pic(File(it).toURI().toString(), File(it).name, "image/") }), p)
     }
     return out
 }
@@ -107,6 +116,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
     var target by rememberSaveable { mutableStateOf(convo?.defaultTarget) }
     var picked by rememberSaveable { mutableStateOf(false) }
     var text by rememberSaveable { mutableStateOf("") }
+    var pics by rememberSaveable { mutableStateOf(listOf<String>()) }
+    var picNote by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
@@ -135,9 +146,20 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
         }
     }
 
-    fun send(body: String, to: String?) {
-        val t = body.trim(); if (t.isEmpty()) return
-        deliver(repo.queue(ref, t, to))
+    fun send(body: String, to: String?, files: List<String> = emptyList()) {
+        val t = body.trim(); if (t.isEmpty() && files.isEmpty()) return
+        deliver(repo.queue(ref, t, to, files))
+    }
+
+    // Pictures (AII-27): the system photo picker needs no permission; each pick is copied into the app at once.
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(MAX_PICS)) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        scope.launch {
+            picNote = "Adding ${uris.size} picture${if (uris.size == 1) "" else "s"}…"
+            val kept = withContext(Dispatchers.IO) { uris.map { repo.keepPicture(it) } }
+            pics = (pics + kept.filterNotNull()).take(MAX_PICS)
+            picNote = if (kept.any { it == null }) "Couldn't read one of those pictures." else null
+        }
     }
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -185,7 +207,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
                         is Row.Card -> CardHeader(r, chosen = target == r.card) {
                             if (targets.any { it.id == r.card }) { target = r.card; picked = true }
                         }
-                        is Row.Msg -> MessageBubble(r, ref,
+                        is Row.Msg -> MessageBubble(r, ref, repo,
                             onOption = { send(it, r.b.card) },
                             onRetry = { p -> deliver(p) },
                             onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) })
@@ -196,8 +218,12 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
                     Text("No messages yet. Say hello below.", Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Composer(ref, text, { text = it }, targets.map { it.id to it.label }, target, { target = it; picked = true }) {
-                send(text, if (ref.kind == Kind.LEAD) target else null); text = ""
+            Composer(ref, text, { text = it }, targets.map { it.id to it.label }, target, { target = it; picked = true },
+                pics = pics, picNote = picNote,
+                onAttach = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                onRemovePic = { f -> pics = pics - f; File(f).delete() },
+            ) {
+                send(text, if (ref.kind == Kind.LEAD) target else null, pics); text = ""; pics = emptyList(); picNote = null
             }
         }
     }
@@ -221,7 +247,7 @@ private fun CardHeader(r: Row.Card, chosen: Boolean, onClick: () -> Unit) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MessageBubble(r: Row.Msg, ref: ChatRef, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
+private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -240,7 +266,8 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, onOption: (String) -> Unit, 
                 if (!b.mine && ref.kind != Kind.FRIEND && b.author.isNotBlank()) {
                     Text(b.author, style = MaterialTheme.typography.labelMedium, color = cs.primary)
                 }
-                Text(Markdown.render(b.text, cs.surfaceVariant, cs.primary), style = MaterialTheme.typography.bodyLarge, color = fg)
+                if (b.pics.isNotEmpty()) MessagePictures(b.pics, repo)
+                if (b.text.isNotEmpty()) Text(Markdown.render(b.text, cs.surfaceVariant, cs.primary), style = MaterialTheme.typography.bodyLarge, color = fg)
                 Text(
                     when (b.state) {
                         SendState.SENDING -> "Sending…"
@@ -267,7 +294,9 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, onOption: (String) -> Unit, 
 @Composable
 private fun Composer(
     ref: ChatRef, text: String, onText: (String) -> Unit,
-    targets: List<Pair<String?, String>>, target: String?, onTarget: (String?) -> Unit, onSend: () -> Unit,
+    targets: List<Pair<String?, String>>, target: String?, onTarget: (String?) -> Unit,
+    pics: List<String> = emptyList(), picNote: String? = null, onAttach: () -> Unit = {}, onRemovePic: (String) -> Unit = {},
+    onSend: () -> Unit,
 ) {
     Surface(tonalElevation = 2.dp) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 10.dp, vertical = 8.dp)) {
@@ -288,7 +317,12 @@ private fun Composer(
                     }
                 }
             }
+            picNote?.let { PictureNote(it) }
+            if (pics.isNotEmpty()) PickedPictures(pics, onRemovePic)
             Row(verticalAlignment = Alignment.Bottom) {
+                IconButton(onClick = onAttach, enabled = pics.size < MAX_PICS, modifier = Modifier.size(52.dp).testTag("attach")) {
+                    Icon(Icons.Default.AddPhotoAlternate, "Add a picture")
+                }
                 OutlinedTextField(
                     value = text, onValueChange = onText, maxLines = 6,
                     placeholder = { Text(if (ref.kind == Kind.WATCHMAN) "Message the Lead Scrum Master" else "Message") },
@@ -296,10 +330,13 @@ private fun Composer(
                     modifier = Modifier.weight(1f).testTag("input"),
                 )
                 Spacer(Modifier.size(8.dp))
-                FilledIconButton(onClick = onSend, enabled = text.isNotBlank(), modifier = Modifier.size(52.dp).testTag("send")) {
+                FilledIconButton(onClick = onSend, enabled = text.isNotBlank() || pics.isNotEmpty(), modifier = Modifier.size(52.dp).testTag("send")) {
                     Icon(Icons.AutoMirrored.Filled.Send, "Send")
                 }
             }
         }
     }
 }
+
+/** Pictures on one message: plenty for screenshots, and well inside the board's 20 files a comment. */
+private const val MAX_PICS = 6
