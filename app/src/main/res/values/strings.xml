@@ -4,4 +4,6 @@
     <string name="widget_description">Your latest chats</string>
     <string name="widget_connect">Open the app to connect to your board</string>
     <string name="widget_no_chats">No chats yet</string>
+    <string name="copy">Copy</string>
+    <string name="copied">Copied</string>
 </resources>
