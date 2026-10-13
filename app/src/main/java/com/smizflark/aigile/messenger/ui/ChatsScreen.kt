@@ -48,8 +48,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
+import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Repo
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** Journey 2: every chat in one list. Shows the last list at once, then fetches. */
@@ -63,16 +63,22 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
     val scope = rememberCoroutineScope()
 
-    suspend fun load() {
+    val pace = remember { Pace(fast = 10_000, slow = 60_000) }
+
+    /** Fetches the list; true when a chat changed. */
+    suspend fun load(): Boolean {
+        val before = chats
         try { chats = repo.chats(); error = null }
         catch (e: Exception) { error = e.message }
         seen = repo.store.seen(); loaded = true
+        return chats != before
     }
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (true) { load(); delay(20_000) }   // calm: every 20 s while you look, never in the background
+            // Calm: every 10 s while chats are busy, easing off to a minute when quiet; never in the background.
+            while (true) { pace.after(load()); pace.sleep() }
         }
     }
 

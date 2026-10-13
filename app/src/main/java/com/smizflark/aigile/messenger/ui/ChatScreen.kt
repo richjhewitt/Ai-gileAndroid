@@ -60,10 +60,10 @@ import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Conversation
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Mapper
+import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.SendState
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private sealed interface Row {
@@ -112,13 +112,18 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
     val list = rememberLazyListState()
     val owner = repo.store.owner.ifBlank { "You" }
 
-    suspend fun load() {
+    val pace = remember { Pace(fast = 3_000, slow = 30_000) }
+
+    /** Fetches the chat; true when there is something new. */
+    suspend fun load(): Boolean {
         try {
             val c = repo.conversation(ref)
+            val changed = c.bubbles != convo?.bubbles
             convo = c; error = null
             if (!picked) target = c.defaultTarget
             repo.store.markSeen(ref.key, c.bubbles.lastOrNull()?.at)
-        } catch (e: Exception) { error = e.message }
+            return changed
+        } catch (e: Exception) { error = e.message; return false }
     }
 
     fun deliver(p: Pending) {
@@ -128,7 +133,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
             r.onSuccess { card ->
                 // A new 💬 carries on in its own card, like the board's page (AIG-757).
                 if (ref.kind == Kind.LEAD && p.target == null && card != null) { target = card; picked = true }
-                load()
+                load(); pace.poke()   // a reply is likely soon: look quickly for a while
             }.onFailure { error = it.message }
             pending = repo.pendingFor(ref.key)
             list.animateScrollToItem(0)
@@ -145,7 +150,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
         // Anything left from last time goes first (it was saved before sending, so nothing is lost).
         repo.pendingFor(ref.key).filter { !it.failed }.forEach { deliver(it) }
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (true) { load(); delay(6_000) }
+            // Live: every 3 s while the chat is busy, easing off to 30 s when it is quiet; never in the background.
+            while (true) { pace.after(load()); pace.sleep() }
         }
     }
 
