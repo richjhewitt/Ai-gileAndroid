@@ -53,10 +53,10 @@ class ScreenshotTest {
     @Test fun connectDark() = shot("connect", true) { ConnectScreen(repo, null) {} }
     @Test fun chatsLight() = shot("chats", false) { ChatsScreen(repo, {}, {}, {}) }
     @Test fun chatsDark() = shot("chats", true) { ChatsScreen(repo, {}, {}, {}) }
-    @Test fun chatLight() { prime(lead()); shot("chat", false) { ChatScreen(repo, lead()) {} } }
-    @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead()) {} } }
-    @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, {}, {}) }
-    @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, {}, {}) }
+    @Test fun chatLight() { prime(lead()); shot("chat", false) { ChatScreen(repo, lead(), onBack = {}) } }
+    @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead(), onBack = {}) } }
+    @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
+    @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun settingsLight() = shot("settings", false) { SettingsScreen(repo, {}, {}) }
     @Test fun settingsDark() = shot("settings", true) { SettingsScreen(repo, {}, {}) }
 }
