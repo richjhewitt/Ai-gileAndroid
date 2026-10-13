@@ -151,7 +151,7 @@ data class Bubble(
 /** A picture or file on a message: a board path (/api/...) or, before it is sent or in the demo, a file:// address. */
 @Serializable
 data class Pic(val path: String, val name: String = "", val type: String = "") {
-    val local get() = path.startsWith("file:") || path.startsWith("content:")
+    val local get() = path.startsWith("file:") || path.startsWith("content:") || path.startsWith("android.resource:")
     val image get() = type.startsWith("image/") || Regex("(?i)\\.(png|jpe?g|gif|webp|bmp|heic)$").containsMatchIn(name.ifEmpty { path })
 }
 

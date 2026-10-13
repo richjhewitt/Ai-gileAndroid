@@ -6,7 +6,9 @@ import com.smizflark.aigile.messenger.data.Conversation
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Pic
 import com.smizflark.aigile.messenger.data.Target
+import com.smizflark.aigile.messenger.data.DemoSource
 import com.smizflark.aigile.messenger.data.chatInfo
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,5 +31,12 @@ class ChatInfoTest {
     @Test fun picturesNewestFirstImagesOnlyOnce() {
         val convo = Conversation(ref, listOf(b("1", a), b("2", doc, c), b("3", a)))
         assertEquals(listOf(a, c), chatInfo(convo).pictures)
+    }
+
+    @Test fun demoChatHasAPictureOnThePhone() = runBlocking {   // AII-86
+        val demo = DemoSource()
+        val pics = chatInfo(demo.conversation(demo.chats().first { it.id == "ai-gile" })).pictures
+        assertEquals(1, pics.size)
+        assertTrue(pics[0].local && pics[0].image)
     }
 }

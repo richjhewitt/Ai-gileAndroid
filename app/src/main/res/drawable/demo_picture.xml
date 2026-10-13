@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AII-86: the made-up photo in the demo chat (sky, sun, hills), so the demo shows a picture with no board. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp" android:height="240dp"
+    android:viewportWidth="320" android:viewportHeight="240">
+    <path android:fillColor="#7dd3fc" android:pathData="M0,0h320v240h-320z" />
+    <path android:fillColor="#fde047" android:pathData="M250,60m-28,0a28,28 0,1 1,56 0a28,28 0,1 1,-56 0" />
+    <path android:fillColor="#4ade80" android:pathData="M0,170 C60,120 120,130 180,165 C230,140 280,135 320,155 L320,240 L0,240 Z" />
+    <path android:fillColor="#16a34a" android:pathData="M0,205 C80,175 160,185 220,205 C260,195 300,195 320,200 L320,240 L0,240 Z" />
+</vector>

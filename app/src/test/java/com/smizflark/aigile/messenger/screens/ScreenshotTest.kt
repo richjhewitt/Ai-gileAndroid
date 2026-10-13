@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onRoot
@@ -98,6 +99,8 @@ class ScreenshotTest {
         rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
         rule.onNodeWithTag("chat-title").performClick()
         rule.onNodeWithTag("details-pin").fetchSemanticsNode()
+        rule.onNodeWithTag("details-card-AIG-2").performClick()   // AII-85: the open card unfolds in the sheet
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("card-details").fetchSemanticsNodes().isNotEmpty() }
         rule.waitForIdle()
         rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_dark.png")   // the sheet is its own window
     }
