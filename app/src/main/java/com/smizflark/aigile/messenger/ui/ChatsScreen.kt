@@ -21,7 +21,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Badge
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -61,6 +64,8 @@ import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.work.CheckWorker
+import com.smizflark.aigile.messenger.data.pinFirst
+import com.smizflark.aigile.messenger.data.togglePin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -75,6 +80,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     var error by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
+    var pinned by remember { mutableStateOf(repo.store.pinned) }
     val scope = rememberCoroutineScope()
 
     val pace = remember { Pace(fast = 10_000, slow = 60_000) }
@@ -142,8 +148,9 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     Text("No chats yet. Tap New message to write to a team.", Modifier.padding(24.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                items(chats, key = { it.key }) { c ->
-                    ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, onRead = { markRead(listOf(c)) }) { onOpen(c) }
+                items(pinFirst(chats, pinned), key = { it.key }) { c ->
+                    ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, onRead = { markRead(listOf(c)) },
+                        onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned }) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
                 item { Spacer(Modifier.size(88.dp)) }
@@ -152,9 +159,10 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     }
 }
 
-@Composable
+/** One chat; long-press for Mark as read and Pin to top (AII-25, AII-47). */
 @OptIn(ExperimentalFoundationApi::class)
-private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, onRead: () -> Unit, onClick: () -> Unit) {
+@Composable
+private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, onRead: () -> Unit, onPin: () -> Unit, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     Row(
         Modifier.fillMaxWidth().combinedClickable(onClickLabel = "Open chat", role = Role.Button, onClick = onClick,
@@ -164,13 +172,18 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, onRead:
     ) {
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             DropdownMenuItem(text = { Text("Mark as read") }, enabled = fresh, onClick = { menu = false; onRead() })
+            DropdownMenuItem(text = { Text(if (pinned) "Unpin" else "Pin to top") }, leadingIcon = { Icon(Icons.Default.PushPin, null) },
+                onClick = { menu = false; onPin() }, modifier = Modifier.testTag("pin"))
         }
         Avatar(c, repo)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    fontWeight = if (fresh) FontWeight.Bold else FontWeight.Medium, modifier = Modifier.weight(1f))
+                    fontWeight = if (fresh) FontWeight.Bold else FontWeight.Medium, modifier = Modifier.weight(1f, fill = false))
+                if (pinned) Icon(Icons.Default.PushPin, "Pinned", Modifier.padding(start = 4.dp).size(14.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.weight(1f))
                 Text(shortTime(c.last), style = MaterialTheme.typography.labelMedium,
                     color = if (fresh) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
             }

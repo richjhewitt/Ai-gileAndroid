@@ -94,6 +94,10 @@ class Store(context: Context) {
     var phoneColours: Boolean
         get() = prefs.getBoolean("phoneColours", true)
         set(v) = prefs.edit().putBoolean("phoneColours", v).apply()
+    /** Chats pinned to the top of the list (AII-47), by chat key. */
+    var pinned: Set<String>
+        get() = prefs.getStringSet("pinned", emptySet())?.toSet() ?: emptySet()
+        set(v) = prefs.edit().putStringSet("pinned", v).apply()
 
     var lastSync: Long
         get() = prefs.getLong("lastSync", 0)
