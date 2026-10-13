@@ -30,6 +30,8 @@ interface ChatSource {
     suspend fun send(ref: ChatRef, text: String, target: String?): String?
     /** A new 💬 message to a project's team. Returns the new card id. */
     suspend fun newMessage(slug: String, text: String): String?
+    /** Tells the board a lead chat is read up to [at] (AII-44); boards without read marks just ignore it. */
+    suspend fun markSeen(slug: String, at: String) {}
 }
 
 /** A message for the person holding the phone, not a stack trace. */
@@ -115,6 +117,10 @@ class BoardSource(
             put("status", "team"); put("createdBy", owner()); put("quick", JsonPrimitive(true))
         }
         return json.decodeFromString<Created>(call("POST", "/api/projects/$slug/cards", body)).id
+    }
+
+    override suspend fun markSeen(slug: String, at: String) {
+        call("POST", "/api/chats/$slug/seen", buildJsonObject { put("at", at) })
     }
 
     /** Full URL for a board picture path like /api/avatars/x.png. */

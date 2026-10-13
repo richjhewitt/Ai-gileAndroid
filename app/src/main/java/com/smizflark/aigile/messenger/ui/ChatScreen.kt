@@ -117,7 +117,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit) {
             val c = repo.conversation(ref)
             convo = c; error = null
             if (!picked) target = c.defaultTarget
-            repo.store.markSeen(ref.key, c.bubbles.lastOrNull()?.at)
+            repo.seen(ref, c.bubbles.lastOrNull()?.at)
         } catch (e: Exception) { error = e.message }
     }
 
