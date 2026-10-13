@@ -35,7 +35,9 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 ## ui/ (Compose screens)
 - ui/CardDetails.kt: card detail sheet and the board's column names.
 - ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, pictures, Mute and Pin.
-- ui/ChatScreen.kt: the chat screen itself (list, top bar, find, scrolling).
+- ui/ChatScreen.kt: the chat screen itself (list, find, scrolling).
+- ui/ChatTopBar.kt: the chat's top bar (name, 'working on', find, Mute).
+- ui/ChatRows.kt: builds the chat's rows (days, card headers, messages, waiting sends) and counts unread below.
 - ui/ChatBubble.kt: one message bubble (copy, reply, forward, options, retry).
 - ui/ChatComposer.kt: the message input with pictures, reply and dictation.
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
