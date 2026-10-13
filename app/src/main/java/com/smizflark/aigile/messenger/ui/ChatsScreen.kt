@@ -1,5 +1,6 @@
 package com.smizflark.aigile.messenger.ui
 
+import com.smizflark.aigile.messenger.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -174,12 +175,17 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 }
                 val shown = chats.filter(filter::keep)
                 if (chats.isNotEmpty() && shown.isEmpty()) item {
-                    Text(if (filter == ChatFilter.WAITING) "Nothing waiting on you." else "No chats here yet.", Modifier.padding(24.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    EmptyState(androidx.compose.ui.res.stringResource(when (filter) {
+                        ChatFilter.WAITING -> R.string.empty_waiting
+                        ChatFilter.TEAMS -> R.string.empty_teams
+                        ChatFilter.FRIENDS -> R.string.empty_friends
+                        ChatFilter.ALL -> R.string.empty_chats
+                    }), button = androidx.compose.ui.res.stringResource(R.string.empty_show_all)) { filter = ChatFilter.ALL }
                 }
-                if (loaded && chats.isEmpty() && error == null) item {
-                    Text("No chats yet. Tap New message to write to a team.", Modifier.padding(24.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (chats.isEmpty() && error == null) item {
+                    if (loaded) EmptyState(androidx.compose.ui.res.stringResource(R.string.empty_chats),
+                        button = androidx.compose.ui.res.stringResource(R.string.empty_chats_new), onButton = onNew)
+                    else EmptyState(androidx.compose.ui.res.stringResource(R.string.empty_loading))
                 }
                 val unsent = outbox.groupBy { it.chat }
                 items(pinFirst(shown, pinned), key = { it.key }) { c ->

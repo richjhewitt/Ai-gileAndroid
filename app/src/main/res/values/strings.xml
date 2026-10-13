@@ -10,4 +10,16 @@
     <string name="forward_to">Forward to…</string>
     <string name="forward_search">Search chats</string>
     <string name="copied">Copied</string>
+    <string name="empty_chats">No chats yet</string>
+    <string name="empty_chats_new">New message</string>
+    <string name="empty_waiting">Nothing waiting on you</string>
+    <string name="empty_teams">No team chats yet</string>
+    <string name="empty_friends">No friends yet</string>
+    <string name="empty_show_all">Show all chats</string>
+    <string name="empty_loading">Loading chats…</string>
+    <string name="search_hint">Type at least 2 letters to search every chat</string>
+    <string name="search_searching">Searching…</string>
+    <string name="search_no_results">No results for “%1$s”</string>
+    <string name="search_clear">Clear search</string>
+    <string name="empty_pick_team">No chats to write to yet</string>
 </resources>

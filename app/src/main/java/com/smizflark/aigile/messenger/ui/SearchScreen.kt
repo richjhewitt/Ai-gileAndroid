@@ -1,5 +1,6 @@
 package com.smizflark.aigile.messenger.ui
 
+import com.smizflark.aigile.messenger.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -90,13 +91,11 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onBack: () -> Unit) {
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
             if (fetching) LinearProgressIndicator(Modifier.fillMaxWidth())
-            val hint = when {
-                query.trim().length < 2 -> "Type at least 2 letters to search every chat."
-                hits.isEmpty() && fetching -> "Searching…"
-                hits.isEmpty() -> "Nothing found for \"${query.trim()}\"."
-                else -> null
-            }
-            if (hint != null) Text(hint, Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val q = query.trim()
+            if (q.length < 2) EmptyState(androidx.compose.ui.res.stringResource(R.string.search_hint))
+            else if (hits.isEmpty() && fetching) EmptyState(androidx.compose.ui.res.stringResource(R.string.search_searching))
+            else if (hits.isEmpty()) EmptyState(androidx.compose.ui.res.stringResource(R.string.search_no_results, q),
+                button = androidx.compose.ui.res.stringResource(R.string.search_clear)) { query = "" }
             LazyColumn(Modifier.fillMaxSize()) {
                 items(hits, key = { "${it.ref.key}|${it.bubble?.key}" }) { h ->
                     HitRow(h, repo) { onOpen(h.ref) }
