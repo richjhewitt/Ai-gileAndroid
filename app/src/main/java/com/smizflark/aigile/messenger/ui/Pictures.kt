@@ -97,7 +97,7 @@ private fun request(pic: Pic, repo: Repo): ImageRequest {
 /** The pictures on a message, inside its bubble. Tap one to see it full screen; other files show as a 📎 line. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun MessagePictures(pics: List<Pic>, repo: Repo) {
+fun MessagePictures(pics: List<Pic>, repo: Repo, onOpened: () -> Unit = {}) {
     val show = LocalShowPicture.current
     val images = pics.filter { it.image }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -109,7 +109,7 @@ fun MessagePictures(pics: List<Pic>, repo: Repo) {
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.widthIn(max = if (pics.size == 1) 260.dp else 126.dp)
                         .heightIn(min = 80.dp, max = if (pics.size == 1) 320.dp else 126.dp)
-                        .clip(RoundedCornerShape(12.dp)).clickable { show?.invoke(Shown(images, images.indexOf(p).coerceAtLeast(0), repo)) }.testTag("pic"),
+                        .clip(RoundedCornerShape(12.dp)).clickable { show?.invoke(Shown(images, images.indexOf(p).coerceAtLeast(0), repo)); onOpened() }.testTag("pic"),
                     loading = { Box(Modifier.size(126.dp).background(MaterialTheme.colorScheme.surfaceVariant)) },
                     error = { Missing(p) },
                 )
