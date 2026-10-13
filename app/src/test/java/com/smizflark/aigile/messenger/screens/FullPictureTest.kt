@@ -2,6 +2,8 @@ package com.smizflark.aigile.messenger.screens
 
 import android.app.Application
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
@@ -37,5 +39,28 @@ class FullPictureTest {
         rule.onNodeWithTag("full-pic-pager", useUnmergedTree = true).performTouchInput { swipeLeft() }
         rule.waitForIdle()
         rule.onNodeWithTag("full-pic-count", useUnmergedTree = true).assertTextEquals("2 / 2")
+    }
+
+    /** AII-90: double tap zooms in, so a drag looks around instead of swiping; double tap again zooms out. Tap closes. */
+    @Test fun doubleTapZooms() {
+        val repo = Repo(ApplicationProvider.getApplicationContext<Application>())
+        val pics = listOf(Pic("file:///a.png", "a.png"), Pic("file:///b.jpg", "b.jpg"))
+        rule.setContent { MessengerTheme { MessagePictures(pics, repo) } }
+        rule.onAllNodesWithTag("pic").onFirst().performClick()
+        val pager = rule.onNodeWithTag("full-pic-pager", useUnmergedTree = true)
+        pager.performTouchInput { doubleClick() }
+        rule.waitForIdle()
+        pager.performTouchInput { swipeLeft() }
+        rule.waitForIdle()
+        rule.onNodeWithTag("full-pic-count", useUnmergedTree = true).assertTextEquals("1 / 2")
+        pager.performTouchInput { doubleClick() }
+        rule.waitForIdle()
+        pager.performTouchInput { swipeLeft() }
+        rule.waitForIdle()
+        rule.onNodeWithTag("full-pic-count", useUnmergedTree = true).assertTextEquals("2 / 2")
+        pager.performTouchInput { click() }
+        rule.mainClock.advanceTimeBy(1_000)
+        rule.waitForIdle()
+        rule.onNodeWithTag("full-pic", useUnmergedTree = true).assertDoesNotExist()
     }
 }
