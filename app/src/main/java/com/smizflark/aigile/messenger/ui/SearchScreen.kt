@@ -55,7 +55,8 @@ import kotlinx.coroutines.coroutineScope
 /** Search across all chats (AII-30): searches what the phone has at once, then fetches every chat and searches again. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onBack: () -> Unit) {
+/** [onOpen] gets the chat and the message found (null for a chat-name match), so the chat can open at it (AII-105). */
+fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> Unit) {
     var query by remember { mutableStateOf("") }
     val chats = remember { repo.store.cachedChats() ?: emptyList() }
     var convs by remember { mutableStateOf(repo.cachedConversations(chats)) }
@@ -100,7 +101,7 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onBack: () -> Unit) {
                 button = androidx.compose.ui.res.stringResource(R.string.search_clear)) { query = "" }
             LazyColumn(Modifier.fillMaxSize()) {
                 items(hits, key = { "${it.ref.key}|${it.bubble?.key}" }) { h ->
-                    HitRow(h, repo) { onOpen(h.ref) }
+                    HitRow(h, repo) { onOpen(h.ref, h.bubble?.key) }
                     HorizontalDivider(Modifier.padding(start = 68.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
             }

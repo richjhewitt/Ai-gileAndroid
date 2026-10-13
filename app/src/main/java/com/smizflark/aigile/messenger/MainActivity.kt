@@ -75,15 +75,17 @@ class MainActivity : FragmentActivity() {
                             onSettings = { nav.navigate("settings") }, onSearch = { nav.navigate("search") })
                     }
                     composable("search") {
-                        SearchScreen(repo, onOpen = { nav.openChat(it.key) }, onBack = { nav.popBackStack() })
+                        SearchScreen(repo, onOpen = { ref, msg -> nav.openChat(ref.key, msg) }, onBack = { nav.popBackStack() })
                     }
                     // A chat, or one card of it (?card=AIG-12, AII-28).
-                    composable("chat/{key}?card={card}", arguments = listOf(navArgument("card") { type = NavType.StringType; nullable = true })) { e ->
+                    composable("chat/{key}?card={card}&msg={msg}", arguments = listOf(navArgument("card") { type = NavType.StringType; nullable = true },
+                        navArgument("msg") { type = NavType.StringType; nullable = true })) { e ->
                         val key = Uri.decode(e.arguments?.getString("key") ?: "")
                         val card = e.arguments?.getString("card")
+                        val msg = e.arguments?.getString("msg")   // AII-105: a search result opens the chat at its message
                         val ref = repo.store.cachedChats()?.firstOrNull { it.key == key }
                         if (ref == null) LaunchedEffect(Unit) { nav.popBackStack() }
-                        else ChatScreen(repo, ref, onBack = { nav.popBackStack() }, focus = card,
+                        else ChatScreen(repo, ref, onBack = { nav.popBackStack() }, focus = card, openAt = msg,
                             onOpenCard = { id -> nav.navigate("chat/" + Uri.encode(key) + "?card=" + Uri.encode(id)) })
                     }
                     composable("new") {
@@ -125,7 +127,8 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    private fun NavHostController.openChat(key: String) = navigate("chat/" + Uri.encode(key)) { launchSingleTop = true }
+    private fun NavHostController.openChat(key: String, msg: String? = null) =
+        navigate("chat/" + Uri.encode(key) + (msg?.let { "?msg=" + Uri.encode(it) } ?: "")) { launchSingleTop = true }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
