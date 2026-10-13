@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.onRoot
@@ -100,6 +101,17 @@ class ScreenshotTest {
         rule.onNodeWithTag("find-field").performTextInput("phone")
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("../docs/shots/chat_find_light.png")
+    }
+    /** AII-100: opening a chat with messages you hadn't seen shows a "New messages" line above them. */
+    @Test fun newLineLight() {
+        // A chat with no pictures, so the shot never catches one half loaded.
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
+        prime(c)
+        val all = repo.store.cachedConversation(c.key)!!.bubbles
+        val last = all.indexOfLast { !it.mine }
+        repo.store.markSeen(c.key, java.time.Instant.parse(all[last].at).minusSeconds(1).toString())
+        shot("chat_new_line", false) { ChatScreen(repo, c, onBack = {}) }
+        rule.onNodeWithTag("new-line").assertExists()
     }
     /** AII-99: reply to a message, then tap the quote: the quoted message gets outlined. */
     @Test fun quoteJumpLight() {

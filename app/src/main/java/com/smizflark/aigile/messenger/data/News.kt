@@ -36,6 +36,10 @@ object News {
         return if (c.kind == Kind.FRIEND && (c.lastIn ?: "") > since) maxOf(n, 1) else n
     }
 
+    /** The first message from them after [seen] (AII-100), where the "New messages" line goes; null when none or never opened. */
+    fun firstNew(bubbles: List<Bubble>, seen: String?): String? =
+        if (seen == null) null else bubbles.firstOrNull { !it.mine && it.at > seen }?.key
+
     /** Has anything moved since you last looked? The Lead Scrum Master goes by the board's count. */
     fun fresh(c: ChatRef, seen: String?): Boolean =
         if (c.kind == Kind.WATCHMAN) c.unread > 0 else c.last != null && c.last > (seen ?: "")
