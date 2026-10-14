@@ -16,6 +16,10 @@ object Outbox {
     /** Edit a Send later message (AII-150): its words go back in the box, above anything already typed. */
     fun editBack(p: Pending, typed: String) = if (typed.isBlank()) p.text else p.text + "\n" + typed
 
+    /** Change time on a Send later message (AII-169): it waits for [at] instead. */
+    fun moveTo(l: List<Pending>, id: String, at: java.time.Instant) =
+        l.map { if (it.id == id) it.copy(sendAt = at.toString()) else it }
+
     /** Failed for good: the server refused, or the tries ran out. These get the red mark. */
     fun failedForGood(l: List<Pending>) = l.filter { it.failed && !it.offline }
 
