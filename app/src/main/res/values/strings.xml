@@ -275,6 +275,10 @@
     <string name="chat_pictures">Pictures in this chat</string>
     <string name="no_chat_pictures">No pictures yet.</string>
     <string name="chat_links">Links in this chat</string>
+    <string name="chat_files">Files in this chat</string>
+    <string name="file_downloading">Opening…</string>
+    <string name="file_not_opened">Could not open this file.</string>
+    <string name="file_no_app">No app on this phone can open this file.</string>
     <string name="star">Star</string>
     <string name="unstar">Remove star</string>
     <string name="starred">Starred</string>

@@ -8,6 +8,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 
 ## data/ (pure logic, mostly unit tested)
 - data/ChatInfo.kt: a chat's open cards and pictures, for the chat details sheet.
+- data/ChatInfo.kt also lists non-picture files and guesses their MIME type (AII-197).
 - data/Links.kt: every web link in a chat (http links, [name](url), bare addresses), newest first, once each, at most 50, for the chat details Links list (AII-194).
 - data/Crash.kt: keeps the last crash and turns it into a bug message for the team.
 - data/Demo.kt: made-up chats that answer back, for trying the app with no board.
@@ -62,6 +63,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/NewMessageScreen.kt: a new message to any team.
 - ui/Parts.kt: small shared UI helpers (colour parsing and similar).
 - ui/ReadAloud.kt: Read aloud from the hold menu with the phone's own voice (AII-185); leaving a chat stops it.
+- ui/Files.kt: tap a file to download it to the cache and open it with another app (AII-197); used in bubbles and the chat details Files list.
 - ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
 - ui/SearchScreen.kt: search across all chats, with Pictures and Links chips (AII-192).
 - ui/SettingsScreen.kt: settings.

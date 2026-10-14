@@ -125,6 +125,11 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                     }
                 }
             }
+            // AII-197: files that are not pictures; tap to open.
+            if (info.files.isNotEmpty()) {
+                Text(stringResource(R.string.chat_files), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+                info.files.forEach { f -> FileLine(f, repo, Modifier.fillMaxWidth().padding(vertical = 6.dp).testTag("details-file")) }
+            }
             Spacer(Modifier.size(24.dp))
         }
     }
