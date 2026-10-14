@@ -22,6 +22,13 @@ class SwipeTest {
         assertEquals(SwipeAction.UNMUTE, swipeAction(true, true, C.MUTE, C.READ))
         assertEquals(SwipeAction.READ, swipeAction(false, true, C.MUTE, C.READ))
     }
+    // AII-257
+    @Test fun remindIsAChoiceButNeverTheDefault() {
+        assertEquals(SwipeAction.REMIND, swipeAction(true, false, C.REMIND, C.MUTE))
+        assertEquals(SwipeAction.REMIND, swipeAction(false, true, C.READ, C.REMIND))
+        assertEquals(C.REMIND, C.of("remind", C.NOTHING))
+        assert(com.smizflark.aigile.messenger.data.SWIPE_RIGHT_DEFAULT != C.REMIND && com.smizflark.aigile.messenger.data.SWIPE_LEFT_DEFAULT != C.REMIND)
+    }
     @Test fun nothingTurnsASwipeOff() { assertNull(swipeAction(true, false, C.NOTHING, C.MUTE)); assertNull(swipeAction(false, false, C.READ, C.NOTHING)) }
     @Test fun idsRoundTripAndUnknownFallsBack() {
         C.entries.forEach { assertEquals(it, C.of(it.id, C.NOTHING)) }
