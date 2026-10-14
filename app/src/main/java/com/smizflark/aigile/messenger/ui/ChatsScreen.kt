@@ -229,16 +229,18 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         )
                     }
                 }
+                // AII-152: chats with a Send later message waiting, for the Scheduled chip.
+                val scheduled = outbox.filter { com.smizflark.aigile.messenger.work.later(it, Now.instant()) }.map { it.chat }.toSet()
                 if (chats.isNotEmpty()) item {
                     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ChatFilter.entries.forEach { f ->
+                        ChatFilter.shown(scheduled.isNotEmpty(), filter).forEach { f ->
                             FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(stringResource(f.res)) },
                                 modifier = Modifier.testTag("filter:${f.name.lowercase()}"))
                         }
                     }
                 }
-                val all = chats.filter { filter.keep(it, News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0) }
+                val all = chats.filter { filter.keep(it, News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0, it.key in scheduled) }
                 // Closed chats (AII-131) wait under a link at the bottom until a newer message brings them back.
                 val shut = all.filter { Closed.hidden(it, closed[it.key]) }
                 val shown = all - shut.toSet()
@@ -248,6 +250,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         ChatFilter.WAITING -> R.string.empty_waiting
                         ChatFilter.TEAMS -> R.string.empty_teams
                         ChatFilter.FRIENDS -> R.string.empty_friends
+                        ChatFilter.SCHEDULED -> R.string.empty_scheduled
                         ChatFilter.ALL -> R.string.empty_chats
                     }), button = androidx.compose.ui.res.stringResource(R.string.empty_show_all)) { filter = ChatFilter.ALL }
                 }

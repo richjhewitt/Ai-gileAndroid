@@ -23,6 +23,7 @@
     <string name="empty_waiting">Nothing waiting on you</string>
     <string name="empty_teams">No team chats yet</string>
     <string name="empty_friends">No friends yet</string>
+    <string name="empty_scheduled">No messages waiting to send later</string>
     <string name="empty_show_all">Show all chats</string>
     <string name="empty_loading">Loading chats…</string>
     <string name="search_hint">Type at least 2 letters to search every chat</string>
@@ -115,6 +116,7 @@
     <string name="filter_waiting">Waiting on me</string>
     <string name="filter_teams">Teams</string>
     <string name="filter_friends">Friends</string>
+    <string name="filter_scheduled">Scheduled</string>
     <string name="unsent_failed">⚠️ %1$d not sent: tap to retry</string>
     <string name="unsent_waiting">⏳ %1$d waiting to send</string>
     <string name="unsent_later">⏰ Sends at %1$s</string>
