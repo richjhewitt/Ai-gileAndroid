@@ -63,6 +63,11 @@ import com.smizflark.aigile.messenger.data.Replies
 import androidx.compose.ui.res.stringArrayResource
 import com.smizflark.aigile.messenger.work.CheckWorker
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.LaunchedEffect
+import coil.imageLoader
+import com.smizflark.aigile.messenger.data.SavedPictures
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,6 +85,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
     var note by remember { mutableStateOf<String?>(null) }
     var saved by remember { mutableIntStateOf(0) }   // bumps after a change, so the connection text re-reads the store
     var confirmSignOut by remember { mutableStateOf(false) }
+    var confirmClear by remember { mutableStateOf(false) }          // AII-215
+    var savedBytes by remember { mutableStateOf<Long?>(null) }
+    LaunchedEffect(Unit) { savedBytes = withContext(Dispatchers.IO) { SavedPictures.size(ctx.cacheDir) } }
     var crash by remember { mutableStateOf(Crash.last(ctx)) }
     var bug by remember { mutableStateOf("") }
     var bugNote by remember { mutableStateOf<String?>(null) }
@@ -142,6 +150,12 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
                 var mine by remember { mutableStateOf(s.quickReplyText.ifBlank { starting }) }
                 OutlinedTextField(mine, { mine = it; s.quickReplyText = it; Appearance.replies = Replies.parse(it) },
                     Modifier.fillMaxWidth().testTag("quickReplyText"), label = { Text(stringResource(R.string.quick_replies_mine)) }, minLines = 2)
+            }
+            // AII-215: pictures and opened files saved on the phone; they load again from the board.
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(stringResource(R.string.saved_pictures, savedBytes?.let { SavedPictures.format(it) } ?: "…"),
+                    Modifier.testTag("savedPictures"))
+                OutlinedButton(onClick = { confirmClear = true }, modifier = Modifier.testTag("clearPictures")) { Text(stringResource(R.string.clear)) }
             }
             HorizontalDivider()
 
@@ -206,6 +220,25 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+
+    if (confirmClear) AlertDialog(
+        onDismissRequest = { confirmClear = false },
+        title = { Text(stringResource(R.string.clear_pictures_title)) },
+        text = { Text(stringResource(R.string.clear_pictures_text)) },
+        confirmButton = {
+            TextButton(onClick = {
+                confirmClear = false
+                scope.launch {
+                    ctx.imageLoader.memoryCache?.clear()
+                    savedBytes = withContext(Dispatchers.IO) {
+                        runCatching { ctx.imageLoader.diskCache?.clear() }
+                        SavedPictures.clear(ctx.cacheDir, repo.store.outbox())
+                    }
+                }
+            }) { Text(stringResource(R.string.clear)) }
+        },
+        dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(stringResource(R.string.cancel)) } },
+    )
 
     if (confirmSignOut) AlertDialog(
         onDismissRequest = { confirmSignOut = false },
