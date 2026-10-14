@@ -225,4 +225,8 @@
     <string name="no_open_cards">Er wacht niets op je.</string>
     <string name="chat_pictures">Foto\'s in deze chat</string>
     <string name="no_chat_pictures">Nog geen foto\'s.</string>
+    <string name="close_chat">Chat sluiten</string>
+    <string name="reopen_chat">Chat weer openen</string>
+    <string name="closed_show">%1$d gesloten tonen</string>
+    <string name="closed_hide">Gesloten verbergen</string>
 </resources>

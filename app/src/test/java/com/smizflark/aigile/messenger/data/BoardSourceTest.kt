@@ -86,6 +86,14 @@ class BoardSourceTest {
         assertEquals(LEAD_CHAT, back!!.card)
     }
 
+    @Test fun closingAChatIsKeptOnTheBoard() = runBlocking {
+        val s = source()
+        s.setClosed("test-team", true)
+        assertTrue("test-team" in s.closed())
+        s.setClosed("test-team", false)
+        assertTrue("test-team" !in s.closed())
+    }
+
     @Test fun aNewMessageMakesACard() = runBlocking {
         val s = source()
         val text = "Brand new ${System.nanoTime()}"

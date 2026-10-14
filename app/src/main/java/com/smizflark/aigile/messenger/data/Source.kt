@@ -40,6 +40,9 @@ interface ChatSource {
     /** Tells the board a lead chat is read up to [at] (AII-44); boards without read marks just ignore it.
      *  [back]: Mark as unread (AII-119), the mark may move back. */
     suspend fun markSeen(slug: String, at: String, back: Boolean = false) {}
+    /** The board's closed chats (AII-131): board key to when it was closed. */
+    suspend fun closed(): Map<String, String> = emptyMap()
+    suspend fun setClosed(key: String, closed: Boolean) {}
 }
 
 /** A picture or file to send with a message. */
@@ -216,6 +219,12 @@ class BoardSource(
 
     override suspend fun markSeen(slug: String, at: String, back: Boolean) {
         call("POST", "/api/chats/$slug/seen", buildJsonObject { put("at", at); if (back) put("back", true) })
+    }
+
+    override suspend fun closed(): Map<String, String> = json.decodeFromString(call("GET", "/api/dmclosed"))
+
+    override suspend fun setClosed(key: String, closed: Boolean) {
+        call("POST", "/api/dmclosed", buildJsonObject { put("key", key); put("closed", closed) })
     }
 
     /** Full URL for a board picture path like /api/avatars/x.png. */

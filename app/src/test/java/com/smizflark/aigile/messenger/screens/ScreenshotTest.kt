@@ -122,6 +122,23 @@ class ScreenshotTest {
         rule.waitForIdle()
         rule.onNodeWithTag("unread:${c.key}", useUnmergedTree = true).assertExists()
     }
+    /** AII-131: hold a chat, Close chat: it waits under 'Show 1 closed' at the bottom; Reopen brings it back. */
+    @Test fun closeChatLight() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        rule.onNodeWithTag("chat:${c.key}").performTouchInput { longClick() }
+        rule.onNodeWithTag("menu-close").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("chat:${c.key}").assertDoesNotExist()
+        rule.onNodeWithTag("show-closed").performClick()
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_closed_light.png")
+        rule.onNodeWithTag("chat:${c.key}").performTouchInput { longClick() }
+        rule.onNodeWithTag("menu-close").performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertFalse(c.key in repo.store.closed())
+    }
     /** AII-125: the Unread chip keeps only chats with a badge. */
     @Test fun unreadChipLight() {
         val c = lead(); prime(c); runBlocking { repo.markRead(c) }

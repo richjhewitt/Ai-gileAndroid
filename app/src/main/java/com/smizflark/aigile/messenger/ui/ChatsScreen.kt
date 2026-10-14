@@ -87,6 +87,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.smizflark.aigile.messenger.data.ChatFilter
+import com.smizflark.aigile.messenger.data.Closed
+import androidx.compose.material.icons.filled.Close
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -105,6 +107,8 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     var refreshing by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
     var pinned by remember { mutableStateOf(repo.store.pinned) }
+    var closed by remember { mutableStateOf(repo.store.closed()) }
+    var showClosed by rememberSaveable { mutableStateOf(false) }
     var filter by rememberSaveable { mutableStateOf(ChatFilter.ALL) }
     val scope = rememberCoroutineScope()
 
@@ -118,7 +122,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
         outbox = repo.store.outbox()   // first, so it shows at once even with no signal
         try { chats = repo.chats(); error = null }
         catch (e: Exception) { error = e.message }
-        seen = repo.store.seen(); unread = counts(); outbox = repo.store.outbox(); drafts = repo.store.drafts(); loaded = true
+        seen = repo.store.seen(); unread = counts(); outbox = repo.store.outbox(); drafts = repo.store.drafts(); closed = repo.store.closed(); loaded = true
         return chats != before
     }
 
@@ -210,8 +214,11 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         }
                     }
                 }
-                val shown = chats.filter { filter.keep(it, News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0) }
-                if (chats.isNotEmpty() && shown.isEmpty()) item {
+                val all = chats.filter { filter.keep(it, News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0) }
+                // Closed chats (AII-131) wait under a link at the bottom until a newer message brings them back.
+                val shut = all.filter { Closed.hidden(it, closed[it.key]) }
+                val shown = all - shut.toSet()
+                if (chats.isNotEmpty() && all.isEmpty()) item {
                     EmptyState(androidx.compose.ui.res.stringResource(when (filter) {
                         ChatFilter.UNREAD -> R.string.empty_unread
                         ChatFilter.WAITING -> R.string.empty_waiting
@@ -226,12 +233,20 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     else EmptyState(androidx.compose.ui.res.stringResource(R.string.empty_loading))
                 }
                 val unsent = outbox.groupBy { it.chat }
-                items(pinFirst(shown, pinned), key = { it.key }) { c ->
-                    ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, unsent[c.key].orEmpty(), drafts[c.key],
+                val rows = pinFirst(shown, pinned) + if (showClosed) shut else emptyList()
+                items(rows, key = { it.key }) { c ->
+                    val isShut = c in shut
+                    ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, unsent[c.key].orEmpty(), drafts[c.key], isShut,
                         onRead = { markRead(listOf(c)) }, onUnread = { markUnread(c) },
                         onMute = { on -> repo.store.setMuted(c.key, on); muted = repo.store.muted() },
-                        onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned }) { onOpen(c) }
+                        onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned },
+                        onClose = { shutIt -> scope.launch { repo.setClosed(c, shutIt); closed = repo.store.closed() } }) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                }
+                if (shut.isNotEmpty()) item(key = "closed-link") {
+                    androidx.compose.material3.TextButton(onClick = { showClosed = !showClosed }, modifier = Modifier.padding(horizontal = 8.dp).testTag("show-closed")) {
+                        Text(if (showClosed) stringResource(R.string.closed_hide) else stringResource(R.string.closed_show, shut.size))
+                    }
                 }
                 item { Spacer(Modifier.size(88.dp)) }
             }
@@ -239,11 +254,11 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     }
 }
 
-/** One chat; long-press for Mark as read (or unread, AII-119) and Pin to top (AII-25, AII-47). */
+/** One chat; long-press for Mark as read (or unread, AII-119), Pin to top (AII-25, AII-47), Mute and Close chat (AII-131). */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>, draft: String?,
-                    onRead: () -> Unit, onUnread: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClick: () -> Unit) {
+private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>, draft: String?, closed: Boolean,
+                    onRead: () -> Unit, onUnread: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClose: (Boolean) -> Unit, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     // Swipe right = mark read, left = mute/unmute (AII-61). The row always springs back.
     val mutedNow by rememberUpdatedState(muted)
@@ -284,6 +299,9 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
             DropdownMenuItem(text = { Text(stringResource(if (muted) R.string.unmute else R.string.mute)) },
                 leadingIcon = { Icon(if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff, null) },
                 onClick = { menu = false; onMute(!muted) }, modifier = Modifier.testTag("menu-mute"))
+            // AII-131: off the list until a newer message, on the board's Messages list too.
+            DropdownMenuItem(text = { Text(stringResource(if (closed) R.string.reopen_chat else R.string.close_chat)) }, leadingIcon = { Icon(Icons.Default.Close, null) },
+                onClick = { menu = false; onClose(!closed) }, modifier = Modifier.testTag("menu-close"))
         }
         Avatar(c, repo)
         Spacer(Modifier.width(12.dp))

@@ -64,7 +64,15 @@ class Repo(context: Context) {
         Shortcuts.update(app, l)   // hold the app icon: your newest chats (AII-53)
         // ...and so are lead chats (AII-44): the board keeps one read mark per chat, set by the PC or this phone.
         l.filter { it.kind == Kind.LEAD }.forEach { store.markSeen(it.key, it.seen) }
+        // Closed chats (AII-131): the board's list, so the PC and this phone agree; offline, the last one kept here.
+        if (!store.demo) runCatching { source.closed() }.getOrNull()?.let { store.setClosed(Closed.fromBoard(it, l)) }
         return l
+    }
+
+    /** Close or reopen a chat (AII-131): here at once, and on the board's Messages list too. */
+    suspend fun setClosed(ref: ChatRef, closed: Boolean) {
+        store.setClosed(if (closed) store.closed() + (ref.key to Now.instant().toString()) else store.closed() - ref.key)
+        if (!store.demo) runCatching { source.setClosed(Closed.boardKey(ref), closed) }   // offline: closed here until the next check brings the board's list
     }
 
     /** This chat as the chats list has it now: is the team at work, and on which card (AII-112/113)? Null when the board can't be reached. */
