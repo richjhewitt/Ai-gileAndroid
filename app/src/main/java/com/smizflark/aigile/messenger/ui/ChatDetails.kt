@@ -80,9 +80,7 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 if (it) muteAsk = true else { muted = false; muteEnds = null; repo.store.setMuted(ref.key, false) }
             }
             muteEnds?.takeIf { muted }?.let { end ->
-                val at = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
-                    .format(java.time.Instant.ofEpochMilli(end).atZone(java.time.ZoneId.systemDefault()))
-                Text(stringResource(R.string.muted_until, at), style = MaterialTheme.typography.bodySmall,
+                Text(stringResource(R.string.muted_until, com.smizflark.aigile.messenger.data.Mute.endTime(end)), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("details-mute-ends"))
             }
             SwitchRow(stringResource(R.string.pin), pinned, "details-pin") {

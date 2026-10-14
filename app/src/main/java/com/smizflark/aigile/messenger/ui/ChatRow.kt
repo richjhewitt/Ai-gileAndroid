@@ -50,6 +50,7 @@ import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Now
+import com.smizflark.aigile.messenger.data.Mute
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.SwipeAction
@@ -116,6 +117,11 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (muted) Icon(Icons.Default.NotificationsOff, stringResource(R.string.muted), Modifier.padding(start = 4.dp).size(16.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // AII-165: a timed mute shows when it ends.
+                    repo.store.mutedUntil()[c.key]?.takeIf { muted }?.let { end ->
+                        Text(stringResource(R.string.muted_until, Mute.endTime(end)), style = MaterialTheme.typography.labelSmall, maxLines = 1,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 2.dp).testTag("row-mute-ends"))
+                    }
                 }
                 Text(shortTime(c.last), style = MaterialTheme.typography.labelMedium,
                     color = if (fresh) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
