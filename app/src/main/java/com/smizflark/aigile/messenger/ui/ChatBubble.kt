@@ -138,7 +138,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -152,6 +152,8 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
     // AII-43: long-press a bubble to copy what it shows (without the ** marks).
     var menu by remember { mutableStateOf(false) }
     var remindMenu by remember { mutableStateOf(false) }
+    var noteAt by remember { mutableStateOf<Long?>(null) }   // AII-244: a chosen time waiting for its note
+    var noteText by remember { mutableStateOf("") }
     var selecting by remember { mutableStateOf(false) }   // AII-127: pick part of a message to copy
     var showTime by remember { mutableStateOf(false) }   // AII-51: tap a bubble for its exact time
     val clipboard = LocalClipboardManager.current
@@ -236,13 +238,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             // AII-201: Remind me picks a time; at that time an alert shows the message and opens the chat at it.
             DropdownMenu(expanded = remindMenu, onDismissRequest = { remindMenu = false }) {
                 val nowMs = com.smizflark.aigile.messenger.data.Now.millis()
-                val setRemind = { at: Long ->
-                    val r = com.smizflark.aigile.messenger.data.Reminder(com.smizflark.aigile.messenger.data.Remind.idOf(ref.key, b.key), ref.key, ref.name, b.key,
-                        Markdown.plain(shown).trim(), at)
-                    repo.store.setReminders(com.smizflark.aigile.messenger.data.Remind.add(repo.store.reminders(), r))
-                    com.smizflark.aigile.messenger.work.RemindWorker.schedule(ctx, r)
-                    Toast.makeText(ctx, ctx.getString(R.string.remind_set, com.smizflark.aigile.messenger.data.Mute.endTime(at)), Toast.LENGTH_SHORT).show()
-                }
+                val setRemind = { at: Long -> noteAt = at; noteText = "" }   // AII-244: ask for an optional note before saving
                 com.smizflark.aigile.messenger.data.Remind.choices(nowMs).forEach { w ->
                     val label = when (w) {
                         com.smizflark.aigile.messenger.data.Remind.When.HOUR -> R.string.remind_hour
@@ -264,6 +260,22 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                             9, 0, android.text.format.DateFormat.is24HourFormat(ctx)).show()
                     }, today.year, today.monthValue - 1, today.dayOfMonth).apply { datePicker.minDate = com.smizflark.aigile.messenger.data.Now.millis() - 1000 }.show()
                 })
+            }
+            noteAt?.let { at ->
+                val save = { note: String? ->
+                    noteAt = null
+                    val r = com.smizflark.aigile.messenger.data.Reminder(com.smizflark.aigile.messenger.data.Remind.idOf(ref.key, b.key), ref.key, ref.name, b.key,
+                        Markdown.plain(shown).trim(), at, note)
+                    repo.store.setReminders(com.smizflark.aigile.messenger.data.Remind.add(repo.store.reminders(), r))
+                    com.smizflark.aigile.messenger.work.RemindWorker.schedule(ctx, r)
+                    Toast.makeText(ctx, ctx.getString(R.string.remind_set, com.smizflark.aigile.messenger.data.Mute.endTime(at)), Toast.LENGTH_SHORT).show()
+                }
+                androidx.compose.material3.AlertDialog(onDismissRequest = { noteAt = null },
+                    title = { Text(stringResource(R.string.remind_note_title)) },
+                    text = { androidx.compose.material3.OutlinedTextField(noteText, { noteText = it }, singleLine = true,
+                        label = { Text(stringResource(R.string.remind_note)) }, modifier = Modifier.testTag("remind-note")) },
+                    confirmButton = { androidx.compose.material3.TextButton(onClick = { save(com.smizflark.aigile.messenger.data.Remind.cleanNote(noteText)) }, modifier = Modifier.testTag("remind-note-save")) { Text(stringResource(R.string.save)) } },
+                    dismissButton = { androidx.compose.material3.TextButton(onClick = { save(null) }, modifier = Modifier.testTag("remind-note-skip")) { Text(stringResource(R.string.skip)) } })
             }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                 if (b.state == SendState.SENT && !b.unverified && shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.remind_me)) }, modifier = Modifier.testTag("remind"),
@@ -364,6 +376,8 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
         if (selecting) SelectText(shown.text) { selecting = false }
         if ((showTime || Appearance.showTimes) && b.at.isNotBlank()) Text(fullTime(b.at), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).testTag("fulltime"))
+        if (remindAt != null) Text(com.smizflark.aigile.messenger.data.Remind.label(remindAt, com.smizflark.aigile.messenger.data.Now.millis()), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).testTag("bubble-reminder"))   // AII-251
         if (r.showOptions) FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             b.options.forEach { o -> OutlinedButton(onClick = { onOption(o) }) { Text(o) } }
         }

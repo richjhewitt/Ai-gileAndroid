@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -65,6 +66,14 @@ fun StarredScreen(repo: Repo, onOpen: (ChatRef, String) -> Unit, onBack: () -> U
             TopAppBar(
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
                 title = { Text(stringResource(R.string.starred)) },
+                actions = {
+                    // AII-243: Share all = what is listed now (respecting the search) as plain text, through the phone's share menu.
+                    if (stars.isNotEmpty()) IconButton(onClick = {
+                        val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
+                            .putExtra(android.content.Intent.EXTRA_TEXT, Stars.asText(stars) { fullTime(it) })
+                        runCatching { context.startActivity(android.content.Intent.createChooser(send, null)) }
+                    }, modifier = Modifier.testTag("starred-share")) { Icon(Icons.Filled.Share, stringResource(R.string.share_all)) }
+                },
             )
         },
     ) { pad ->

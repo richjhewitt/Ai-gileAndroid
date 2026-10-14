@@ -46,6 +46,10 @@ object Stars {
         return if (q.isEmpty()) list else list.filter { (_, s) -> s.text.contains(q, ignoreCase = true) || s.author.contains(q, ignoreCase = true) }
     }
 
+    /** The stars as plain text for Share all (AII-243): "Chat name · time", then the text; blank line between, in the order given. */
+    fun asText(list: List<Pair<ChatRef, Star>>, time: (String) -> String): String =
+        list.joinToString("\n\n") { (ref, s) -> "${ref.name} · ${time(s.at)}\n${s.text.trim()}" }
+
     /** Every chat's stars, newest message first (AII-140); stars of chats this phone no longer has are left out, as they can't open. */
     fun everywhere(all: List<Star>, chats: List<ChatRef>): List<Pair<ChatRef, Star>> {
         val byKey = chats.associateBy { it.key }

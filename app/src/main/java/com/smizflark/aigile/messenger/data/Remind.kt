@@ -6,7 +6,7 @@ import java.time.ZoneId
 
 /** A message to be reminded about (AII-201): kept on this phone, with a copy of its text for the alert. */
 @Serializable
-data class Reminder(val id: String, val chat: String, val chatName: String, val msg: String, val text: String, val at: Long)
+data class Reminder(val id: String, val chat: String, val chatName: String, val msg: String, val text: String, val at: Long, val note: String? = null)
 
 /** Remind me about a message (AII-201). Pure, so it is unit tested: the clock and zone are always passed in. */
 object Remind {
@@ -52,6 +52,23 @@ object Remind {
 
     /** The WorkManager job name of a reminder. */
     fun workName(id: String) = "remind-$id"
+
+    /** The alert's / list's text (AII-244): the note, if any, as "📝 note" on the first line above the message. */
+    fun withNote(r: Reminder) = if (r.note.isNullOrBlank()) r.text else "📝 ${r.note.trim()}\n${r.text}"
+
+    /** When this chat's message has a reminder (AII-251), or null. */
+    fun forMessage(all: List<Reminder>, chat: String, msg: String): Long? = all.firstOrNull { it.chat == chat && it.msg == msg }?.at
+
+    /** "🔔 18:00" under a bubble (AII-251): the toast's time format; "🔔 Thu 15 Oct, 18:00" when not today. */
+    fun label(at: Long, now: Long, zone: ZoneId = ZoneId.systemDefault(), locale: java.util.Locale = java.util.Locale.getDefault()): String {
+        val time = Mute.endTime(at, zone, locale)
+        val t = Instant.ofEpochMilli(at).atZone(zone)
+        if (t.toLocalDate() == Instant.ofEpochMilli(now).atZone(zone).toLocalDate()) return "🔔 $time"
+        return "🔔 " + java.time.format.DateTimeFormatter.ofPattern("EEE d MMM", locale).format(t) + ", " + time
+    }
+
+    /** A typed note (AII-244): trimmed, and null when empty. */
+    fun cleanNote(s: String) = s.trim().ifEmpty { null }
 
     fun idOf(chat: String, msg: String) = "$chat|$msg"
 }

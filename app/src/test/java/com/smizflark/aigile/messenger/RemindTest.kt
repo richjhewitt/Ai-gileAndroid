@@ -4,6 +4,8 @@ import com.smizflark.aigile.messenger.data.Remind
 import com.smizflark.aigile.messenger.data.Reminder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import org.junit.Test
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -17,6 +19,19 @@ class RemindTest {
         val r = { id: String, chat: String -> Reminder(id, chat, chat, id, "t", 1L) }
         assertEquals(setOf("a", "b"), Remind.chatKeys(listOf(r("1", "a"), r("2", "b"), r("3", "a"))))
         assertEquals(emptySet<String>(), Remind.chatKeys(emptyList()))
+    }
+
+    @Test fun forMessageMatchesChatAndKey() {
+        val all = listOf(Reminder("a|1", "a", "A", "1", "t", 5L), Reminder("b|1", "b", "B", "1", "t", 7L))
+        assertEquals(7L, Remind.forMessage(all, "b", "1"))
+        assertNull(Remind.forMessage(all, "a", "2"))
+        assertNull(Remind.forMessage(emptyList(), "a", "1"))
+    }
+
+    @Test fun labelShowsTimeTodayAndDayOtherwise() {
+        val en = java.util.Locale.UK
+        assertEquals("🔔 18:00", Remind.label(ms(18), ms(9), zone, en))
+        assertEquals("🔔 Thu 15 Oct, 09:00", Remind.label(ms(9, 0, 15), ms(9), zone, en))
     }
 
     @Test fun inAnHourIsSixtyMinutesOn() = assertEquals(ms(11, 30), Remind.at(ms(10, 30), Remind.When.HOUR, zone))
@@ -42,6 +57,18 @@ class RemindTest {
         val b = Reminder("b", "c", "C", "m2", "two", 300)
         assertEquals(listOf(a), Remind.due(listOf(b, a), 200))
         assertEquals(listOf(b), Remind.left(listOf(b, a), 200))
+    }
+
+    @Test fun aNoteGoesFirstAndOldRemindersStillLoad() {
+        val plain = Reminder("a", "c", "C", "m", "text", 1L)
+        assertEquals("text", Remind.withNote(plain))
+        assertEquals("📝 call back\ntext", Remind.withNote(plain.copy(note = " call back ")))
+        assertEquals("text", Remind.withNote(plain.copy(note = "  ")))
+        assertNull(Remind.cleanNote("  "))
+        assertEquals("x", Remind.cleanNote(" x "))
+        val json = kotlinx.serialization.json.Json
+        assertEquals(plain, json.decodeFromString<Reminder>("""{"id":"a","chat":"c","chatName":"C","msg":"m","text":"text","at":1}"""))
+        assertEquals(plain.copy(note = "n"), json.decodeFromString<Reminder>(json.encodeToString(plain.copy(note = "n"))))
     }
 
     @Test fun sameMessageReplacesItsReminder() {
