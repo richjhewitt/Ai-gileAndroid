@@ -38,10 +38,15 @@ abstract class ShotBase {
     @After fun tearDown() { Now.clock = java.time.Clock.systemDefaultZone() }
 
     protected fun shot(name: String, dark: Boolean, content: @androidx.compose.runtime.Composable () -> Unit) {
+        show(dark, content)
+        rule.onRoot().captureRoboImage("../docs/shots/${name}_${if (dark) "dark" else "light"}.png")
+    }
+
+    /** Set the screen without a shot, for tests that type or tap before capturing. */
+    protected fun show(dark: Boolean, content: @androidx.compose.runtime.Composable () -> Unit) {
         RuntimeEnvironment.setQualifiers(if (dark) "+night" else "+notnight")
         rule.setContent { MessengerTheme { content() } }
         rule.waitForIdle()
-        rule.onRoot().captureRoboImage("../docs/shots/${name}_${if (dark) "dark" else "light"}.png")
     }
 
     protected fun lead() = chats.first { it.id == "ai-gile" }

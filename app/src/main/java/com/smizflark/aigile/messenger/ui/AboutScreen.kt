@@ -65,7 +65,7 @@ val WHATS_NEW = listOf(
 /** About (AII-220): app name, version and the open-source licences; tap one to read it in the browser. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(onBack: () -> Unit) {
+fun AboutScreen(onBack: () -> Unit, build: Int = BuildConfig.VERSION_CODE) {
     val ctx = LocalContext.current
     Scaffold(topBar = {
         TopAppBar(
@@ -76,7 +76,7 @@ fun AboutScreen(onBack: () -> Unit) {
         Column(Modifier.fillMaxSize().padding(pad).verticalScroll(rememberScrollState()).padding(16.dp)) {
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
             Text(stringResource(R.string.version, BuildConfig.VERSION_NAME), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(stringResource(R.string.build_number, BuildConfig.VERSION_CODE), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.build_number, build), color = MaterialTheme.colorScheme.onSurfaceVariant)
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             Text(stringResource(R.string.whats_new), style = MaterialTheme.typography.titleMedium)
             WHATS_NEW.forEach { Text("• " + stringResource(it), Modifier.padding(vertical = 3.dp).testTag("whats_new")) }

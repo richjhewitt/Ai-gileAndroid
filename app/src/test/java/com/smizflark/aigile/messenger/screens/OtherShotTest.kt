@@ -128,7 +128,7 @@ class OtherShotTest : ShotBase() {
         repo.store.cacheConversation(com.smizflark.aigile.messenger.data.Conversation(zed, listOf(
             m("l1", "Read [the guide](https://dnbloco.com/guide) first", "2026-10-12T09:00:00Z"),
             m("l2", "Then open dnbloco.com and check it loads.", "2026-10-13T09:00:00Z"))))
-        shot("search_links", false) { SearchScreen(repo, { _, _ -> }, {}) }
+        show(false) { SearchScreen(repo, { _, _ -> }, {}) }
         rule.onNodeWithTag("search-links").performClick()
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("../docs/shots/search_links_light.png")
@@ -140,12 +140,12 @@ class OtherShotTest : ShotBase() {
         repo.store.cacheChats(repo.store.cachedChats().orEmpty() + zed)
         repo.store.cacheConversation(com.smizflark.aigile.messenger.data.Conversation(zed, listOf(
             com.smizflark.aigile.messenger.data.Bubble("t1", "Zed", "Read [the Guide](https://dnbloco.com/guide) first, **Guide** matters", "2026-10-12T09:00:00Z", mine = false))))
-        shot("search_tidy", false) { SearchScreen(repo, { _, _ -> }, {}) }
+        show(false) { SearchScreen(repo, { _, _ -> }, {}) }
         rule.onNodeWithTag("search").performTextInput("guide")
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("../docs/shots/search_tidy_light.png")
     }
-    @Test fun aboutLight() = shot("about", false) { com.smizflark.aigile.messenger.ui.AboutScreen {} }
+    @Test fun aboutLight() = shot("about", false) { com.smizflark.aigile.messenger.ui.AboutScreen({}, build = 1) }
     @Test fun settingsLight()=shot("settings", false) { SettingsScreen(repo, {}, {}) }
     @Test fun settingsDark() = shot("settings", true) { SettingsScreen(repo, {}, {}) }
     /** AII-175: Settings has the Sent alert switch for Send later, on by default; turning it off is kept. */
