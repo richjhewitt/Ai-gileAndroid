@@ -71,6 +71,7 @@ import com.smizflark.aigile.messenger.data.Pause
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.Update
 import com.smizflark.aigile.messenger.data.pinFirst
+import com.smizflark.aigile.messenger.data.mutedLast
 import com.smizflark.aigile.messenger.data.togglePin
 import com.smizflark.aigile.messenger.work.CheckWorker
 import kotlinx.coroutines.launch
@@ -271,7 +272,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     else EmptyState(androidx.compose.ui.res.stringResource(R.string.empty_loading))
                 }
                 val unsent = outbox.groupBy { it.chat }
-                val rows = pinFirst(shown, pinned) + if (showClosed) shut else emptyList()
+                val rows = (if (Appearance.mutedLast) mutedLast(shown, pinned, muted) else pinFirst(shown, pinned)) + if (showClosed) shut else emptyList()
                 items(rows, key = { it.key }) { c ->
                     val isShut = c in shut
                     ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, unsent[c.key].orEmpty(), drafts[c.key], isShut,

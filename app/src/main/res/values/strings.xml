@@ -206,6 +206,8 @@
     <string name="play_gifs">Play GIF links</string>
     <string name="play_gifs_sub">GIF links (giphy, tenor) play in the chat; off keeps them as links</string>
     <string name="compact_list">Compact list</string>
+    <string name="muted_last">Muted chats at the bottom</string>
+    <string name="muted_last_sub">Muted chats move below all the others</string>
     <string name="compact_list_sub">Smaller rows, so more chats fit on the screen</string>
     <string name="saved_pictures">Saved pictures: %1$s</string>
     <string name="clear_pictures_title">Clear saved pictures?</string>

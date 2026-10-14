@@ -143,6 +143,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             Toggle(stringResource(R.string.compact_list), stringResource(R.string.compact_list_sub), Appearance.compact, Modifier.testTag("compact")) {
                 Appearance.compact = it; s.compact = it
             }
+            Toggle(stringResource(R.string.muted_last), stringResource(R.string.muted_last_sub), Appearance.mutedLast, Modifier.testTag("mutedLast")) {
+                Appearance.mutedLast = it; s.mutedLast = it
+            }
             SwipePick(stringResource(R.string.swipe_right), Appearance.swipeRight, "swipeRight") { Appearance.swipeRight = it; s.swipeRight = it.id }
             SwipePick(stringResource(R.string.swipe_left), Appearance.swipeLeft, "swipeLeft") { Appearance.swipeLeft = it; s.swipeLeft = it.id }
             Toggle(stringResource(R.string.buzz), stringResource(R.string.buzz_sub), Appearance.buzz, Modifier.testTag("buzz")) {

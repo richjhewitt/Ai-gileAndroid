@@ -93,6 +93,9 @@ class Store(context: Context) {
         set(v) = settings.edit().putInt("morning", v).apply()
 
     /** AII-212: smaller chats list rows, so more chats fit. */
+    var mutedLast: Boolean
+        get() = settings.getBoolean("mutedLast", false)
+        set(v) = settings.edit().putBoolean("mutedLast", v).apply()
     var compact: Boolean
         get() = settings.getBoolean("compact", false)
         set(v) = settings.edit().putBoolean("compact", v).apply()
@@ -294,7 +297,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "enterSends", "undoSend", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "enterSends", "undoSend", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
 
         /** One-time move of the settings out of the pairing file, so the pairing file can stay out of backup. */
         fun moveSettings(from: SharedPreferences, to: SharedPreferences) {
