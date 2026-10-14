@@ -22,6 +22,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -53,7 +62,20 @@ fun WaitingScreen(repo: Repo, onOpen: (ChatRef, String) -> Unit, onBack: () -> U
     var waiting by remember { mutableStateOf(Outbox.waiting(repo.store.outbox(), chats, Now.instant())) }
     val scope = rememberCoroutineScope()
     fun reload() { waiting = Outbox.waiting(repo.store.outbox(), chats, Now.instant()) }
+    val snack = remember { SnackbarHostState() }
+    val res = androidx.compose.ui.platform.LocalContext.current.resources
+    // AII-253: swipe a row away; it leaves the outbox at once (pictures kept) and is only really deleted when Undo times out.
+    fun swipeAway(p: Pending) {
+        repo.store.saveOutbox(Outbox.remove(repo.store.outbox(), p.id)); reload()
+        scope.launch {
+            snack.currentSnackbarData?.dismiss()
+            val r = snack.showSnackbar(res.getString(R.string.waiting_deleted), res.getString(R.string.undo), duration = SnackbarDuration.Long)
+            if (r == SnackbarResult.ActionPerformed) { repo.store.saveOutbox(repo.store.outbox() + p); reload() }
+            else p.files.forEach { java.io.File(it).delete() }
+        }
+    }
     Scaffold(
+        snackbarHost = { SnackbarHost(snack, Modifier.testTag("snack")) },
         topBar = {
             TopAppBar(
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
@@ -65,9 +87,21 @@ fun WaitingScreen(repo: Repo, onOpen: (ChatRef, String) -> Unit, onBack: () -> U
             if (waiting.isEmpty()) EmptyState(stringResource(R.string.empty_scheduled))
             LazyColumn(Modifier.fillMaxSize()) {
                 items(waiting, key = { (_, p) -> p.id }) { (ref, p) ->
-                    WaitingRow(ref, p, repo, onClick = { onOpen(ref, "p:${p.id}") },   // the waiting bubble's row id (ChatRows)
-                        onSendNow = { waiting = waiting.filter { it.second.id != p.id }; scope.launch { repo.sendNow(ref, p); reload() } },
-                        onDelete = { repo.discard(p.id); reload() })
+                    val box = rememberSwipeToDismissBoxState(confirmValueChange = { v -> if (v != SwipeToDismissBoxValue.Settled) { swipeAway(p); true } else false })
+                    SwipeToDismissBox(box, modifier = Modifier.testTag("waiting-swipe"), backgroundContent = {
+                        val toEnd = box.dismissDirection == SwipeToDismissBoxValue.StartToEnd
+                        if (box.dismissDirection != SwipeToDismissBoxValue.Settled)
+                            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 24.dp),
+                                contentAlignment = if (toEnd) Alignment.CenterStart else Alignment.CenterEnd) {
+                                Icon(Icons.Default.Delete, stringResource(R.string.delete))
+                            }
+                    }) {
+                        Box(Modifier.background(MaterialTheme.colorScheme.surface)) {
+                            WaitingRow(ref, p, repo, onClick = { onOpen(ref, "p:${p.id}") },   // the waiting bubble's row id (ChatRows)
+                                onSendNow = { waiting = waiting.filter { it.second.id != p.id }; scope.launch { repo.sendNow(ref, p); reload() } },
+                                onDelete = { repo.discard(p.id); reload() })
+                        }
+                    }
                     HorizontalDivider(Modifier.padding(start = 68.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
             }

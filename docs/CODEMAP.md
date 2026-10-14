@@ -53,6 +53,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 ## ui/ (Compose screens)
 - ui/CardDetails.kt: card detail sheet and the board's column names.
 - ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, this chat's reminders (AII-223, tap jumps to the message, X cancels via cancelReminder in ui/RemindersScreen.kt), pictures, links (AII-194), Mute and Silent alerts side by side (AII-245), and Pin.
+- ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, this chat's reminders (AII-223, tap jumps to the message, X cancels via cancelReminder in ui/RemindersScreen.kt), pictures, links (AII-194), Mute and Pin; section headings show their counts (AII-252).
 - ui/ChatScreen.kt: the chat screen itself (list, find, scrolling).
 - ui/ChatTopBar.kt: the chat's top bar (name, 'working on', find, Mute; menu: Go to date, My last message AII-242).
 - ui/ChatRows.kt: builds the chat's rows (days, card headers, messages, waiting sends) and counts unread below.
@@ -78,6 +79,8 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/AboutScreen.kt: About, from the bottom of Settings (AII-220): app name, version, build number and a hand-written list of open-source licences (LICENCES, keep in step with app/build.gradle.kts); tap one to open its licence page.
 - ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); Share all in the top bar sends what is listed as text via Stars.asText (AII-243); tap one, its chat opens at it; chat-name chips (2+ chats, AII-228) show one chat's stars (Stars.onlyChat).
 - ui/WaitingScreen.kt: every Send later message from all chats, soonest first (AII-166, See every waiting message under the Scheduled chip); tap one, its chat opens at it.
+- ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); tap one, its chat opens at it; chat-name chips (2+ chats, AII-228) show one chat's stars (Stars.onlyChat).
+- ui/WaitingScreen.kt: every Send later message from all chats, soonest first (AII-166, See every waiting message under the Scheduled chip); tap one, its chat opens at it; swipe one away to delete it with an Undo snackbar (AII-253, the real file delete waits for the snackbar to time out).
 - ui/Shortcuts.kt: app icon shortcuts (New message, recent chats).
 - ui/Theme.kt: colours and Material theme.
 
