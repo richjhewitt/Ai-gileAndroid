@@ -322,6 +322,9 @@
     <string name="remind_in_hour">Herinner me over 1 uur</string>
     <string name="remind_again">Opnieuw over 1 uur</string>
     <string name="remind_pick">Kies een tijd…</string>
+    <string name="remind_note_title">Notitie toevoegen?</string>
+    <string name="remind_note">Notitie</string>
+    <string name="skip">Overslaan</string>
     <string name="has_reminder">Heeft een herinnering</string>
     <string name="unstar">Ster weghalen</string>
     <string name="starred">Met ster</string>

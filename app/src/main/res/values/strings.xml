@@ -322,6 +322,9 @@
     <string name="remind_in_hour">Remind me in 1 hour</string>
     <string name="remind_again">Again in 1 hour</string>
     <string name="remind_pick">Pick a time…</string>
+    <string name="remind_note_title">Add a note?</string>
+    <string name="remind_note">Note</string>
+    <string name="skip">Skip</string>
     <string name="has_reminder">Has a reminder</string>
     <string name="unstar">Remove star</string>
     <string name="starred">Starred</string>

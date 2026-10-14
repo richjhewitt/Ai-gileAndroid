@@ -21,13 +21,14 @@ class RemindReceiver : BroadcastReceiver() {
         val own = intent.getIntExtra(EXTRA_NOTIFY, 0)
         if (own != 0) androidx.core.app.NotificationManagerCompat.from(app).cancel(own) else ChatNotifier.clear(app, chat)
         val at = Remind.at(Now.millis(), Remind.When.HOUR) ?: return
-        val r = Reminder(Remind.idOf(chat, msg), chat, name, msg, text, at)
+        val r = Reminder(Remind.idOf(chat, msg), chat, name, msg, text, at, intent.getStringExtra(EXTRA_NOTE))
         app.repo.store.setReminders(Remind.add(app.repo.store.reminders(), r))
         RemindWorker.schedule(app, r)
     }
 
     companion object {
         const val ACTION = "com.smizflark.aigile.messenger.REMIND"
+        const val EXTRA_NOTE = "remind_note"
         const val EXTRA_NOTIFY = "remind_notify"
         const val EXTRA_NAME = "remind_name"
         const val EXTRA_TEXT = "remind_text"

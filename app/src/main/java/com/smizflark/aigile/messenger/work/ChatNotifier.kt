@@ -158,11 +158,12 @@ object ChatNotifier {
         val n = QuickReply.notificationId("remind:${r.id}")
         // AII-224: Again in 1 hour reuses RemindReceiver; it dismisses this alert and sets the reminder 1 hour on.
         val again = Intent(context, RemindReceiver::class.java).setAction(RemindReceiver.ACTION).putExtra(CheckWorker.EXTRA_CHAT, r.chat)
-            .putExtra(RemindReceiver.EXTRA_NAME, r.chatName).putExtra(CheckWorker.EXTRA_MSG, r.msg).putExtra(RemindReceiver.EXTRA_TEXT, r.text)
+            .putExtra(RemindReceiver.EXTRA_NAME, r.chatName).putExtra(CheckWorker.EXTRA_MSG, r.msg).putExtra(RemindReceiver.EXTRA_TEXT, r.text).putExtra(RemindReceiver.EXTRA_NOTE, r.note)
             .putExtra(RemindReceiver.EXTRA_NOTIFY, n)
         val againPi = PendingIntent.getBroadcast(context, n, again, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         NotificationManagerCompat.from(context).notify(n, base(context).setContentTitle(context.getString(R.string.notify_remind, r.chatName))
-            .setContentText(r.text).setStyle(NotificationCompat.BigTextStyle().bigText(r.text))
+            .setContentText(com.smizflark.aigile.messenger.data.Remind.withNote(r).replace('\n', ' '))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(com.smizflark.aigile.messenger.data.Remind.withNote(r)))
             .addAction(NotificationCompat.Action.Builder(R.drawable.ic_notify, context.getString(R.string.remind_again), againPi).setShowsUserInterface(false).build())
             .setContentIntent(openChat(context, r.chat, n, r.msg)).build())
     }

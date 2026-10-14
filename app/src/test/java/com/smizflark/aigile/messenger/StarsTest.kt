@@ -35,7 +35,7 @@ class StarsTest {
     @Test fun shareAllIsChatAndTimeThenTheTextWithBlankLinesBetween() {
         val a = ChatRef(Kind.LEAD, "a", "Alpha", "", "")
         val b = ChatRef(Kind.LEAD, "b", "Beta", "", "")
-        val list = Stars.everywhere(listOf(Stars.of("a", old), Stars.of("b", new)), listOf(a, b))
+        val list = Stars.everywhere(listOf(Stars.of(a.key, old), Stars.of(b.key, new)), listOf(a, b))
         assertEquals("Beta · T10\nsecond\n\nAlpha · T09\nfirst", Stars.asText(list) { "T" + it.substring(11, 13) })
         assertEquals("", Stars.asText(emptyList()) { it })
     }
