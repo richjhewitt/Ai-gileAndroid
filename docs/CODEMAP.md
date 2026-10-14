@@ -77,6 +77,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 ## Other
 - tools/: release.ps1 (release build script) and emulator/ (emulator helpers).
 - docs/shots: reference screenshots (Roborazzi) for each screen and theme.
+- test/.../screens: ShotBase.kt (demo data, fixed clock, shot helpers); ChatsListShotTest (chats list), ChatShotTest (one chat), OtherShotTest (Connect, Starred, New message, Settings, black, Dutch).
 
 ## res/xml backup (AII-81)
 - res/xml/backup_rules.xml and res/xml/data_extraction_rules.xml: backup takes only settings.xml (look, text size, pins, mutes, quiet hours); keys, board address, drafts and outbox stay out.
