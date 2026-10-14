@@ -371,10 +371,13 @@ private fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned:
 }
 
 /** What a chat row says about messages typed on the phone that haven't reached the board (AII-52); null when none. */
-fun unsentLabel(unsent: List<Pending>): String? {
+fun unsentLabel(unsent: List<Pending>, now: java.time.Instant = Now.instant()): String? {
     if (unsent.isEmpty()) return null
     val failed = unsent.count { it.failed && !it.offline }   // offline ones still go by themselves (AII-55)
-    return if (failed > 0) Words.unsentFailed.format(failed) else Words.unsentWaiting.format(unsent.size)
+    // AII-148: only Send later ones left: say when the first goes.
+    val held = unsent.filter { com.smizflark.aigile.messenger.work.later(it, now) }
+    if (failed == 0 && held.size == unsent.size) return Words.sendsAt.format(clock(held.minBy { java.time.Instant.parse(it.sendAt) }.sendAt))
+    return if (failed > 0) Words.unsentFailed.format(failed) else Words.unsentWaiting.format(unsent.size - held.size)
 }
 
 /** The line under a chat's name: "working…" while the team is at work (AII-112), else its newest message ("You: ..." when it is yours, AII-106), else the chat's subtitle. */

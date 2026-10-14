@@ -115,6 +115,7 @@
     <string name="filter_friends">Vrienden</string>
     <string name="unsent_failed">⚠️ %1$d niet verstuurd: tik om opnieuw te proberen</string>
     <string name="unsent_waiting">⏳ %1$d wachten om verstuurd te worden</string>
+    <string name="unsent_later">⏰ Gaat om %1$s</string>
     <string name="draft_label">Concept: %1$s</string>
     <string name="you_label">Jij: %1$s</string>
     <string name="working">bezig…</string>
