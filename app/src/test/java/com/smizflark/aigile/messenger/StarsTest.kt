@@ -43,4 +43,15 @@ class StarsTest {
         assertEquals("Done: export", Stars.preview("\n• Done: export\nmore"))
         assertEquals("plain", Stars.preview("plain"))
     }
+
+    @Test fun filterByChat_AII228() {
+        val a = ChatRef(Kind.LEAD, "a", "Alpha", "", "")
+        val b = ChatRef(Kind.LEAD, "b", "Beta", "", "")
+        val every = Stars.everywhere(listOf(Stars.of(a.key, old), Stars.of(b.key, new), Stars.of(a.key, new)), listOf(a, b))
+        assertEquals(listOf(b, a), Stars.chatsWithStars(every))
+        assertEquals(2, Stars.onlyChat(every, a.key).size)
+        assertEquals(listOf(b.key), Stars.onlyChat(every, b.key).map { it.second.chat })
+        assertEquals(3, Stars.onlyChat(every, null).size)
+        assertEquals(1, Stars.matching(Stars.onlyChat(every, a.key), "first").size)
+    }
 }

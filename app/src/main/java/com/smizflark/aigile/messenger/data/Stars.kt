@@ -51,4 +51,10 @@ object Stars {
         val byKey = chats.associateBy { it.key }
         return all.mapNotNull { s -> byKey[s.chat]?.let { it to s } }.sortedByDescending { it.second.at }
     }
+
+    /** The chats that have stars, in the order their newest star comes (AII-228); [every] is newest first. */
+    fun chatsWithStars(every: List<Pair<ChatRef, Star>>): List<ChatRef> = every.map { it.first }.distinctBy { it.key }
+
+    /** Only [chat]'s stars (AII-228); null keeps them all. */
+    fun <T> onlyChat(list: List<Pair<T, Star>>, chat: String?): List<Pair<T, Star>> = if (chat == null) list else list.filter { it.second.chat == chat }
 }
