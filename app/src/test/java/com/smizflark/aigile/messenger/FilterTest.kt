@@ -26,5 +26,11 @@ class FilterTest {
         assertEquals(true, ChatFilter.SCHEDULED in ChatFilter.shown(true, ChatFilter.ALL))
         assertEquals(true, ChatFilter.SCHEDULED in ChatFilter.shown(false, ChatFilter.SCHEDULED))   // sent meanwhile: stays until you pick another
     }
+    @Test fun remindersOnlyWhereAReminderIsSet() = assertEquals(listOf(quiet), all.filter { ChatFilter.REMINDERS.keep(it, reminded = it == quiet) })
+    @Test fun remindersChipOnlyWhenNeeded() {
+        assertEquals(false, ChatFilter.REMINDERS in ChatFilter.shown(false, ChatFilter.ALL, false))
+        assertEquals(true, ChatFilter.REMINDERS in ChatFilter.shown(false, ChatFilter.ALL, true))
+        assertEquals(true, ChatFilter.REMINDERS in ChatFilter.shown(false, ChatFilter.REMINDERS, false))
+    }
     @Test fun unreadComesRightAfterAll() = assertEquals(ChatFilter.UNREAD, ChatFilter.entries[1])
 }

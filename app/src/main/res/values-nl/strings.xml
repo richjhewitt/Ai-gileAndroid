@@ -29,6 +29,7 @@
     <string name="empty_teams">Nog geen teamchats</string>
     <string name="empty_friends">Nog geen vrienden</string>
     <string name="empty_scheduled">Geen berichten die later verstuurd worden</string>
+    <string name="empty_filter_reminders">Geen chats met een herinnering</string>
     <string name="empty_show_all">Alle chats tonen</string>
     <string name="waiting_title">Wacht op verzenden</string>
     <string name="waiting_all">Alle wachtende berichten bekijken</string>
@@ -154,6 +155,7 @@
     <string name="filter_teams">Teams</string>
     <string name="filter_friends">Vrienden</string>
     <string name="filter_scheduled">Gepland</string>
+    <string name="filter_reminders">Herinneringen</string>
     <string name="unsent_failed">⚠️ %1$d niet verstuurd: tik om opnieuw te proberen</string>
     <string name="unsent_waiting">⏳ %1$d wachten om verstuurd te worden</string>
     <string name="unsent_later">⏰ Gaat om %1$s</string>
