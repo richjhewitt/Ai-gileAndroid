@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -370,6 +371,17 @@ class ChatShotTest : ShotBase() {
         rule.waitUntil(5_000) { rule.onAllNodesWithTag("card-details").fetchSemanticsNodes().isNotEmpty() }
         rule.waitForIdle()
         rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_dark.png")   // the sheet is its own window
+    }
+    /** AII-194: the Links list in the chat details (named and plain links). */
+    @Test fun chatDetailsLinksLight() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        val links = com.smizflark.aigile.messenger.data.Links.of(listOf("see https://github.com/smizflark/aigile/pull/194.", "[Release notes](https://example.org/notes) and dnbloco.com", "[Board](https://aigile.smizflark.com/board)"))
+        rule.setContent { MessengerTheme { com.smizflark.aigile.messenger.ui.ChatDetails(lead(), repo, com.smizflark.aigile.messenger.data.ChatInfo(emptyList(), emptyList(), links), onClose = {}) } }
+        rule.waitForIdle()
+        rule.onAllNodesWithTag("details-link").assertCountEquals(4)
+        rule.onNodeWithTag("chat-details").performTouchInput { swipeUp() }   // the sheet opens half way: pull it up so every link shows
+        rule.waitForIdle()
+        rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_links_light.png")
     }
     /** AII-160: a 1 hour mute shows when it ends under Mute alerts in the chat details. */
     @Test fun muteEndsLight() {

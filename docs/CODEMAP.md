@@ -8,6 +8,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 
 ## data/ (pure logic, mostly unit tested)
 - data/ChatInfo.kt: a chat's open cards and pictures, for the chat details sheet.
+- data/Links.kt: every web link in a chat (http links, [name](url), bare addresses), newest first, once each, at most 50, for the chat details Links list (AII-194).
 - data/Crash.kt: keeps the last crash and turns it into a bug message for the team.
 - data/Demo.kt: made-up chats that answer back, for trying the app with no board.
 - data/Gif.kt: GIF links in a message (giphy, tenor, .gif) shown as moving pictures in the bubble, like the board (AII-188).
@@ -43,7 +44,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 
 ## ui/ (Compose screens)
 - ui/CardDetails.kt: card detail sheet and the board's column names.
-- ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, pictures, Mute and Pin.
+- ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, pictures, links (AII-194), Mute and Pin.
 - ui/ChatScreen.kt: the chat screen itself (list, find, scrolling).
 - ui/ChatTopBar.kt: the chat's top bar (name, 'working on', find, Mute).
 - ui/ChatRows.kt: builds the chat's rows (days, card headers, messages, waiting sends) and counts unread below.

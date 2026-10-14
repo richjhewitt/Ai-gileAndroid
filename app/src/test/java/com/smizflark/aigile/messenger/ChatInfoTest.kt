@@ -21,7 +21,26 @@ class ChatInfoTest {
     private val c = Pic("/api/c", "c.jpg", "image/jpeg")
     private val doc = Pic("/api/d", "d.pdf", "application/pdf")
 
-    @Test fun noChatYet() = assertTrue(chatInfo(null).let { it.openCards.isEmpty() && it.pictures.isEmpty() })
+    @Test fun linksNewestFirstOnceEach() {
+        val l = com.smizflark.aigile.messenger.data.Links.of(listOf("old https://a.com/x.", "[Named](https://b.org/p) then https://a.com/x", "dnbloco.com, and (https://c.io)"))
+        assertEquals(listOf("https://dnbloco.com", "https://c.io", "https://b.org/p", "https://a.com/x"), l.map { it.url })
+        assertEquals("Named", l[2].title)
+        assertEquals("dnbloco.com", l[0].title)
+    }
+    @Test fun linksSkipCodeAndCapAt50() {
+        val ls = com.smizflark.aigile.messenger.data.Links
+        assertTrue(ls.inText("`https://a.com` and ```\nhttps://b.com\n``` ok").isEmpty())
+        assertTrue(ls.inText("mail me@dnbloco.com, version 1.2.3 and file.txt").isEmpty())
+        assertEquals(50, ls.of((1..80).map { "https://x.com/$it" }).size)
+        assertEquals("https://x.com/80", ls.of((1..80).map { "https://x.com/$it" }).first().url)
+    }
+    @Test fun chatInfoCarriesLinks() {
+        val c = Conversation(ref, listOf(Bubble("1", "a", "go to https://a.com", "2026-01-01", false)), emptyList())
+        assertEquals(listOf("https://a.com"), chatInfo(c).links.map { it.url })
+        assertTrue(chatInfo(null).links.isEmpty())
+    }
+
+    @Test fun noChatYet()= assertTrue(chatInfo(null).let { it.openCards.isEmpty() && it.pictures.isEmpty() })
 
     @Test fun openCardsAreTheWaitingOnes() {
         val t = listOf(Target("A-1", "A-1 one", waiting = true), Target("A-2", "A-2 two"), Target(null, "New message"))
