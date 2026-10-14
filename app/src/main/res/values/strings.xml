@@ -375,4 +375,18 @@
     <string name="reset_settings_text">Reset all settings? Your board connection, pins and mutes stay.</string>
     <string name="reset">Reset</string>
     <string name="go_to_message">Go to message</string>
+    <!-- What's new (AII-261), newest first; keep in step with WHATS_NEW in AboutScreen.kt -->
+    <string name="whats_new">What\'s new</string>
+    <string name="new_remind">Remind me about a message: alerts, a list and notes</string>
+    <string name="new_undo">Undo send (5 or 10 seconds)</string>
+    <string name="new_next_unread">Next unread chat button</string>
+    <string name="new_settings">Settings in sections, with reset to defaults</string>
+    <string name="new_pinch">Pinch to zoom text in a chat</string>
+    <string name="new_chat_list">Chats list: sort, unread count, reminder bells and Copy name</string>
+    <string name="new_swipe">Choose what swiping a chat does</string>
+    <string name="new_details">Chat details: About this chat, save as file, counts</string>
+    <string name="new_silent">Silent alerts for one chat</string>
+    <string name="new_star">Double-tap a message to star it; Copy as quote</string>
+    <string name="new_starred">Starred list: filter by chat, share all as text</string>
+    <string name="new_widget">Widget shows unread counts and follows the app\'s look</string>
 </resources>
