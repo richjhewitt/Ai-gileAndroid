@@ -261,7 +261,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     val reading = ReadAloud.speaking == b.key
                     DropdownMenuItem(text = { Text(stringResource(if (reading) R.string.stop_reading else R.string.read_aloud)) }, modifier = Modifier.testTag("read-aloud"), onClick = {
                         menu = false
-                        if (reading) ReadAloud.stop() else ReadAloud.speak(ctx, b.key, shown.text)
+                        if (reading) ReadAloud.stop() else ReadAloud.speak(ctx, b.key, Markdown.plain(shown))
                     })
                 }
             }
