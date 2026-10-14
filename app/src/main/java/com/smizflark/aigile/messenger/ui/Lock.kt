@@ -24,15 +24,16 @@ import com.smizflark.aigile.messenger.R
 
 /** Lock the app with fingerprint, face or phone PIN (AII-63). */
 object Lock {
-    /** How long the app can be in the background before it asks again. */
-    const val GRACE_MS = 60_000L
+    /** The Lock after choices in Settings (AII-234), in seconds: straight away, 1 minute, 5 minutes. */
+    val AFTER_CHOICES = listOf(0, 60, 300)
 
     /**
      * Should the locked screen show now? [unlocked] is whether this run has been unlocked,
      * [leftAt] is when the app last went to the background (null if never), on the same clock as [now].
+     * [afterSec] is how long it may stay away before it locks (0 = any time away locks).
      */
-    fun shouldLock(enabled: Boolean, unlocked: Boolean, leftAt: Long?, now: Long): Boolean =
-        enabled && (!unlocked || (leftAt != null && now - leftAt > GRACE_MS))
+    fun shouldLock(enabled: Boolean, unlocked: Boolean, leftAt: Long?, now: Long, afterSec: Int = 0): Boolean =
+        enabled && (!unlocked || (leftAt != null && now - leftAt > afterSec * 1_000L))
 
     private const val ALLOWED = BIOMETRIC_WEAK or DEVICE_CREDENTIAL
 
