@@ -87,6 +87,11 @@ class Store(context: Context) {
         get() = prefs.getBoolean("lock", false)
         set(v) = prefs.edit().putBoolean("lock", v).apply()
 
+    /** AII-234: seconds away before the lock asks again; 0 = straight away. Kept with [lock], so not backed up. */
+    var lockAfter: Int
+        get() = prefs.getInt("lockAfter", 0)
+        set(v) = prefs.edit().putInt("lockAfter", v).apply()
+
     /** AII-208: the hour "Send in the morning" uses (Send later, AII-146). */
     var morning: Int
         get() = settings.getInt("morning", 8)

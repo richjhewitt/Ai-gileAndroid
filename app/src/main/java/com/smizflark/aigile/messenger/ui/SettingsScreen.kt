@@ -84,6 +84,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
     val scope = rememberCoroutineScope()
     var alerts by remember { mutableStateOf(s.alerts) }
     var lockOn by remember { mutableStateOf(s.lock) }
+    var lockAfter by remember { mutableStateOf(s.lockAfter) }   // AII-234
     var quietOn by remember { mutableStateOf(s.quietOn) }
     var sentAlerts by remember { mutableStateOf(s.sentAlerts) }   // AII-175
     var from by remember { mutableStateOf(s.quietFrom) }
@@ -186,6 +187,17 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             Toggle(stringResource(R.string.lock), stringResource(R.string.lock_sub), lockOn) {
                 if (it && !Lock.available(ctx)) note = ctx.getString(R.string.lock_unavailable)
                 else { lockOn = it; s.lock = it }
+            }
+            // AII-234: how long away before it asks again.
+            if (lockOn) {
+                Text(stringResource(R.string.lock_after), style = MaterialTheme.typography.bodyLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Lock.AFTER_CHOICES.forEach { n ->
+                        FilterChip(selected = lockAfter == n, onClick = { lockAfter = n; s.lockAfter = n },
+                            label = { Text(stringResource(when (n) { 0 -> R.string.lock_now; 60 -> R.string.lock_1m; else -> R.string.lock_5m })) },
+                            modifier = Modifier.testTag("lockAfter$n"))
+                    }
+                }
             }
             HorizontalDivider()
 

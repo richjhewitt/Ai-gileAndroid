@@ -169,14 +169,17 @@ class MainActivity : FragmentActivity() {
         val lockOn = (application as App).repo.store.lock
         // No chat preview in the recent apps list while the lock is on.
         if (Build.VERSION.SDK_INT >= 33) setRecentsScreenshotEnabled(!lockOn)
-        if (Lock.shouldLock(lockOn, unlocked, leftAt, SystemClock.elapsedRealtime())) {
+        if (Lock.shouldLock(lockOn, unlocked, leftAt, SystemClock.elapsedRealtime(), (application as App).repo.store.lockAfter)) {
             unlocked = false; locked = true
         }
     }
-    override fun onStop() { super.onStop(); App.inForeground = false; leftAt = SystemClock.elapsedRealtime() }
+    override fun onStop() {
+        super.onStop(); App.inForeground = false
+        if (!isChangingConfigurations) leftAt = SystemClock.elapsedRealtime()   // turning the phone is not leaving
+    }
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean("unlocked", unlocked)
-        outState.putLong("leftAt", leftAt ?: SystemClock.elapsedRealtime())
+        leftAt?.let { outState.putLong("leftAt", it) }
     }
 }

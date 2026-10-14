@@ -192,6 +192,10 @@
     <string name="privacy">Privacy</string>
     <string name="lock">Lock with fingerprint</string>
     <string name="lock_sub">Asks for your fingerprint, face or phone PIN when you open the app</string>
+    <string name="lock_after">Lock after</string>
+    <string name="lock_now">Straight away</string>
+    <string name="lock_1m">1 minute</string>
+    <string name="lock_5m">5 minutes</string>
     <string name="lock_unavailable">This phone has no fingerprint, face or PIN set up yet.</string>
     <string name="lock_title">Unlock Messenger</string>
     <string name="locked">Messenger is locked</string>

@@ -63,7 +63,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ConnectScreen.kt: connect the phone to a board, or try the demo.
 - ui/Dictate.kt: voice to text with the phone's recogniser.
 - ui/Find.kt: find in a chat (pure).
-- ui/Lock.kt: app lock with fingerprint, face or PIN.
+- ui/Lock.kt: app lock with fingerprint, face or PIN; Lock after straight away / 1 / 5 minutes (AII-234, Store lockAfter, not backed up like lock).
 - ui/Markdown.kt: renders message markdown ([name](link), bare web addresses and • bullets like the board, AII-187; ⧉ after a **Label:** value copies the value, AII-191).
 - ui/MuteFor.kt: the Mute for how long dialog (AII-157), used by the chats list, chat menu and chat details.
 - ui/NewMessageScreen.kt: a new message to any team.
