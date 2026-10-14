@@ -15,7 +15,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Demo.kt: made-up chats that answer back, for trying the app with no board.
 - data/Gif.kt: GIF links in a message (giphy, tenor, .gif) shown as moving pictures in the bubble, like the board (AII-188).
 - data/Drafts.kt: half-typed replies, one per chat.
-- data/GoToDate.kt: Go to date in a chat (AII-193): which day to land on, and the picker's range (dialog: ui/GoToDateDialog.kt).
+- data/GoToDate.kt: Go to date in a chat (AII-193): which day to land on, and the picker's range (dialog: ui/GoToDateDialog.kt, with a First message button that picks the range start, AII-231).
 - data/Filter.kt: the chips above the chats list.
 - data/Forward.kt: forwarding a message to another chat.
 - data/Mapper.kt: turns the board's answers into what the screens show.
@@ -44,7 +44,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Stars.kt: starred messages (AII-138), listed in the chat details; lead chats kept in step with the board (AII-141, Repo syncStars; Starred refreshes them on open, AII-162).
 - data/SavedPictures.kt: size of the saved pictures and which files Clear may delete, never ones waiting in the outbox (AII-215).
 - data/Store.kt: on-disk storage: pairing in the "messenger" prefs (not backed up), settings in the "settings" prefs (backed up, AII-81), drafts and cache.
-- data/Transcript.kt: a whole chat as plain text, for Share this chat (AII-139).
+- data/Transcript.kt: a whole chat as plain text, for Share this chat (AII-139) and Save as file (AII-229, safe file name here; saveTextFile in ui/ChatDetails.kt writes to Downloads).
 - data/UndoSend.kt: a sent message held 5 seconds with an Undo bar (AII-202); used by ui/ChatScreen.kt.
 - data/Swipe.kt: what a swipe on a chat row does.
 - data/Update.kt: 'New version' bar: latest GitHub release (tag build-N = versionCode), checked once a day.
@@ -75,7 +75,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/SettingsScreen.kt: settings.
 - ui/RemindersScreen.kt: every reminder, soonest first (AII-209, a Reminders row in Settings when there are any); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
 - ui/AboutScreen.kt: About, from the bottom of Settings (AII-220): app name, version, build number and a hand-written list of open-source licences (LICENCES, keep in step with app/build.gradle.kts); tap one to open its licence page.
-- ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); tap one, its chat opens at it.
+- ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); tap one, its chat opens at it; chat-name chips (2+ chats, AII-228) show one chat's stars (Stars.onlyChat).
 - ui/WaitingScreen.kt: every Send later message from all chats, soonest first (AII-166, See every waiting message under the Scheduled chip); tap one, its chat opens at it.
 - ui/Shortcuts.kt: app icon shortcuts (New message, recent chats).
 - ui/Theme.kt: colours and Material theme.

@@ -22,4 +22,11 @@ class TranscriptTest {
         assertEquals("AI-gile\n\nLead, T1:\nReady?\n\nRich, T2:\n[sea.png]\nYes\n\nAI-gile, T3:\nDone\n",
             Transcript.of(c, "Rich") { it.uppercase() })
     }
+
+    @Test fun fileNameIsSafeAndDated_AII229() {
+        val d = java.time.LocalDate.of(2026, 10, 14)
+        assertEquals("AI-gile 2026-10-14.txt", Transcript.fileName("AI-gile", d))
+        assertEquals("a b c d 2026-10-14.txt", Transcript.fileName("a/b: c?\"d", d))
+        assertEquals("chat 2026-10-14.txt", Transcript.fileName(" ../ ", d))
+    }
 }

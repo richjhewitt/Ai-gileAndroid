@@ -51,7 +51,9 @@ fun StarredScreen(repo: Repo, onOpen: (ChatRef, String) -> Unit, onBack: () -> U
     var all by remember { mutableStateOf(repo.store.stars()) }
     var query by remember { mutableStateOf("") }   // AII-164
     val every = remember(all) { Stars.everywhere(all, chats) }
-    val stars = remember(every, query) { Stars.matching(every, query) }
+    var only by remember { mutableStateOf<String?>(null) }   // AII-228: one chat's stars
+    val withStars = remember(every) { Stars.chatsWithStars(every) }
+    val stars = remember(every, query, only) { Stars.matching(Stars.onlyChat(every, only), query) }
     val snack = remember { androidx.compose.material3.SnackbarHostState() }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -71,6 +73,15 @@ fun StarredScreen(repo: Repo, onOpen: (ChatRef, String) -> Unit, onBack: () -> U
             if (every.isNotEmpty()) androidx.compose.material3.OutlinedTextField(query, { query = it },
                 placeholder = { Text(stringResource(R.string.search_starred)) }, singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).testTag("starred-search"))
+            // AII-228: chips with the chats that have stars, once there are two.
+            if (withStars.size >= 2) androidx.compose.foundation.lazy.LazyRow(Modifier.fillMaxWidth().testTag("starred-chats"),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                items(withStars, key = { it.key }) { c ->
+                    androidx.compose.material3.FilterChip(selected = only == c.key, onClick = { only = if (only == c.key) null else c.key },
+                        label = { Text(c.name, maxLines = 1, overflow = TextOverflow.Ellipsis) }, modifier = Modifier.testTag("starred-chip"))
+                }
+            }
             if (every.isEmpty()) EmptyState(stringResource(R.string.no_starred))
             else if (stars.isEmpty()) EmptyState(stringResource(R.string.search_no_results, query.trim()))
             LazyColumn(Modifier.fillMaxSize()) {
