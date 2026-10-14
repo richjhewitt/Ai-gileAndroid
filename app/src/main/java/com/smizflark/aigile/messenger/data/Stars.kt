@@ -22,6 +22,16 @@ object Stars {
     /** The line a star shows in a list: the first line of the message (markdown already rendered), without a leading bullet (AII-144). */
     fun preview(plain: String) = plain.lines().firstOrNull { it.isNotBlank() }.orEmpty().trim().removePrefix("•").trim()
 
+    /** A lead chat's star as the board keeps it (AII-141): "fold|at", the fold being the card id or _lead (the start of the bubble key). */
+    fun boardKey(s: Star) = s.key.substringBefore(':') + "|" + s.at
+
+    /** This chat's stars as the board has them (AII-141), other chats' left alone. A board star whose message isn't loaded here is left out. */
+    fun fromBoard(all: List<Star>, chat: String, board: List<String>, bubbles: List<Bubble>): List<Star> {
+        val mine = all.filter { it.chat == chat }.associateBy { boardKey(it) }
+        val loaded = bubbles.associateBy { it.key.substringBefore(':') + "|" + it.at }
+        return all.filter { it.chat != chat } + board.distinct().mapNotNull { k -> mine[k] ?: loaded[k]?.let { of(chat, it) } }
+    }
+
     /** Every chat's stars, newest message first (AII-140); stars of chats this phone no longer has are left out, as they can't open. */
     fun everywhere(all: List<Star>, chats: List<ChatRef>): List<Pair<ChatRef, Star>> {
         val byKey = chats.associateBy { it.key }

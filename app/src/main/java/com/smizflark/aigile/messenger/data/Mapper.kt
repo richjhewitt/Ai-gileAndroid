@@ -89,7 +89,7 @@ object Mapper {
         val lastCard = bubbles.lastOrNull()?.card
         val default = t.open.firstOrNull()?.id
             ?: lastCard?.takeIf { id -> targets.any { it.id == id } }
-        return Conversation(ref, bubbles, targets, default, lastFromThem)
+        return Conversation(ref, bubbles, targets, default, lastFromThem, boardStars = t.stars)
     }
 
     fun friend(ref: ChatRef, owner: String, msgs: List<FriendMsg>): Conversation {

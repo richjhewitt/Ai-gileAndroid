@@ -43,6 +43,10 @@ interface ChatSource {
     /** The board's closed chats (AII-131): board key to when it was closed. */
     suspend fun closed(): Map<String, String> = emptyMap()
     suspend fun setClosed(key: String, closed: Boolean) {}
+    /** Star or unstar one message on the board (AII-141); [chat] is the fold, [key] the message time. */
+    suspend fun setStar(slug: String, chat: String, key: String, on: Boolean) {}
+    /** The phone's stars replace the board's (first sync, AII-141). */
+    suspend fun replaceStars(slug: String, stars: List<Pair<String, String>>) {}
 }
 
 /** A picture or file to send with a message. */
@@ -219,6 +223,16 @@ class BoardSource(
 
     override suspend fun markSeen(slug: String, at: String, back: Boolean) {
         call("POST", "/api/chats/$slug/seen", buildJsonObject { put("at", at); if (back) put("back", true) })
+    }
+
+    override suspend fun setStar(slug: String, chat: String, key: String, on: Boolean) {
+        call("POST", "/api/projects/$slug/stars", buildJsonObject { put("chat", chat); put("key", key); put("on", on) })
+    }
+
+    override suspend fun replaceStars(slug: String, stars: List<Pair<String, String>>) {
+        call("POST", "/api/projects/$slug/stars", buildJsonObject {
+            put("stars", kotlinx.serialization.json.JsonArray(stars.map { (c, k) -> buildJsonObject { put("chat", c); put("key", k) } }))
+        })
     }
 
     override suspend fun closed(): Map<String, String> = json.decodeFromString(call("GET", "/api/dmclosed"))

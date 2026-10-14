@@ -173,6 +173,11 @@ class Store(context: Context) {
             .putStringSet("mutedUntil", ends.filterKeys { it in muted() || it == chat }.map { (c, t) -> "$c\t$t" }.toSet()).apply()
     }
 
+    /** Boards (project slugs) whose stars this phone has sent once (AII-141): the phone's list wins on the first sync. */
+    var starsSynced: Set<String>
+        get() = prefs.getStringSet("starsSynced", emptySet())?.toSet() ?: emptySet()
+        set(v) = prefs.edit().putStringSet("starsSynced", v).apply()
+
     /* ---------- closed chats: off the list until a newer message (AII-131), per board ---------- */
 
     fun closed(): Map<String, String> = read("closed.json") ?: emptyMap()
