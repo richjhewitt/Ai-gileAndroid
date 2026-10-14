@@ -14,8 +14,8 @@ object Pause {
     fun oneHour(now: Long): Long = now + HOUR
     fun fourHours(now: Long): Long = now + 4 * HOUR
 
-    /** The next 08:00 in the given zone: this morning when pressed in the small hours, else tomorrow. */
-    fun untilTomorrow(now: Long, zone: ZoneId = ZoneId.systemDefault()): Long = nextAt(now, 8, 0, zone)
+    /** The next [hour]:00 (your morning time, AII-222) in the given zone: this morning when pressed in the small hours, else tomorrow. */
+    fun untilTomorrow(now: Long, zone: ZoneId = ZoneId.systemDefault(), hour: Int = 8): Long = nextAt(now, hour, 0, zone)
 
     /** Hour:minute on [day] (Send later, pick a day, AII-170); a time already gone means the next one. */
     fun onDay(now: Long, day: java.time.LocalDate, hour: Int, minute: Int, zone: ZoneId = ZoneId.systemDefault()): Long {

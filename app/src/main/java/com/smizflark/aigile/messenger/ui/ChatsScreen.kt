@@ -184,8 +184,8 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         IconButton(onClick = { pauseMenu = true }, modifier = Modifier.testTag("pause")) { Icon(Icons.Default.NotificationsOff, stringResource(R.string.pause_alerts)) }
                         DropdownMenu(expanded = pauseMenu, onDismissRequest = { pauseMenu = false }) {
                             val now = Now.millis()
-                            listOf(R.string.pause_1h to Pause.oneHour(now), R.string.pause_4h to Pause.fourHours(now), R.string.pause_tomorrow to Pause.untilTomorrow(now)).forEach { (label, end) ->
-                                DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = { pauseMenu = false; pausedUntil = end; repo.store.pausedUntil = end })
+                            listOf(R.string.pause_1h to Pause.oneHour(now), R.string.pause_4h to Pause.fourHours(now), R.string.pause_tomorrow to Pause.untilTomorrow(now, hour = Appearance.morning)).forEach { (label, end) ->
+                                DropdownMenuItem(text = { Text(stringResource(label, Appearance.morning)) }, onClick = { pauseMenu = false; pausedUntil = end; repo.store.pausedUntil = end })
                             }
                         }
                     }
