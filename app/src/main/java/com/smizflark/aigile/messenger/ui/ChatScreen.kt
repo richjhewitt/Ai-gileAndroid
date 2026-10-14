@@ -51,6 +51,7 @@ import com.smizflark.aigile.messenger.data.Forward
 import com.smizflark.aigile.messenger.data.Quote
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.Stars
+import com.smizflark.aigile.messenger.data.Transcript
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -276,7 +277,13 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
 
     if (details) ChatDetails(ref, repo, chatInfo(convo), onFind = { details = false; finding = true },
-        starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }) { details = false; muted = ref.key in repo.store.muted() }
+        starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) },
+        onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> {
+            // AII-139: the whole chat as text through the phone's share menu.
+            val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
+                .putExtra(android.content.Intent.EXTRA_SUBJECT, ref.name).putExtra(android.content.Intent.EXTRA_TEXT, Transcript.of(c, owner) { fullTime(it) })
+            runCatching { view.context.startActivity(android.content.Intent.createChooser(send, null)) }
+        } }) { details = false; muted = ref.key in repo.store.muted() }
     Scaffold(
         topBar = {
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },

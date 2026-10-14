@@ -34,6 +34,7 @@
     <string name="more">More</string>
     <string name="search">Search</string>
     <string name="find_in_chat">Find in this chat</string>
+    <string name="share_chat">Share this chat</string>
     <string name="find_hint">Find</string>
     <string name="find_count">%1$d of %2$d</string>
     <string name="find_none">No matches</string>
