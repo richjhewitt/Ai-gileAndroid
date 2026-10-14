@@ -58,6 +58,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/MuteFor.kt: the Mute for how long dialog (AII-157), used by the chats list, chat menu and chat details.
 - ui/NewMessageScreen.kt: a new message to any team.
 - ui/Parts.kt: small shared UI helpers (colour parsing and similar).
+- ui/ReadAloud.kt: Read aloud from the hold menu with the phone's own voice (AII-185); leaving a chat stops it.
 - ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
 - ui/SearchScreen.kt: search across all chats.
 - ui/SettingsScreen.kt: settings.
@@ -80,7 +81,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - tools/: release.ps1 (release build script) and emulator/ (smoke.ps1 emulator helpers).
 - tools/testboard/testboard.mjs: throwaway test board with demo chats (start, check, phone over Tailscale with a pairing QR, stop).
 - docs/shots: reference screenshots (Roborazzi) for each screen and theme.
-- test/.../screens: ShotBase.kt (demo data, fixed clock, shot helpers); ChatsListShotTest (chats list), ChatShotTest (one chat), OtherShotTest (Connect, Starred, New message, Settings, black, Dutch); LongMessageShotTest (Read more, AII-184).
+- test/.../screens: ShotBase.kt (demo data, fixed clock, shot helpers); ChatsListShotTest (chats list), ChatShotTest (one chat), OtherShotTest (Connect, Starred, New message, Settings, black, Dutch); LongMessageShotTest (Read more, AII-184); ReadAloudShotTest (AII-185).
 
 ## res/xml backup (AII-81)
 - res/xml/backup_rules.xml and res/xml/data_extraction_rules.xml: backup takes only settings.xml (look, text size, pins, mutes, quiet hours); keys, board address, drafts and outbox stay out.

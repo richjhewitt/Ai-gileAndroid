@@ -112,6 +112,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     LaunchedEffect(text) { delay(400); repo.store.saveDraft(ref.key, text) }
     val latest by rememberUpdatedState(text)
     DisposableEffect(ref.key) { onDispose { repo.store.saveDraft(ref.key, latest) } }
+    DisposableEffect(ref.key) { onDispose { ReadAloud.stop() } }   // AII-185: leaving the chat stops Read aloud
 
     val pace = remember { Pace(fast = 3_000, slow = 30_000) }
 
