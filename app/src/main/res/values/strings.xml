@@ -56,7 +56,8 @@
     <string name="send_pick_time">Pick a time…</string>
     <string name="sends_at">Sends at %1$s</string>
     <string name="send_now">Send now</string>
-    <string name="later_options">Send now or delete</string>
+    <string name="later_options">Send now, edit or delete</string>
+    <string name="edit">Edit</string>
     <string name="retry">Retry</string>
     <string name="delete">Delete</string>
     <string name="chat_empty">No messages yet. Say hello below.</string>
