@@ -200,9 +200,9 @@
     <string name="enter_sends">Enter-toets verstuurt</string>
     <string name="show_times">Tijden tonen</string>
     <string name="show_times_sub">Toon de tijd onder elk bericht, zonder erop te tikken</string>
-    <string name="undo_send">Verzenden ongedaan maken</string>
-    <string name="undo_send_sub">Na Verzenden wacht het bericht 5 seconden, zodat je het kunt terugnemen</string>
-    <string name="message_sent_undo">Verzenden over 5 seconden</string>
+    <string name="undo_send">Versturen ongedaan maken</string>
+    <string name="undo_send_sub">Na Versturen wacht het bericht 5 seconden, zodat je het kunt terugnemen</string>
+    <string name="message_sent_undo">Versturen over 5 seconden</string>
     <string name="play_gifs">GIF-links afspelen</string>
     <string name="play_gifs_sub">GIF-links (giphy, tenor) spelen af in het gesprek; uit laat ze als link staan</string>
     <string name="compact_list">Compacte lijst</string>
@@ -310,7 +310,7 @@
     <string name="file_not_opened">Dit bestand kon niet worden geopend.</string>
     <string name="file_no_app">Geen app op deze telefoon kan dit bestand openen.</string>
     <string name="star">Ster geven</string>
-    <string name="remind_me">Herinner mij</string>
+    <string name="remind_me">Herinner me</string>
     <string name="remind_hour">Over 1 uur</string>
     <string name="remind_evening">Vanavond (18:00)</string>
     <string name="remind_tomorrow">Morgen 9:00</string>
@@ -319,7 +319,7 @@
     <string name="reminders">Herinneringen</string>
     <string name="empty_reminders">Geen herinneringen</string>
     <string name="cancel_reminder">Annuleren</string>
-    <string name="remind_in_hour">Herinner mij over 1 uur</string>
+    <string name="remind_in_hour">Herinner me over 1 uur</string>
     <string name="unstar">Ster weghalen</string>
     <string name="starred">Met ster</string>
     <string name="no_starred">Houd een bericht ingedrukt en tik op Ster geven om het hier te bewaren.</string>
