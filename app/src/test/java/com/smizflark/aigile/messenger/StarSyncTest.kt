@@ -42,4 +42,13 @@ class StarSyncTest {
         val kept = Star("lead:a", "_lead:$t1:7", "Lead", "saved text", t1)
         assertEquals(listOf(kept), Stars.fromBoard(listOf(kept), "lead:a", listOf("_lead|$t1"), emptyList()))
     }
+
+    @Test fun searchKeepsMatchingWordsOrSender() {
+        val a = Star("lead:a", "k1", "Lead", "The APK is ready", t1)
+        val b = Star("lead:a", "k2", "Rich", "lunch?", t2)
+        val all = listOf("x" to a, "x" to b)
+        assertEquals(listOf("x" to a), Stars.matching(all, " apk "))
+        assertEquals(listOf("x" to b), Stars.matching(all, "rich"))
+        assertEquals(all, Stars.matching(all, "  "))
+    }
 }

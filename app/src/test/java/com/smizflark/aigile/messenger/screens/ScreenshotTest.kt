@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.onChildren
@@ -543,6 +544,15 @@ class ScreenshotTest {
         rule.onNodeWithText("Undo").performClick()
         rule.onAllNodesWithTag("starred-row").assertCountEquals(2)
         org.junit.Assert.assertEquals(2, repo.store.stars().size)
+        // AII-164: the search box keeps only the stars with those words in them.
+        val q = Regex("[A-Za-z]{5,}").find(repo.store.stars().first().text)!!.value
+        rule.onNodeWithTag("starred-search").performTextInput(q)
+        rule.onAllNodesWithTag("starred-row").assertCountEquals(repo.store.stars().count { it.text.contains(q, ignoreCase = true) })
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("../docs/shots/starred_search_light.png")
+        rule.onNodeWithTag("starred-search").performTextReplacement("zzzq")
+        rule.onAllNodesWithTag("starred-row").assertCountEquals(0)
+        rule.onNodeWithText("No results for “zzzq”").assertExists()
     }
     @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }

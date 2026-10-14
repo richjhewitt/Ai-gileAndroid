@@ -49,7 +49,9 @@ import com.smizflark.aigile.messenger.data.Stars
 fun StarredScreen(repo: Repo, onOpen: (ChatRef, String) -> Unit, onBack: () -> Unit) {
     val chats = remember { repo.store.cachedChats() ?: emptyList() }
     var all by remember { mutableStateOf(repo.store.stars()) }
-    val stars = remember(all) { Stars.everywhere(all, chats) }
+    var query by remember { mutableStateOf("") }   // AII-164
+    val every = remember(all) { Stars.everywhere(all, chats) }
+    val stars = remember(every, query) { Stars.matching(every, query) }
     val snack = remember { androidx.compose.material3.SnackbarHostState() }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -65,7 +67,12 @@ fun StarredScreen(repo: Repo, onOpen: (ChatRef, String) -> Unit, onBack: () -> U
         },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad)) {
-            if (stars.isEmpty()) EmptyState(stringResource(R.string.no_starred))
+            // AII-164: a search box once there is something to search.
+            if (every.isNotEmpty()) androidx.compose.material3.OutlinedTextField(query, { query = it },
+                placeholder = { Text(stringResource(R.string.search_starred)) }, singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).testTag("starred-search"))
+            if (every.isEmpty()) EmptyState(stringResource(R.string.no_starred))
+            else if (stars.isEmpty()) EmptyState(stringResource(R.string.search_no_results, query.trim()))
             LazyColumn(Modifier.fillMaxSize()) {
                 items(stars, key = { (ref, s) -> "${ref.key}|${s.key}" }) { (ref, s) ->
                     StarRow(ref, s, repo, onClick = { onOpen(ref, s.key) },
