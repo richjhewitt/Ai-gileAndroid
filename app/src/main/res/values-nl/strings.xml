@@ -186,6 +186,14 @@
     <string name="alerts">Meldingen</string>
     <string name="enter_sends">Enter-toets verstuurt</string>
     <string name="enter_sends_sub">Enter verstuurt het bericht; Shift+Enter maakt een nieuwe regel</string>
+    <string name="quick_replies">Snelle antwoorden</string>
+    <string name="quick_replies_sub">Kant-en-klare antwoorden boven een leeg berichtvak; tik en het staat erin</string>
+    <string-array name="quick_replies_list">
+        <item>👍 Ga je gang</item>
+        <item>Nog niet</item>
+        <item>Ziet er goed uit, dank je!</item>
+        <item>👉 al nieuws?</item>
+    </string-array>
     <string name="alerts_new">Meldingen bij nieuwe berichten</string>
     <string name="alerts_sent_later">Melden als een later bericht verstuurd is</string>
     <string name="alerts_sent_later_sub">Eén korte melding bij het versturen</string>

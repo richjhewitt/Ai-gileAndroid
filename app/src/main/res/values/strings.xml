@@ -186,6 +186,14 @@
     <string name="alerts">Alerts</string>
     <string name="enter_sends">Enter key sends</string>
     <string name="enter_sends_sub">Enter sends the message; Shift+Enter makes a new line</string>
+    <string name="quick_replies">Quick replies</string>
+    <string name="quick_replies_sub">Ready-made replies above an empty message box; a tap puts one in</string>
+    <string-array name="quick_replies_list">
+        <item>👍 Go</item>
+        <item>Not yet</item>
+        <item>Looks good, thanks!</item>
+        <item>👉 any update?</item>
+    </string-array>
     <string name="alerts_new">New message alerts</string>
     <string name="alerts_sent_later">Say when a Send later message goes</string>
     <string name="alerts_sent_later_sub">One short alert as it is sent</string>

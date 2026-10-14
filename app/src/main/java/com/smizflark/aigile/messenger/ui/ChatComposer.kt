@@ -58,6 +58,10 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -173,6 +177,8 @@ internal fun Composer(
                 leadingIcon = { Icon(Icons.Default.ContentPaste, null) }, modifier = Modifier.testTag("paste-pic"),
             )
             if (pics.isNotEmpty()) PickedPictures(pics, onRemovePic)
+            // AII-179: ready-made replies while the box is empty; a tap puts one in the box, Send still sends it.
+            if (Appearance.quickReplies && text.isEmpty() && pics.isEmpty()) QuickReplies(onText)
             val canSend = text.isNotBlank() || pics.isNotEmpty()
             Row(verticalAlignment = Alignment.Bottom) {
                 IconButton(onClick = onAttach, enabled = pics.size < MAX_PICS, modifier = Modifier.size(52.dp).testTag("attach")) {
@@ -239,6 +245,16 @@ private fun SendButton(canSend: Boolean, onSend: () -> Unit, onSendLater: ((Inst
                         9, 0, android.text.format.DateFormat.is24HourFormat(view.context)).show()
                 }, today.year, today.monthValue - 1, today.dayOfMonth).apply { datePicker.minDate = Now.millis() - 1000 }.show()
             })
+        }
+    }
+}
+
+/** One row of ready-made replies that scrolls sideways (AII-179). */
+@Composable
+private fun QuickReplies(onPick: (String) -> Unit) {
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("quick-replies"), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        stringArrayResource(R.array.quick_replies_list).forEach { reply ->
+            SuggestionChip(onClick = { onPick(reply) }, label = { Text(reply, maxLines = 1) })
         }
     }
 }

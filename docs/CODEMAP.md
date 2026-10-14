@@ -45,7 +45,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ChatTopBar.kt: the chat's top bar (name, 'working on', find, Mute).
 - ui/ChatRows.kt: builds the chat's rows (days, card headers, messages, waiting sends) and counts unread below.
 - ui/ChatBubble.kt: one message bubble (copy, reply, forward, options, retry).
-- ui/ChatComposer.kt: the message input with pictures, reply and dictation.
+- ui/ChatComposer.kt: the message input with pictures, reply, dictation and quick replies (AII-179).
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
 - ui/ChatsScreen.kt: every chat in one list.
 - ui/ChatRow.kt: one row of the chats list (swipe, hold menu, badges) and its preview, draft and unsent labels.

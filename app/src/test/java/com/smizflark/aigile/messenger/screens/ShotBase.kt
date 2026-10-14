@@ -31,6 +31,8 @@ abstract class ShotBase {
         repo.startDemo()
         chats = runBlocking { repo.chats() }
         repo.store.updateChecked = Now.millis()   // AII-132: no GitHub call in screenshot tests
+        // AII-179: Settings loads the saved settings (quick replies on) afresh each test; every other shot keeps them off as before.
+        Appearance.look = null; Appearance.quickReplies = false
     }
 
     @After fun tearDown() { Now.clock = java.time.Clock.systemDefaultZone() }
