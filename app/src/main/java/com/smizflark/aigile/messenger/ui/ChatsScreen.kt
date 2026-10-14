@@ -237,10 +237,12 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 }
                 // AII-152: chats with a Send later message waiting, for the Scheduled chip.
                 val scheduled = outbox.filter { com.smizflark.aigile.messenger.work.later(it, Now.instant()) }.map { it.chat }.toSet()
+                // AII-262: chats with a reminder, for the Reminders chip (and the row marks below).
+                val reminded = com.smizflark.aigile.messenger.data.Remind.chatKeys(repo.store.reminders())
                 if (chats.isNotEmpty()) item {
                     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ChatFilter.shown(scheduled.isNotEmpty(), filter).forEach { f ->
+                        ChatFilter.shown(scheduled.isNotEmpty(), filter, reminded.isNotEmpty()).forEach { f ->
                             FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(stringResource(f.res)) },
                                 modifier = Modifier.testTag("filter:${f.name.lowercase()}"))
                         }
@@ -252,7 +254,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         Text(stringResource(R.string.waiting_all))
                     }
                 }
-                val all = chats.filter { filter.keep(it, News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0, it.key in scheduled) }
+                val all = chats.filter { filter.keep(it, News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0, it.key in scheduled, it.key in reminded) }
                 // Closed chats (AII-131) wait under a link at the bottom until a newer message brings them back.
                 val shut = all.filter { Closed.hidden(it, closed[it.key]) }
                 val shown = all - shut.toSet()
@@ -263,6 +265,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         ChatFilter.TEAMS -> R.string.empty_teams
                         ChatFilter.FRIENDS -> R.string.empty_friends
                         ChatFilter.SCHEDULED -> R.string.empty_scheduled
+                        ChatFilter.REMINDERS -> R.string.empty_filter_reminders
                         ChatFilter.ALL -> R.string.empty_chats
                     }), button = androidx.compose.ui.res.stringResource(R.string.empty_show_all)) { filter = ChatFilter.ALL }
                 }
@@ -272,7 +275,6 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     else EmptyState(androidx.compose.ui.res.stringResource(R.string.empty_loading))
                 }
                 val unsent = outbox.groupBy { it.chat }
-                val reminded = com.smizflark.aigile.messenger.data.Remind.chatKeys(repo.store.reminders())
                 val sorted = com.smizflark.aigile.messenger.data.sortChats(shown, Appearance.sortAz)
                 val rows = (if (Appearance.mutedLast) mutedLast(sorted, pinned, muted) else pinFirst(sorted, pinned)) + if (showClosed) shut else emptyList()
                 items(rows, key = { it.key }) { c ->

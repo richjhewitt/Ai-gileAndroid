@@ -29,6 +29,7 @@
     <string name="empty_teams">No team chats yet</string>
     <string name="empty_friends">No friends yet</string>
     <string name="empty_scheduled">No messages waiting to send later</string>
+    <string name="empty_filter_reminders">No chats with a reminder</string>
     <string name="empty_show_all">Show all chats</string>
     <string name="waiting_title">Waiting to send</string>
     <string name="waiting_all">See every waiting message</string>
@@ -153,6 +154,7 @@
     <string name="filter_teams">Teams</string>
     <string name="filter_friends">Friends</string>
     <string name="filter_scheduled">Scheduled</string>
+    <string name="filter_reminders">Reminders</string>
     <string name="unsent_failed">⚠️ %1$d not sent: tap to retry</string>
     <string name="unsent_waiting">⏳ %1$d waiting to send</string>
     <string name="unsent_later">⏰ Sends at %1$s</string>
