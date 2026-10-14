@@ -19,6 +19,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
 - data/Outbox.kt: outbox state changes (retry / delete failed messages).
 - data/Pace.kt: pacing of sends / checks.
+- data/Closed.kt: Close chat, hidden until a newer message (board's dmclosed list).
 - data/Pause.kt: pause alerts for a while.
 - data/Pins.kt: pinned chats first.
 - data/QuickReply.kt: replying from the notification.
