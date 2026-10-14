@@ -100,6 +100,14 @@ class Repo(context: Context) {
         if (ref.kind == Kind.LEAD && !store.demo) runCatching { source.markSeen(ref.id, at, back = true) }   // offline or an older board: kept here until the next check
     }
 
+    /** Undo Mark all as read (AII-158): the read marks go back to [before], here and on the board for lead chats. */
+    suspend fun restoreSeen(refs: List<ChatRef>, before: Map<String, String>) {
+        store.restoreSeen(refs.map { it.key }, before)
+        if (!store.demo) refs.filter { it.kind == Kind.LEAD }.forEach { r ->
+            before[r.key]?.let { runCatching { source.markSeen(r.id, it, back = true) } }   // offline or an older board: kept here
+        }
+    }
+
     suspend fun conversation(ref: ChatRef): Conversation {
         val c = source.conversation(ref)
         store.cacheConversation(c)

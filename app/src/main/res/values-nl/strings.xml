@@ -249,6 +249,7 @@
     <string name="close_chat">Chat sluiten</string>
     <string name="reopen_chat">Chat weer openen</string>
     <string name="chat_closed">Chat gesloten</string>
+    <string name="all_read">Alles gelezen</string>
     <string name="undo">Ongedaan maken</string>
     <string name="star_removed">Ster weggehaald</string>
     <string name="closed_show">%1$d gesloten tonen</string>

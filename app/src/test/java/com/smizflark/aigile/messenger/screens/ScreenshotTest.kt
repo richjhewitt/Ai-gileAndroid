@@ -213,6 +213,24 @@ class ScreenshotTest {
         rule.waitForIdle()
         org.junit.Assert.assertEquals(emptyList<String>(), repo.store.recentSearches())
     }
+    /** AII-158: Mark all as read shows a bar with Undo, which brings the badges back. */
+    @Test fun readAllUndo() {
+        val c = lead(); prime(c)
+        val before = repo.store.seen()[c.key]
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithTag("readAll").performClick()
+        rule.mainClock.advanceTimeBy(500)
+        org.junit.Assert.assertNotEquals(before, repo.store.seen()[c.key])
+        rule.onNodeWithText("All read").assertExists()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_read_undo_light.png")
+        rule.onNodeWithText("Undo").performClick()
+        rule.mainClock.advanceTimeBy(500)
+        rule.mainClock.autoAdvance = true
+        rule.waitForIdle()
+        org.junit.Assert.assertEquals(before, repo.store.seen()[c.key])
+    }
     /** AII-125: the Unread chip keeps only chats with a badge. */
     @Test fun unreadChipLight() {
         val c = lead(); prime(c); runBlocking { repo.markRead(c) }

@@ -191,6 +191,10 @@ class Store(context: Context) {
     }
     /** Mark as unread (AII-119): sets the mark exactly, even back. */
     fun unsee(chat: String, at: String) { write("seen.json", seen() + (chat to at)) }
+    /** Undo Mark all as read (AII-158): these chats' marks exactly as [before] had them, none if it had none. */
+    fun restoreSeen(chats: List<String>, before: Map<String, String>) {
+        write("seen.json", chats.fold(seen()) { s, c -> before[c]?.let { s + (c to it) } ?: (s - c) })
+    }
     /** The newest message per chat an alert already told you about. */
     fun told(): Map<String, String> = read("told.json") ?: emptyMap()
     fun setTold(all: Map<String, String>) = write("told.json", all)
