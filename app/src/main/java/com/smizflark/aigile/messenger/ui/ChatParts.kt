@@ -105,6 +105,7 @@ import java.io.File
 import androidx.compose.ui.res.stringResource
 import com.smizflark.aigile.messenger.R
 import android.os.Build
+import androidx.compose.ui.draw.clip
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -193,19 +194,38 @@ internal fun BoxScope.DayPill(label: String?) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun CardHeader(r: Row.Card, chosen: Boolean, onOpen: (() -> Unit)?, onClick: () -> Unit) {
+    val clipboard = LocalClipboardManager.current
+    val ctx = LocalContext.current
+    var menu by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(50)
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically) {
+        Box {
         Surface(
-            onClick = onClick, shape = RoundedCornerShape(50),
+            shape = shape,
             color = if (r.waiting) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.clip(shape).combinedClickable(onClick = onClick,
+                onLongClick = if (r.card == LEAD_CHAT) null else ({ menu = true })),
         ) {
             Text(
                 (if (r.waiting) "⏳ " else "") + (if (r.card == LEAD_CHAT) r.title else "${r.card}  ${r.title}") + if (chosen) "  ✓" else "",
                 style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp).widthIn(max = 260.dp),
             )
+        }
+        DropdownMenu(menu, { menu = false }) {
+            DropdownMenuItem(text = { Text(stringResource(R.string.copy_card_id)) }, modifier = Modifier.testTag("copy-card-id"), onClick = {
+                menu = false
+                clipboard.setText(AnnotatedString(r.card))
+                // Android 13+ shows its own "copied" note.
+                if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
+            })
+            if (onOpen != null) DropdownMenuItem(text = { Text(stringResource(R.string.open_card_menu)) },
+                modifier = Modifier.testTag("open-card-menu"), onClick = { menu = false; onOpen() })
+        }
         }
         if (onOpen != null) IconButton(onClick = onOpen, modifier = Modifier.size(40.dp).testTag("open:${r.card}")) {
             Icon(Icons.AutoMirrored.Filled.OpenInNew, stringResource(R.string.open_card, r.card), Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)

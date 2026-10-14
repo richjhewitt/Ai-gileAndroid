@@ -307,4 +307,6 @@
     <string name="star_removed">Star removed</string>
     <string name="closed_show">Show %1$d closed</string>
     <string name="closed_hide">Hide closed</string>
+    <string name="copy_card_id">Copy card id</string>
+    <string name="open_card_menu">Open card</string>
 </resources>
