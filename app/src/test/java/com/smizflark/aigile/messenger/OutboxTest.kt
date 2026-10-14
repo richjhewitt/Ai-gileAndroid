@@ -33,6 +33,13 @@ class OutboxTest {
         assertEquals(emptyList<String>(), Outbox.newlyFailed(after, after).map { it.id })
     }
 
+    /** AII-169: Change time moves only that message, and it still waits. */
+    @Test fun changeTimeMovesOnlyThatOne() {
+        val l = listOf(p("a").copy(sendAt = "2026-10-13T14:00:00Z"), p("b").copy(sendAt = "2026-10-13T14:00:00Z"))
+        val moved = Outbox.moveTo(l, "a", java.time.Instant.parse("2026-10-13T17:30:00Z"))
+        assertEquals(listOf("2026-10-13T17:30:00Z", "2026-10-13T14:00:00Z"), moved.map { it.sendAt })
+    }
+
     @Test fun onlyRefusedOnesGetTheRedMark() {
         val l = listOf(p("new"), p("offline", failed = true, offline = true), p("refused", failed = true))
         assertEquals(listOf("refused"), Outbox.failedForGood(l).map { it.id })

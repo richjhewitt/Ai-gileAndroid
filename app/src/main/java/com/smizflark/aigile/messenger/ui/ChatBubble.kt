@@ -136,7 +136,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -187,7 +187,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 }
             }
         }
-        // Send later (AII-146): a clock mark; tap it to send now, edit (AII-150) or delete.
+        // Send later (AII-146): a clock mark; tap it to send now, change time (AII-169), edit (AII-150) or delete.
         val laterP = r.pending?.takeIf { b.state == SendState.LATER }
         if (laterP != null) {
             var ask by remember { mutableStateOf(false) }
@@ -199,6 +199,13 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     contentAlignment = Alignment.Center) { Icon(Icons.Default.Schedule, null, Modifier.size(18.dp), tint = cs.onSecondaryContainer) }
                 DropdownMenu(expanded = ask, onDismissRequest = { ask = false }) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.send_now)) }, modifier = Modifier.testTag("send-now"), onClick = { ask = false; onSendNow(laterP) })
+                    // AII-169: the phone's clock picker on the time it is set for; a time already gone today means tomorrow.
+                    DropdownMenuItem(text = { Text(stringResource(R.string.change_time)) }, modifier = Modifier.testTag("change-time"), onClick = {
+                        ask = false
+                        val was = java.time.Instant.parse(laterP.sendAt!!).atZone(java.time.ZoneId.systemDefault())
+                        android.app.TimePickerDialog(ctx, { _, h, m -> onMoveLater(laterP, java.time.Instant.ofEpochMilli(com.smizflark.aigile.messenger.data.Pause.nextAt(com.smizflark.aigile.messenger.data.Now.millis(), h, m))) },
+                            was.hour, was.minute, android.text.format.DateFormat.is24HourFormat(ctx)).show()
+                    })
                     DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, modifier = Modifier.testTag("edit-later"), onClick = { ask = false; onEdit(laterP) })
                     DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, modifier = Modifier.testTag("delete"), onClick = { ask = false; onDiscard(laterP) })
                 }

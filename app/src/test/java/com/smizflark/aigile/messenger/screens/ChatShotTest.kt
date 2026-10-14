@@ -206,6 +206,17 @@ class ChatShotTest : ShotBase() {
         rule.onNodeWithTag("send-hour").performClick()
         rule.waitForIdle()
         org.junit.Assert.assertEquals("Morning! Coffee later? ☕", repo.pendingFor(c.key).single().text)
+        // AII-169: Change time opens the clock on 15:00 (London), and 18:30 moves it, still waiting.
+        rule.onNodeWithTag("later-mark").performClick()
+        rule.onNodeWithTag("change-time").performClick()
+        rule.waitForIdle()
+        val picker = org.robolectric.shadows.ShadowDialog.getLatestDialog() as android.app.TimePickerDialog
+        org.junit.Assert.assertEquals(15, picker.onSaveInstanceState().getInt("hour"))
+        picker.updateTime(18, 30)
+        picker.getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertEquals("2026-10-13T17:30:00Z", repo.pendingFor(c.key).single().sendAt)
+        rule.onNodeWithTag("later-mark").assertIsDisplayed()
         rule.onNodeWithTag("later-mark").performClick()
         rule.onNodeWithTag("send-now").performClick()
         rule.waitUntil(5_000) { repo.pendingFor(c.key).isEmpty() }

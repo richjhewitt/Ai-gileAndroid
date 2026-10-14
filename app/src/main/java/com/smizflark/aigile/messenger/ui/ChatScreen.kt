@@ -349,6 +349,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 onRetry = { p -> deliver(p) },
                                 onSendNow = { p -> pending = repo.pendingFor(ref.key); scope.launch { repo.sendNow(ref, p).onSuccess { load() }.onFailure { error = it.message }; pending = repo.pendingFor(ref.key) } },
                                 onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) },
+                                onMoveLater = { p, at -> repo.moveLater(p.id, at); pending = repo.pendingFor(ref.key) },
                                 onEdit = { p ->   // AII-150: back in the box, with its card and pictures
                                     repo.takeBack(p.id); pending = repo.pendingFor(ref.key)
                                     text = Outbox.editBack(p, text); pics = p.files + pics

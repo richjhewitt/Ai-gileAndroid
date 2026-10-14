@@ -169,6 +169,12 @@ class Repo(context: Context) {
         return p
     }
 
+    /** Change time, on a Send later message (AII-169): the same wake-up, moved to [at]. */
+    fun moveLater(id: String, at: Instant) {
+        store.saveOutbox(Outbox.moveTo(store.outbox(), id, at))
+        if (!store.demo) SendWorker.scheduleAt(app, id, at)
+    }
+
     /** Send now, on a Send later message (AII-146). */
     suspend fun sendNow(ref: ChatRef, p: Pending): Result<String?> {
         store.saveOutbox(store.outbox().map { if (it.id == p.id) it.copy(sendAt = null) else it })
