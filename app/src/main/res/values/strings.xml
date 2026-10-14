@@ -45,6 +45,7 @@
     <string name="back">Back</string>
     <string name="more">More</string>
     <string name="search">Search</string>
+    <string name="go_to_date">Go to date</string>
     <string name="find_in_chat">Find in this chat</string>
     <string name="share_chat">Share this chat</string>
     <string name="find_hint">Find</string>

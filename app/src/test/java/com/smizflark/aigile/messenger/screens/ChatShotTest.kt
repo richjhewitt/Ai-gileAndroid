@@ -316,6 +316,17 @@ class ChatShotTest : ShotBase() {
         rule.waitForIdle()
         rule.onNodeWithTag(first).assertIsDisplayed()
     }
+    /** AII-193: the chat's menu lists Go to date; tapping it opens the date picker. */
+    @Test fun goToDateMenuLight() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onNodeWithContentDescription("More").performClick()
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chat_go_to_date_menu_light.png")
+        rule.onNodeWithTag("go-to-date").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Cancel").assertIsDisplayed()
+    }
     /** AII-121: hold a message, Share: the phone's share menu gets the message text. */
     @Test fun shareMessage() {
         prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")

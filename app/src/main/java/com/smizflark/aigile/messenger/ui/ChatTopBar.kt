@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Search
@@ -44,7 +45,7 @@ import com.smizflark.aigile.messenger.data.Repo
 @Composable
 internal fun ChatTopBar(
     ref: ChatRef, repo: Repo, focus: String?, focusBubble: Bubble?, working: Boolean, workingOn: String?, muted: Boolean,
-    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit,
+    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {},
 ) {
     TopAppBar(
         navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
@@ -69,6 +70,12 @@ internal fun ChatTopBar(
             IconButton(onClick = onFind) { Icon(Icons.Default.Search, stringResource(R.string.find_in_chat)) }
             IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.more)) }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.go_to_date)) },
+                    leadingIcon = { Icon(Icons.Default.DateRange, null) },
+                    onClick = { menu = false; onGoToDate() },
+                    modifier = Modifier.testTag("go-to-date"),
+                )
                 DropdownMenuItem(
                     text = { Text(stringResource(if (muted) R.string.unmute else R.string.mute_alerts)) },
                     leadingIcon = { Icon(if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff, null) },
