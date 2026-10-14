@@ -117,6 +117,13 @@ object ChatNotifier {
             .setContentText(context.getString(R.string.notify_gave_up, text)).setContentIntent(openChat(context, chat, n)).build())
     }
 
+    /** A Send later message went by itself (AII-175): say so; tapping opens its chat. */
+    fun sentLater(context: Context, chat: String, name: String, id: String, text: String) {
+        val n = QuickReply.notificationId("sentlater:$id")
+        NotificationManagerCompat.from(context).notify(n, base(context).setContentTitle(name)
+            .setContentText(context.getString(R.string.notify_sent_later, text)).setContentIntent(openChat(context, chat, n)).build())
+    }
+
     /** The summary shows only while two or more chats have a notification. */
     fun refreshSummary(context: Context) {
         val nm = NotificationManagerCompat.from(context)

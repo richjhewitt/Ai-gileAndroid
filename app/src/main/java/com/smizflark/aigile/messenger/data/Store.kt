@@ -119,6 +119,11 @@ class Store(context: Context) {
         get() = settings.getString("textSize", "normal") ?: "normal"
         set(v) = settings.edit().putString("textSize", v).apply()
 
+    /** A Sent alert when a Send later message goes by itself (AII-175). */
+    var sentAlerts: Boolean
+        get() = settings.getBoolean("sentAlerts", true)
+        set(v) = settings.edit().putBoolean("sentAlerts", v).apply()
+
     /** The keyboard's Enter key sends the message instead of starting a new line (AII-126). */
     var enterSends: Boolean
         get() = settings.getBoolean("enterSends", false)
