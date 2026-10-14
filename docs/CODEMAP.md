@@ -30,6 +30,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Search.kt: search results (chats and messages).
 - data/Share.kt: text shared in from other apps.
 - data/Source.kt: chat source, the real board or the demo.
+- data/Stars.kt: starred messages (AII-138), kept on this phone, listed in the chat details.
 - data/Store.kt: on-disk storage: pairing in the "messenger" prefs (not backed up), settings in the "settings" prefs (backed up, AII-81), drafts and cache.
 - data/Swipe.kt: what a swipe on a chat row does.
 - data/Update.kt: 'New version' bar: latest GitHub release (tag build-N = versionCode), checked once a day.

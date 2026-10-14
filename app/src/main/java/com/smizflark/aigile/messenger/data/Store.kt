@@ -171,6 +171,11 @@ class Store(context: Context) {
     fun closed(): Map<String, String> = read("closed.json") ?: emptyMap()
     fun setClosed(all: Map<String, String>) = write("closed.json", all)
 
+    /* ---------- starred messages (AII-138), per board ---------- */
+
+    fun stars(): List<Star> = read("stars.json") ?: emptyList()
+    fun setStars(all: List<Star>) = write("stars.json", all)
+
     /* ---------- seen: the newest message from them you have looked at, per chat ---------- */
 
     fun seen(): Map<String, String> = read("seen.json") ?: emptyMap()

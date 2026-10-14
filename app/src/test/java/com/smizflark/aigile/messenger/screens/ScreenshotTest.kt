@@ -345,6 +345,20 @@ class ScreenshotTest {
         rule.waitForIdle()
         rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_dark.png")   // the sheet is its own window
     }
+    /** AII-138: hold a message, Star: a ★ by its time, and it shows under Starred in the details; tapping it closes the sheet. */
+    @Test fun starredLight() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onAllNodesWithTag("theirs").onLast().performTouchInput { longClick() }
+        rule.onNodeWithTag("star").performClick()
+        rule.onAllNodes(androidx.compose.ui.test.hasText("★", substring = true), useUnmergedTree = true).onFirst().assertExists()
+        rule.onNodeWithTag("chat-title").performClick()
+        rule.onNodeWithTag("details-star").assertExists()
+        rule.waitForIdle()
+        rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_starred_light.png")   // the sheet is its own window
+        rule.onNodeWithTag("details-star").performClick()
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("chat-details").fetchSemanticsNodes().isEmpty() }
+    }
     @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun emptyChatsLight() = shot("empty_chats", false) { EmptyState("No chats yet", button = "New message") }

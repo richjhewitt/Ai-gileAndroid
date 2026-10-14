@@ -226,6 +226,11 @@
     <string name="no_open_cards">Nothing is waiting on you.</string>
     <string name="chat_pictures">Pictures in this chat</string>
     <string name="no_chat_pictures">No pictures yet.</string>
+    <string name="star">Star</string>
+    <string name="unstar">Remove star</string>
+    <string name="starred">Starred</string>
+    <string name="no_starred">Hold a message and tap Star to keep it here.</string>
+    <string name="star_not_loaded">That message is too far back to show.</string>
     <string name="close_chat">Close chat</string>
     <string name="reopen_chat">Reopen chat</string>
     <string name="closed_show">Show %1$d closed</string>

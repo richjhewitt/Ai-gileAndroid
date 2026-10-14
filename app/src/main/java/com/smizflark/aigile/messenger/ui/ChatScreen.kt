@@ -50,6 +50,7 @@ import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Forward
 import com.smizflark.aigile.messenger.data.Quote
 import com.smizflark.aigile.messenger.data.Repo
+import com.smizflark.aigile.messenger.data.Stars
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -90,6 +91,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var error by remember { mutableStateOf<String?>(null) }
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var details by remember { mutableStateOf(false) }   // AII-80: the chat details sheet
+    var stars by remember { mutableStateOf(repo.store.stars()) }   // AII-138: starred messages
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
     var finding by rememberSaveable { mutableStateOf(false) }   // AII-78: the find bar
@@ -266,7 +268,15 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         list.scrollToItem(i + 1); flash = openAt; delay(1500); if (flash == openAt) flash = null   // +1: the spacer at the bottom
     }
 
-    if (details) ChatDetails(ref, repo, chatInfo(convo), onFind = { details = false; finding = true }) { details = false; muted = ref.key in repo.store.muted() }
+    // AII-138: tap a starred message in the details, the chat scrolls to it and outlines it.
+    fun jumpToStar(key: String) {
+        val i = items.indexOfFirst { it.id == key }
+        if (i < 0) { Toast.makeText(view.context, R.string.star_not_loaded, Toast.LENGTH_SHORT).show(); return }
+        scope.launch { list.animateScrollToItem(i + 1); flash = key; delay(1500); if (flash == key) flash = null }   // +1: the spacer at the bottom
+    }
+
+    if (details) ChatDetails(ref, repo, chatInfo(convo), onFind = { details = false; finding = true },
+        starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }) { details = false; muted = ref.key in repo.store.muted() }
     Scaffold(
         topBar = {
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
@@ -308,7 +318,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 onOption = { send(it, r.b.card) },
                                 onRetry = { p -> deliver(p) },
                                 onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) },
-                                onQuote = { q -> jumpToQuote(q, r.id) })
+                                onQuote = { q -> jumpToQuote(q, r.id) },
+                                starred = Stars.has(stars, ref.key, r.b.key),
+                                onStar = if (r.pending == null) { { stars = Stars.toggle(stars, Stars.of(ref.key, r.b)); repo.store.setStars(stars) } } else null)
                         }
                     }
                     if (convo == null && error == null) item { Text(stringResource(R.string.loading), Modifier.padding(24.dp)) }
