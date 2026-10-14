@@ -63,7 +63,10 @@
     <string name="sends_at">Gaat om %1$s</string>
     <string name="change_time">Tijd wijzigen…</string>
     <string name="send_now">Nu versturen</string>
-    <string name="later_options">Nu versturen, tijd wijzigen, bewerken of verwijderen</string>
+    <string name="later_options">Nu versturen, tijd wijzigen, herhalen, bewerken of verwijderen</string>
+    <string name="repeat_day">Elke dag herhalen</string>
+    <string name="repeat_week">Elke week herhalen</string>
+    <string name="repeat_off">Niet herhalen</string>
     <string name="edit">Bewerken</string>
     <string name="retry">Opnieuw proberen</string>
     <string name="delete">Verwijderen</string>

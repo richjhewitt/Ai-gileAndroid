@@ -53,6 +53,18 @@ class SendLaterTest {
         assertEquals(SendState.SENDING, r[1].b.state)
     }
 
+    /** AII-174: a repeating message comes back a day or a week on, at the first such time after now; pictures don't repeat. */
+    @Test fun repeatsADayOrAWeekOn() {
+        val d = p("a", "2026-10-14T02:30:00Z").copy(repeat = "day", files = listOf("x.jpg"))
+        val next = Outbox.nextRepeat(d, now, ZoneOffset.UTC)!!
+        assertEquals("2026-10-15T02:30:00Z", next.sendAt)
+        assertTrue(next.id != d.id && next.files.isEmpty() && next.repeat == "day" && next.text == d.text)
+        assertEquals("2026-10-21T02:30:00Z", Outbox.nextRepeat(d.copy(repeat = "week"), now, ZoneOffset.UTC)!!.sendAt)
+        // Long gone (phone was off): the next one is still in the future, not a pile of old ones.
+        assertEquals("2026-10-15T02:30:00Z", Outbox.nextRepeat(d.copy(sendAt = "2026-10-01T02:30:00Z"), now, ZoneOffset.UTC)!!.sendAt)
+        assertEquals(null, Outbox.nextRepeat(p("b", "2026-10-14T02:30:00Z"), now, ZoneOffset.UTC))
+    }
+
     /** AII-175: only Send later messages that left the outbox get a Sent alert; ones still waiting, failed or sent at once don't. */
     @Test fun sentAlertOnlyForSendLaterThatWent() {
         val before = listOf(p("went", "2026-10-14T02:30:00Z"), p("waits", "2026-10-14T08:00:00Z"), p("plain"), p("stuck", "2026-10-14T02:00:00Z"))

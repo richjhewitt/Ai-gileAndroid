@@ -212,4 +212,6 @@ data class Pending(
     val offline: Boolean = false,
     /** Send later (AII-146): it waits until this time (ISO instant); null sends at once. */
     val sendAt: String? = null,
+    /** Send later that repeats (AII-174): "day" or "week"; once it goes, the next one waits by itself. */
+    val repeat: String? = null,
 )

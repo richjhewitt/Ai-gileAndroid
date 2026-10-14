@@ -177,8 +177,17 @@ class Repo(context: Context) {
 
     /** Send now, on a Send later message (AII-146). */
     suspend fun sendNow(ref: ChatRef, p: Pending): Result<String?> {
-        store.saveOutbox(store.outbox().map { if (it.id == p.id) it.copy(sendAt = null) else it })
-        return deliver(ref, p.copy(sendAt = null))
+        val again = Outbox.nextRepeat(p, Now.instant())   // AII-174: a repeating one still comes back at its own time
+        store.saveOutbox(store.outbox().map { if (it.id == p.id) it.copy(sendAt = null, repeat = null) else it })
+        return deliver(ref, p.copy(sendAt = null, repeat = null)).onSuccess { again?.let(::queueAgain) }
+    }
+
+    /** Repeat every day or week, on a Send later message (AII-174); null stops it. */
+    fun setRepeat(id: String, repeat: String?) = store.saveOutbox(Outbox.setRepeat(store.outbox(), id, repeat))
+
+    private fun queueAgain(next: Pending) {
+        store.saveOutbox(store.outbox() + next)
+        if (!store.demo) SendWorker.scheduleAt(app, next.id, Instant.parse(next.sendAt))
     }
 
     /** Sends one queued message. Returns the card it landed on; on failure it stays queued, marked failed. */
@@ -191,6 +200,7 @@ class Repo(context: Context) {
             else Outbox.fail(store.outbox(), p.id, offline)
         )
         if (r.isSuccess) p.files.forEach { File(it).delete() }
+        if (r.isSuccess) Outbox.nextRepeat(p, Now.instant())?.let(::queueAgain)   // AII-174: the next one of a repeating message
         if (offline && !store.demo) SendWorker.schedule(app)
         r
     }

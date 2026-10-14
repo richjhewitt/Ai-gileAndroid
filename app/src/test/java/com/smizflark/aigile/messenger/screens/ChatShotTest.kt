@@ -221,6 +221,25 @@ class ChatShotTest : ShotBase() {
         rule.onNodeWithTag("send-now").performClick()
         rule.waitUntil(5_000) { repo.pendingFor(c.key).isEmpty() }
     }
+    /** AII-174: clock, Repeat every day: the bubble says 🔁; Send now sends it and tomorrow's waits at the same time. */
+    @Test fun sendLaterRepeatsLight() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }; prime(c); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, c, onBack = {}) } }
+        rule.onNodeWithTag("input").performTextInput("Daily stand-up in 10")
+        rule.onNodeWithTag("send").performTouchInput { longClick() }
+        rule.onNodeWithTag("send-hour").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("later-mark").performClick()
+        rule.onNodeWithTag("repeat-day").performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertEquals("day", repo.pendingFor(c.key).single().repeat)
+        rule.onNodeWithText("Sends at 15:00 🔁").assertIsDisplayed()
+        rule.onRoot().captureRoboImage("../docs/shots/send_later_repeat_light.png")
+        rule.onNodeWithTag("later-mark").performClick()
+        rule.onNodeWithTag("send-now").performClick()
+        rule.waitUntil(5_000) { repo.pendingFor(c.key).singleOrNull()?.sendAt == "2026-10-14T14:00:00Z" }
+        org.junit.Assert.assertEquals("Daily stand-up in 10", repo.pendingFor(c.key).single().text)
+    }
     /** AII-170: hold Send, Pick a day…: calendar, then clock; the bubble says the day. */
     @Test fun sendLaterOnADay() {
         val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }; prime(c); RuntimeEnvironment.setQualifiers("+notnight")

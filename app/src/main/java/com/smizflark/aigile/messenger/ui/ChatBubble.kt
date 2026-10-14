@@ -136,7 +136,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -206,6 +206,12 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                         android.app.TimePickerDialog(ctx, { _, h, m -> onMoveLater(laterP, java.time.Instant.ofEpochMilli(com.smizflark.aigile.messenger.data.Pause.nextAt(com.smizflark.aigile.messenger.data.Now.millis(), h, m))) },
                             was.hour, was.minute, android.text.format.DateFormat.is24HourFormat(ctx)).show()
                     })
+                    // AII-174: repeat every day or week; the chosen one is ticked, Don't repeat stops it.
+                    listOf("day" to R.string.repeat_day, "week" to R.string.repeat_week).forEach { (r, label) ->
+                        DropdownMenuItem(text = { Text((if (laterP.repeat == r) "✓ " else "") + stringResource(label)) }, modifier = Modifier.testTag("repeat-$r"),
+                            onClick = { ask = false; onRepeat(laterP, r) })
+                    }
+                    if (laterP.repeat != null) DropdownMenuItem(text = { Text(stringResource(R.string.repeat_off)) }, modifier = Modifier.testTag("repeat-off"), onClick = { ask = false; onRepeat(laterP, null) })
                     DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, modifier = Modifier.testTag("edit-later"), onClick = { ask = false; onEdit(laterP) })
                     DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, modifier = Modifier.testTag("delete"), onClick = { ask = false; onDiscard(laterP) })
                 }
@@ -268,7 +274,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     when (b.state) {
                         SendState.SENDING -> stringResource(R.string.sending)
                         SendState.FAILED -> stringResource(R.string.not_sent)
-                        SendState.LATER -> stringResource(R.string.sends_at, sendTime(b.at))
+                        SendState.LATER -> stringResource(R.string.sends_at, sendTime(b.at)) + if (laterP?.repeat != null) " 🔁" else ""   // AII-174
                         SendState.SENT -> (if (starred) "★ " else "") + clock(b.at) +if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
                     },
                     style = MaterialTheme.typography.labelSmall,

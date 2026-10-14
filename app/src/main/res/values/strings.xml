@@ -63,7 +63,10 @@
     <string name="sends_at">Sends at %1$s</string>
     <string name="change_time">Change time…</string>
     <string name="send_now">Send now</string>
-    <string name="later_options">Send now, change time, edit or delete</string>
+    <string name="later_options">Send now, change time, repeat, edit or delete</string>
+    <string name="repeat_day">Repeat every day</string>
+    <string name="repeat_week">Repeat every week</string>
+    <string name="repeat_off">Don\'t repeat</string>
     <string name="edit">Edit</string>
     <string name="retry">Retry</string>
     <string name="delete">Delete</string>
