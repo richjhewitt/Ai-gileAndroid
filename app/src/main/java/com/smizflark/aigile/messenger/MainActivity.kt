@@ -31,6 +31,7 @@ import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.PictureHost
 import com.smizflark.aigile.messenger.ui.SearchScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
+import com.smizflark.aigile.messenger.ui.StarredScreen
 import com.smizflark.aigile.messenger.ui.Shortcuts
 import com.smizflark.aigile.messenger.work.CheckWorker
 
@@ -72,7 +73,10 @@ class MainActivity : FragmentActivity() {
                     }
                     composable("chats") {
                         ChatsScreen(repo, onOpen = { nav.openChat(it.key) }, onNew = { nav.navigate("new") },
-                            onSettings = { nav.navigate("settings") }, onSearch = { nav.navigate("search") })
+                            onSettings = { nav.navigate("settings") }, onSearch = { nav.navigate("search") }, onStarred = { nav.navigate("starred") })
+                    }
+                    composable("starred") {   // AII-140: every starred message; tap one, its chat opens at it
+                        StarredScreen(repo, onOpen = { ref, msg -> nav.openChat(ref.key, msg) }, onBack = { nav.popBackStack() })
                     }
                     composable("search") {
                         SearchScreen(repo, onOpen = { ref, msg -> nav.openChat(ref.key, msg) }, onBack = { nav.popBackStack() })

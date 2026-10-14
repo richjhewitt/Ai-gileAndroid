@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material.icons.filled.NotificationsOff
@@ -97,7 +98,7 @@ import kotlinx.coroutines.launch
 /** Journey 2: every chat in one list. Shows the last list at once, then fetches. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit, onSearch: () -> Unit = {}) {
+fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit, onSearch: () -> Unit = {}, onStarred: () -> Unit = {}) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var seen by remember { mutableStateOf(repo.store.seen()) }
     fun counts() = chats.associate { it.key to News.unread(it, seen[it.key], repo.store.cachedConversation(it.key)) }
@@ -109,6 +110,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     var refreshing by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(chats.isNotEmpty()) }
     var pinned by remember { mutableStateOf(repo.store.pinned) }
+    val anyStars = remember { repo.store.stars().isNotEmpty() }   // AII-140: the Starred button shows once something is starred
     var closed by remember { mutableStateOf(repo.store.closed()) }
     var showClosed by rememberSaveable { mutableStateOf(false) }
     var filter by rememberSaveable { mutableStateOf(ChatFilter.ALL) }
@@ -171,6 +173,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 },
                 actions = {
                     IconButton(onClick = onSearch, modifier = Modifier.testTag("open-search")) { Icon(Icons.Default.Search, stringResource(R.string.search)) }
+                    if (anyStars) IconButton(onClick = onStarred, modifier = Modifier.testTag("open-starred")) { Icon(Icons.Default.Star, stringResource(R.string.starred)) }
                     if (chats.any { News.fresh(it, seen[it.key]) })
                         IconButton(onClick = { markRead(chats) }, Modifier.testTag("readAll")) { Icon(Icons.Default.DoneAll, stringResource(R.string.mark_all_read)) }
                     Box {

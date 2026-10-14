@@ -1,6 +1,8 @@
 package com.smizflark.aigile.messenger
 
 import com.smizflark.aigile.messenger.data.Bubble
+import com.smizflark.aigile.messenger.data.ChatRef
+import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Stars
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -28,5 +30,12 @@ class StarsTest {
         val all = listOf(Stars.of("a", old), Stars.of("b", new), Stars.of("a", new))
         assertEquals(listOf("k2", "k1"), Stars.inChat(all, "a").map { it.key })
         assertEquals("second", Stars.inChat(all, "b").single().text)
+    }
+
+    @Test fun everywhereListsAllChatsNewestFirstAndSkipsChatsThePhoneLost() {
+        val a = ChatRef(Kind.LEAD, "a", "Alpha", "", "")
+        val b = ChatRef(Kind.LEAD, "b", "Beta", "", "")
+        val all = listOf(Stars.of(a.key, old), Stars.of(b.key, new), Stars.of("gone", new))
+        assertEquals(listOf("Beta" to "k2", "Alpha" to "k1"), Stars.everywhere(all, listOf(a, b)).map { (r, s) -> r.name to s.key })
     }
 }
