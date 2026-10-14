@@ -21,4 +21,7 @@ class MuteForTest {
         assertEquals(setOf("lead:a", "lead:b"), Mute.active(setOf("lead:a", "lead:b"), ends, now))
         assertEquals(setOf("lead:b"), Mute.active(setOf("lead:a", "lead:b"), ends, now + Pause.HOUR))
     }
+
+    @Test fun theEndShowsAsAClockTime() =
+        assertEquals("14:30", Mute.endTime(java.time.Instant.parse("2026-10-14T13:30:00Z").toEpochMilli(), java.time.ZoneId.of("Europe/London"), java.util.Locale.UK))
 }

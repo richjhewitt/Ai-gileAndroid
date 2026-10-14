@@ -141,6 +141,10 @@ class ScreenshotTest {
         com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_mute_for_light.png")
         rule.onNodeWithTag("mute-for:HOUR").performClick()
         org.junit.Assert.assertTrue(c.key in repo.store.muted())
+        // AII-165: the row shows when the mute ends.
+        rule.waitForIdle()
+        rule.onNodeWithTag("row-mute-ends", useUnmergedTree = true).assertExists()
+        rule.onRoot().captureRoboImage("../docs/shots/chats_mute_ends_light.png")
         rule.onNodeWithTag("chat:${c.key}").performTouchInput { longClick() }
         rule.onNodeWithTag("menu-mute").performClick()
         org.junit.Assert.assertFalse(c.key in repo.store.muted())

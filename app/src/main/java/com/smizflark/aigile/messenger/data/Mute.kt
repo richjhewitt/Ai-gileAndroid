@@ -14,4 +14,9 @@ object Mute {
     /** The chats still muted at [now]: a timed mute ends by itself. */
     fun active(muted: Set<String>, until: Map<String, Long>, now: Long): Set<String> =
         muted.filterTo(mutableSetOf()) { c -> until[c]?.let { it > now } ?: true }
+
+    /** The clock time a timed mute ends, in the phone's own style (AII-160, AII-165). */
+    fun endTime(end: Long, zone: java.time.ZoneId = java.time.ZoneId.systemDefault(), locale: java.util.Locale = java.util.Locale.getDefault()): String =
+        java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT).withLocale(locale)
+            .format(java.time.Instant.ofEpochMilli(end).atZone(zone))
 }
