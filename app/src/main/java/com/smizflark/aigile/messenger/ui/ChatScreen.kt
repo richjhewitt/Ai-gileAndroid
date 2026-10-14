@@ -123,7 +123,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             val before = convo?.bubbles?.lastOrNull { !it.mine }?.at
             val now = c.bubbles.lastOrNull { !it.mine }?.at
             if (before != null && now != null && now > before) tick()
-            convo = c; error = null
+            convo = c; error = null; stars = repo.store.stars()   // AII-141: the board's stars came with it
             if (!picked && focus == null) target = c.defaultTarget
             repo.seen(ref, c.bubbles.lastOrNull()?.at)
             return changed
@@ -356,7 +356,10 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 },
                                 onQuote = { q -> jumpToQuote(q, r.id) },
                                 starred = Stars.has(stars, ref.key, r.b.key),
-                                onStar = if (r.pending == null) { { stars = Stars.toggle(stars, Stars.of(ref.key, r.b)); repo.store.setStars(stars) } } else null)
+                                onStar = if (r.pending == null) { {
+                                    val s = Stars.of(ref.key, r.b); val on = !Stars.has(stars, s.chat, s.key)
+                                    stars = Stars.toggle(stars, s); scope.launch { repo.setStar(ref, s, on) }   // AII-141: on the board too
+                                } } else null)
                         }
                     }
                     if (convo == null && error == null) item { Text(stringResource(R.string.loading), Modifier.padding(24.dp)) }

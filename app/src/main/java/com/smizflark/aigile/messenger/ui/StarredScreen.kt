@@ -68,12 +68,12 @@ fun StarredScreen(repo: Repo, onOpen: (ChatRef, String) -> Unit, onBack: () -> U
                 items(stars, key = { (ref, s) -> "${ref.key}|${s.key}" }) { (ref, s) ->
                     StarRow(ref, s, repo, onClick = { onOpen(ref, s.key) },
                         onUnstar = {
-                            all = Stars.toggle(all, s); repo.store.setStars(all)
+                            all = Stars.toggle(all, s); scope.launch { repo.setStar(ref, s, false) }   // AII-141: off the board too
                             // AII-156: a bar with Undo puts the star straight back.
                             scope.launch {
                                 snack.currentSnackbarData?.dismiss()
                                 val r = snack.showSnackbar(context.getString(R.string.star_removed), context.getString(R.string.undo), duration = androidx.compose.material3.SnackbarDuration.Short)
-                                if (r == androidx.compose.material3.SnackbarResult.ActionPerformed && !Stars.has(all, s.chat, s.key)) { all = all + s; repo.store.setStars(all) }
+                                if (r == androidx.compose.material3.SnackbarResult.ActionPerformed && !Stars.has(all, s.chat, s.key)) { all = all + s; repo.setStar(ref, s, true) }
                             }
                         })
                     HorizontalDivider(Modifier.padding(start = 68.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))

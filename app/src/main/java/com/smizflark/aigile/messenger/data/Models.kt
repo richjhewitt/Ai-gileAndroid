@@ -72,6 +72,8 @@ data class WireThread(
     val open: List<OpenCard> = emptyList(),
     val cards: Map<String, CardInfo> = emptyMap(),
     val watchman: Boolean = false,
+    /** Starred messages on the board (AII-141), as "fold|at"; null from an older board. */
+    val stars: List<String>? = null,
 )
 
 /** A friend from GET /api/dms/contacts (private DMs, sealed by the board). */
@@ -184,6 +186,8 @@ data class Conversation(
     val defaultTarget: String? = null,
     /** The newest message from someone else, for "seen" and alerts. */
     val lastFromThem: String? = null,
+    /** The board's stars for this chat (AII-141), as "fold|at"; null when the board doesn't keep them. */
+    val boardStars: List<String>? = null,
 )
 
 /** A message typed on the phone that hasn't reached the board yet. */
