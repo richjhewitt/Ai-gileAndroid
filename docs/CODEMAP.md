@@ -29,7 +29,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Pace.kt: pacing of sends / checks.
 - data/Closed.kt: Close chat, hidden until a newer message (board's dmclosed list).
 - data/Pause.kt: pause alerts for a while.
-- data/Pins.kt: pinned chats first.
+- data/Pins.kt: pinned chats first; sortChats = Newest first / A to Z (AII-241, Settings, Store sortChats) applied before pins and muted-last.
 - data/NextUnread.kt: which chat the Next unread button at the bottom of a chat goes to (AII-204); button in ui/ChatParts.kt.
 - data/QuickReply.kt: replying from the notification.
 - data/Quote.kt: quoting a message in a reply.
@@ -53,13 +53,13 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/CardDetails.kt: card detail sheet and the board's column names.
 - ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, this chat's reminders (AII-223, tap jumps to the message, X cancels via cancelReminder in ui/RemindersScreen.kt), pictures, links (AII-194), Mute and Pin.
 - ui/ChatScreen.kt: the chat screen itself (list, find, scrolling).
-- ui/ChatTopBar.kt: the chat's top bar (name, 'working on', find, Mute).
+- ui/ChatTopBar.kt: the chat's top bar (name, 'working on', find, Mute; menu: Go to date, My last message AII-242).
 - ui/ChatRows.kt: builds the chat's rows (days, card headers, messages, waiting sends) and counts unread below.
 - ui/ChatBubble.kt: one message bubble (copy, reply, forward, options, retry; long ones fold with Read more, AII-184).
 - ui/ChatComposer.kt: the message input with pictures, reply, dictation and quick replies (AII-179).
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
 - ui/ChatsScreen.kt: every chat in one list.
-- ui/ChatRow.kt: one row of the chats list (swipe, hold menu, badges, a bell when the chat has a reminder AII-226) and its preview, draft and unsent labels.
+- ui/ChatRow.kt: one row of the chats list (swipe, hold menu, badges, a bell when the chat has a reminder AII-226; Remind me in 1 hour on its newest cached message, AII-240) and its preview, draft and unsent labels.
 - ui/ConnectScreen.kt: connect the phone to a board, or try the demo.
 - ui/Dictate.kt: voice to text with the phone's recogniser.
 - ui/Find.kt: find in a chat (pure).

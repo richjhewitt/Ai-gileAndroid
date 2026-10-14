@@ -25,6 +25,15 @@ class RemindWorker(context: Context, params: WorkerParameters) : CoroutineWorker
     }
 
     companion object {
+        /** Remind me in 1 hour about one message (AII-210, AII-240): saves the reminder and schedules it; returns when, or null when no time fits. */
+        fun inAnHour(context: Context, store: com.smizflark.aigile.messenger.data.Store, chat: String, name: String, msg: String, text: String): Long? {
+            val at = Remind.at(Now.millis(), Remind.When.HOUR) ?: return null
+            val r = Reminder(Remind.idOf(chat, msg), chat, name, msg, text, at)
+            store.setReminders(Remind.add(store.reminders(), r))
+            schedule(context, r)
+            return at
+        }
+
         fun schedule(context: Context, r: Reminder) {
             val req = OneTimeWorkRequestBuilder<RemindWorker>()
                 .setInitialDelay((r.at - Now.millis()).coerceAtLeast(0), TimeUnit.MILLISECONDS).build()
