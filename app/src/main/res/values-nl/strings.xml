@@ -201,8 +201,10 @@
     <string name="show_times">Tijden tonen</string>
     <string name="show_times_sub">Toon de tijd onder elk bericht, zonder erop te tikken</string>
     <string name="undo_send">Versturen ongedaan maken</string>
-    <string name="undo_send_sub">Na Versturen wacht het bericht 5 seconden, zodat je het kunt terugnemen</string>
-    <string name="message_sent_undo">Versturen over 5 seconden</string>
+    <string name="undo_send_sub">Na Versturen wacht het bericht een paar seconden, zodat je het kunt terugnemen</string>
+    <string name="message_sent_undo">Versturen over %1$d seconden</string>
+    <string name="undo_seconds">Wachttijd voor het versturen</string>
+    <string name="seconds_short">%1$d s</string>
     <string name="play_gifs">GIF-links afspelen</string>
     <string name="play_gifs_sub">GIF-links (giphy, tenor) spelen af in het gesprek; uit laat ze als link staan</string>
     <string name="compact_list">Compacte lijst</string>

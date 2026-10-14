@@ -45,7 +45,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/SavedPictures.kt: size of the saved pictures and which files Clear may delete, never ones waiting in the outbox (AII-215).
 - data/Store.kt: on-disk storage: pairing in the "messenger" prefs (not backed up), settings in the "settings" prefs (backed up, AII-81), drafts and cache.
 - data/Transcript.kt: a whole chat as plain text, for Share this chat (AII-139).
-- data/UndoSend.kt: a sent message held 5 seconds with an Undo bar (AII-202); used by ui/ChatScreen.kt.
+- data/UndoSend.kt: a sent message held 5 or 10 seconds (Settings, AII-233) with an Undo bar (AII-202); used by ui/ChatScreen.kt.
 - data/Swipe.kt: what a swipe on a chat row does.
 - data/Update.kt: 'New version' bar: latest GitHub release (tag build-N = versionCode), checked once a day.
 

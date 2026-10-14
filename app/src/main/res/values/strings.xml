@@ -201,8 +201,10 @@
     <string name="show_times">Show times</string>
     <string name="show_times_sub">Show the time under every message without tapping it</string>
     <string name="undo_send">Undo send</string>
-    <string name="undo_send_sub">After Send, the message waits 5 seconds so you can take it back</string>
-    <string name="message_sent_undo">Sending in 5 seconds</string>
+    <string name="undo_send_sub">After Send, the message waits a few seconds so you can take it back</string>
+    <string name="message_sent_undo">Sending in %1$d seconds</string>
+    <string name="undo_seconds">Wait before sending</string>
+    <string name="seconds_short">%1$d s</string>
     <string name="play_gifs">Play GIF links</string>
     <string name="play_gifs_sub">GIF links (giphy, tenor) play in the chat; off keeps them as links</string>
     <string name="compact_list">Compact list</string>

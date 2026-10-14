@@ -29,7 +29,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import com.smizflark.aigile.messenger.data.UndoSend
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -134,6 +136,16 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             }
             Toggle(stringResource(R.string.undo_send), stringResource(R.string.undo_send_sub), Appearance.undoSend, Modifier.testTag("undoSend")) {
                 Appearance.undoSend = it; s.undoSend = it
+            }
+            // AII-233: how long it waits.
+            if (Appearance.undoSend) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.undo_seconds), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                    UndoSend.CHOICES.forEach { n ->
+                        FilterChip(selected = UndoSend.seconds(Appearance.undoSeconds) == n, onClick = { Appearance.undoSeconds = n; s.undoSeconds = n },
+                            label = { Text(stringResource(R.string.seconds_short, n)) }, modifier = Modifier.testTag("undoSeconds$n"))
+                    }
+                }
             }
             Toggle(stringResource(R.string.show_times), stringResource(R.string.show_times_sub), Appearance.showTimes, Modifier.testTag("showTimes")) {
                 Appearance.showTimes = it; s.showTimes = it

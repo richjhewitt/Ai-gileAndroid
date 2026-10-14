@@ -160,6 +160,10 @@ class Store(context: Context) {
     var undoSend: Boolean
         get() = settings.getBoolean("undoSend", false)
         set(v) = settings.edit().putBoolean("undoSend", v).apply()
+    /** AII-233: how long Undo send holds a message, 5 or 10 seconds. */
+    var undoSeconds: Int
+        get() = settings.getInt("undoSeconds", 5)
+        set(v) = settings.edit().putInt("undoSeconds", v).apply()
 
     var enterSends: Boolean
         get() = settings.getBoolean("enterSends", false)
@@ -300,7 +304,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "enterSends", "undoSend", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "enterSends", "undoSend", "undoSeconds", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
 
         /** What "Reset settings" clears (AII-217): every backed-up setting except the ones that are your data. */
         val KEPT_ON_RESET = setOf("pinned", "muted", "silent")
