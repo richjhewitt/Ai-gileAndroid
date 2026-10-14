@@ -315,4 +315,6 @@
     <string name="star_removed">Ster weggehaald</string>
     <string name="closed_show">%1$d gesloten tonen</string>
     <string name="closed_hide">Gesloten verbergen</string>
+    <string name="copy_card_id">Kaart-id kopiëren</string>
+    <string name="open_card_menu">Kaart openen</string>
 </resources>
