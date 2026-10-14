@@ -2,8 +2,9 @@
 // seeded with a team and a DM, so tests never touch Rich's real board.
 //   node tools/testboard/testboard.mjs start [--port N] [--board <AI-gile folder>]   prints the address
 //   node tools/testboard/testboard.mjs check    calls every API the app uses, one line each
+//   node tools/testboard/testboard.mjs phone [--https 8443]   serves it to Rich's phone over Tailscale and shows a QR to pair the app
 //   node tools/testboard/testboard.mjs stop     stops it and deletes its data
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -58,7 +59,7 @@ async function start() {
     if (!mine) await sleep(100);
   }
   if (!mine) { try { process.kill(proc.pid); } catch {} fs.rmSync(dir, { recursive: true, force: true }); throw new Error(`no test board on port ${port} (port taken?)`); }
-  fs.writeFileSync(STATE, JSON.stringify({ url, pid: proc.pid, dir }, null, 2));
+  fs.writeFileSync(STATE, JSON.stringify({ url, pid: proc.pid, dir, board }, null, 2));
   await seed(url);
   console.log(url);
 }
@@ -93,10 +94,48 @@ async function check() {
   process.exitCode = bad ? 1 : 0;
 }
 
+/* ---------- phone ---------- */
+// The test board on Rich's phone (AII-67): `tailscale serve` on its own https port, so Rich's real board keeps 443,
+// then an app pairing (the board's POST /api/phone/app, host with that port) shown as a QR on a page that opens on the PC.
+const tailscale = (...a) => execFileSync('tailscale', a, { encoding: 'utf8', windowsHide: true, timeout: 20000, stdio: 'pipe' });
+async function phone() {
+  const s = readState();
+  if (!s) throw new Error('no test board: run start first');
+  const https = Number(flag('https')) || 8443;
+  if (https === 443) throw new Error('443 is for the real board: pick another port');
+  const ts = String(JSON.parse(tailscale('status', '--json')).Self?.DNSName || '').replace(/\.$/, '').toLowerCase();
+  if (!ts) throw new Error('Tailscale is not signed in on this PC');
+  // First time on a tailnet, serve waits on a sign-in page to switch Serve on: say so instead of hanging.
+  try { tailscale('serve', '--bg', `--https=${https}`, s.url); } catch (e) {
+    const link = String((e.stdout || '') + (e.stderr || '')).match(/https:[/][/]login[.]tailscale[.]com[/][!-~]+/);
+    throw new Error(link ? `Serve is off on your Tailscale: open ${link[0]}, switch it on, then run phone again` : 'tailscale serve failed: ' + e.message);
+  }
+  s.https = https; fs.writeFileSync(STATE, JSON.stringify(s, null, 2));
+  const { qr } = await call(s.url, 'POST', '/api/phone/app', { host: `${ts}:${https}` });
+  if (!qr.includes(`:${https}&`)) throw new Error('this AI-gile drops the port from the phone address: use one with AII-67 (branch tds/phone-port)');
+  const page = path.join(s.dir, 'pair.html');
+  fs.writeFileSync(page, `<!doctype html><meta charset="utf-8"><title>Test board: pair the app</title>
+<body style="font:18px system-ui;text-align:center;padding:2em"><h2>📱 Test board</h2><p>In the app: <b>Scan QR code</b></p>
+${qrSvg(s.board, qr)}<p style="color:#666;font-size:14px">https://${ts}:${https} (demo chats, not your real board)</p></body>`);
+  console.log(`serving https://${ts}:${https}\npair the app with: ${page}`);
+  if (!args.includes('--no-open')) spawn('explorer', [page], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+}
+// The QR code from the board's own Setup page (public/js/phone.js), so this tool needs no QR package.
+function qrSvg(board, text) {
+  const src = fs.readFileSync(path.join(board, 'public', 'js', 'phone.js'), 'utf8');
+  const a = src.indexOf('  function qr(text, low)'), b = src.indexOf('  function qrSvg(');
+  if (a < 0 || b < a) throw new Error('no QR code maker in this AI-gile');
+  const M = new Function(src.slice(a, b) + '\nreturn qr;')()(text);
+  const n = M.length + 8; let d = '';
+  M.forEach((r, y) => r.forEach((c, x) => { if (c) d += `M${x + 4} ${y + 4}h1v1h-1z`; }));
+  return `<svg viewBox="0 0 ${n} ${n}" width="320" height="320"><rect width="${n}" height="${n}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+
 /* ---------- stop ---------- */
 function stop() {
   const s = readState();
   if (!s) { console.log('not running'); return; }
+  if (s.https) try { tailscale('serve', `--https=${s.https}`, 'off'); } catch {}
   try { process.kill(s.pid); } catch {}
   // The server may hold files a moment after it dies (Windows): retry the delete.
   try { fs.rmSync(s.dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }); } catch {}
@@ -104,6 +143,6 @@ function stop() {
   console.log('stopped');
 }
 
-const cmds = { start, check, stop };
-if (!cmds[cmd]) { console.log('usage: node tools/testboard/testboard.mjs start|check|stop'); process.exit(2); }
+const cmds = { start, check, phone, stop };
+if (!cmds[cmd]) { console.log('usage: node tools/testboard/testboard.mjs start|check|phone|stop'); process.exit(2); }
 try { await cmds[cmd](); } catch (e) { console.error(e.message); process.exit(1); }
