@@ -19,6 +19,9 @@ object Stars {
     /** This chat's stars, newest message first. */
     fun inChat(all: List<Star>, chat: String) = all.filter { it.chat == chat }.sortedByDescending { it.at }
 
+    /** The line a star shows in a list: the first line of the message (markdown already rendered), without a leading bullet (AII-144). */
+    fun preview(plain: String) = plain.lines().firstOrNull { it.isNotBlank() }.orEmpty().trim().removePrefix("•").trim()
+
     /** Every chat's stars, newest message first (AII-140); stars of chats this phone no longer has are left out, as they can't open. */
     fun everywhere(all: List<Star>, chats: List<ChatRef>): List<Pair<ChatRef, Star>> {
         val byKey = chats.associateBy { it.key }

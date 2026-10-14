@@ -380,6 +380,11 @@ class ScreenshotTest {
         rule.onRoot().captureRoboImage("../docs/shots/starred_light.png")
         rule.onAllNodesWithTag("starred-row").onFirst().performClick()
         org.junit.Assert.assertEquals(repo.store.stars().maxBy { it.at }.key, opened?.second)
+        // AII-143: hold one, Remove star: it leaves the list.
+        rule.onAllNodesWithTag("starred-row").onFirst().performTouchInput { longClick() }
+        rule.onNodeWithTag("starred-unstar").performClick()
+        rule.onAllNodesWithTag("starred-row").assertCountEquals(1)
+        org.junit.Assert.assertEquals(1, repo.store.stars().size)
     }
     @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
