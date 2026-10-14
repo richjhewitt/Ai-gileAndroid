@@ -79,13 +79,15 @@ object Appearance {
     var gifs by mutableStateOf(true)
     /** Undo send (AII-202): Send waits 5 seconds with an Undo bar. */
     var undoSend by mutableStateOf(false)
+    /** Buzz on send and on a new reply (AII-205). */
+    var buzz by mutableStateOf(true)
     /** Quick replies above an empty message box (AII-179); off until loaded, so screenshots stay as they were. */
     var quickReplies by mutableStateOf(false)
     /** Your own quick replies (AII-180); empty means the starting ones. */
     var replies by mutableStateOf(emptyList<String>())
 
     fun load(store: Store) {
-        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; undoSend = store.undoSend; quickReplies = store.quickReplies; replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
+        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; buzz = store.buzz; undoSend = store.undoSend; quickReplies = store.quickReplies; replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
     }
 }
 

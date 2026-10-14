@@ -114,6 +114,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
             Toggle(stringResource(R.string.play_gifs), stringResource(R.string.play_gifs_sub), Appearance.gifs, Modifier.testTag("gifs")) {
                 Appearance.gifs = it; s.gifs = it
             }
+            Toggle(stringResource(R.string.buzz), stringResource(R.string.buzz_sub), Appearance.buzz, Modifier.testTag("buzz")) {
+                Appearance.buzz = it; s.buzz = it
+            }
             Toggle(stringResource(R.string.quick_replies), stringResource(R.string.quick_replies_sub), Appearance.quickReplies, Modifier.testTag("quickReplies")) {
                 Appearance.quickReplies = it; s.quickReplies = it
             }

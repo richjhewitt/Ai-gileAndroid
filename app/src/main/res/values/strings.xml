@@ -199,6 +199,8 @@
     <string name="message_sent_undo">Sending in 5 seconds</string>
     <string name="play_gifs">Play GIF links</string>
     <string name="play_gifs_sub">GIF links (giphy, tenor) play in the chat; off keeps them as links</string>
+    <string name="buzz">Buzz</string>
+    <string name="buzz_sub">A little buzz when you send and when a reply comes in</string>
     <string name="enter_sends_sub">Enter sends the message; Shift+Enter makes a new line</string>
     <string name="quick_replies">Quick replies</string>
     <string name="quick_replies_sub">Ready-made replies above an empty message box; a tap puts one in</string>
