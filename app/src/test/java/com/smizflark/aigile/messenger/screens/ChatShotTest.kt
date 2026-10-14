@@ -383,6 +383,17 @@ class ChatShotTest : ShotBase() {
         rule.waitForIdle()
         rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_links_light.png")
     }
+    /** AII-197: the Files list in the chat details. */
+    @Test fun chatDetailsFilesLight() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        val files = listOf(com.smizflark.aigile.messenger.data.Pic("/api/f1", "Invoice-October.pdf", "application/pdf"), com.smizflark.aigile.messenger.data.Pic("/api/f2", "notes.txt"), com.smizflark.aigile.messenger.data.Pic("/api/f3", "export.csv", "text/csv"))
+        rule.setContent { MessengerTheme { com.smizflark.aigile.messenger.ui.ChatDetails(lead(), repo, com.smizflark.aigile.messenger.data.ChatInfo(emptyList(), emptyList(), emptyList(), files), onClose = {}) } }
+        rule.waitForIdle()
+        rule.onNodeWithTag("chat-details").performTouchInput { swipeUp() }
+        rule.waitForIdle()
+        rule.onAllNodesWithTag("details-file").assertCountEquals(3)
+        rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_files_light.png")
+    }
     /** AII-160: a 1 hour mute shows when it ends under Mute alerts in the chat details. */
     @Test fun muteEndsLight() {
         prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")

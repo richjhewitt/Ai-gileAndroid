@@ -40,6 +40,19 @@ class ChatInfoTest {
         assertTrue(chatInfo(null).links.isEmpty())
     }
 
+    @Test fun filesNewestFirstOnceNoImages() {
+        val x = Pic("/api/x", "x.txt")
+        val convo = Conversation(ref, listOf(b("1", doc, a), b("2", x), b("3", doc)))
+        assertEquals(listOf(doc, x), chatInfo(convo).files)
+        assertTrue(chatInfo(null).files.isEmpty())
+    }
+    @Test fun mimeFromTypeOrName() {
+        assertEquals("application/pdf", com.smizflark.aigile.messenger.data.fileMime(doc))
+        assertEquals("text/csv", com.smizflark.aigile.messenger.data.fileMime(Pic("/api/q", "Data.CSV")))
+        assertEquals("application/zip", com.smizflark.aigile.messenger.data.fileMime(Pic("/api/q", "a.zip", "application/octet-stream")))
+        assertEquals("*/*", com.smizflark.aigile.messenger.data.fileMime(Pic("/api/q", "noext")))
+    }
+
     @Test fun noChatYet()= assertTrue(chatInfo(null).let { it.openCards.isEmpty() && it.pictures.isEmpty() })
 
     @Test fun openCardsAreTheWaitingOnes() {

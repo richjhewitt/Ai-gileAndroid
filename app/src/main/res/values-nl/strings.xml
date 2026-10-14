@@ -277,6 +277,10 @@
     <string name="chat_pictures">Foto\'s in deze chat</string>
     <string name="no_chat_pictures">Nog geen foto\'s.</string>
     <string name="chat_links">Links in deze chat</string>
+    <string name="chat_files">Bestanden in deze chat</string>
+    <string name="file_downloading">Openen…</string>
+    <string name="file_not_opened">Dit bestand kon niet worden geopend.</string>
+    <string name="file_no_app">Geen app op deze telefoon kan dit bestand openen.</string>
     <string name="star">Ster geven</string>
     <string name="unstar">Ster weghalen</string>
     <string name="starred">Met ster</string>

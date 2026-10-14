@@ -147,8 +147,7 @@ fun MessagePictures(pics: List<Pic>, repo: Repo, onOpened: () -> Unit = {}) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.share_picture)) }, leadingIcon = { Icon(Icons.Default.Share, null) },
                         onClick = { held = null; actions.share(req, p.name) }, modifier = Modifier.testTag("pic-share"))
                 }
-            } else Text("📎 ${p.name.ifEmpty { stringResource(R.string.file) }}", style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            } else FileLine(p, repo)
         }
     }
 }
