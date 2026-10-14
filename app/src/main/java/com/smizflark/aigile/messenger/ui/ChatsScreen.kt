@@ -88,6 +88,8 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.smizflark.aigile.messenger.data.ChatFilter
 import com.smizflark.aigile.messenger.data.Closed
+import com.smizflark.aigile.messenger.data.Update
+import com.smizflark.aigile.messenger.BuildConfig
 import androidx.compose.material.icons.filled.Close
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -145,6 +147,16 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
         }
     }
 
+    // AII-132: ask GitHub for the latest release at most once a day; the bar shows while it is newer than this app.
+    var release by remember { mutableStateOf(repo.store.release) }
+    LaunchedEffect(Unit) {
+        val now = Now.millis()
+        if (Update.due(now, repo.store.updateChecked)) {
+            repo.store.updateChecked = now
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Update.fetch() }?.let { repo.store.release = it; release = it }
+        }
+    }
+
     val list = androidx.compose.foundation.lazy.rememberLazyListState()
     Scaffold(
         topBar = {
@@ -193,6 +205,15 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         Text(stringResource(R.string.paused_until, at), Modifier.weight(1f), color = MaterialTheme.colorScheme.onSecondaryContainer,
                             style = MaterialTheme.typography.bodyMedium)
                         androidx.compose.material3.TextButton(onClick = { pausedUntil = 0L; repo.store.pausedUntil = 0L }, modifier = Modifier.testTag("resume")) { Text(stringResource(R.string.resume)) }
+                    }
+                }
+                release?.takeIf { Update.newer(it, BuildConfig.VERSION_CODE) }?.let { r ->
+                    item {
+                        Text(stringResource(R.string.new_version), Modifier.fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .clickable { runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(r.url))) } }
+                            .padding(horizontal = 16.dp, vertical = 12.dp).testTag("newVersion"),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 error?.let { e ->

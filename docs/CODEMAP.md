@@ -32,6 +32,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Source.kt: chat source, the real board or the demo.
 - data/Store.kt: on-disk storage: pairing in the "messenger" prefs (not backed up), settings in the "settings" prefs (backed up, AII-81), drafts and cache.
 - data/Swipe.kt: what a swipe on a chat row does.
+- data/Update.kt: 'New version' bar: latest GitHub release (tag build-N = versionCode), checked once a day.
 
 ## ui/ (Compose screens)
 - ui/CardDetails.kt: card detail sheet and the board's column names.

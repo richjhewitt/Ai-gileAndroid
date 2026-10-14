@@ -44,6 +44,9 @@ $sha = (Get-FileHash $named -Algorithm SHA256).Hash.ToLower()
 $mb = [math]::Round((Get-Item $named).Length / 1MB, 1)
 Write-Host "Built $named ($mb MB)"
 Write-Host "SHA-256 $sha"
+# AII-132: the app's 'New version' bar reads the build number at the end of the GitHub release tag (= versionCode).
+$build = (git -C $root rev-list --count HEAD).Trim()
+Write-Host "GitHub release tag: build-$build (attach $named)"
 
 if ($Serve) {
     & $tailscale serve --bg --https=443 --set-path=$path $dist
