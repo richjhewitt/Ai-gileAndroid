@@ -3,6 +3,7 @@ package com.smizflark.aigile.messenger.ui
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.clickable
@@ -47,7 +48,7 @@ import kotlinx.coroutines.launch
 /** Tap the chat name (AII-80): the team, its open cards, the pictures sent here, and the Mute and Pin switches. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onClose: () -> Unit) {
+fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onClose: () -> Unit) {
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var silent by remember { mutableStateOf(ref.key in repo.store.silent) }
     var pinned by remember { mutableStateOf(ref.key in repo.store.pinned) }
@@ -57,6 +58,8 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
         onDismiss = { muteAsk = false })
     var shown by remember { mutableStateOf<CardDetail?>(null) }   // AII-85: the open card tapped, shown under its row
     val scope = rememberCoroutineScope()
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    var mine by remember { mutableStateOf(com.smizflark.aigile.messenger.data.Remind.inChat(repo.store.reminders(), ref.key)) }   // AII-223
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     ModalBottomSheet(onDismissRequest = onClose) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding().testTag("chat-details")) {
@@ -116,6 +119,23 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                             maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Text(listOf(s.author, fullTime(s.at)).filter { it.isNotBlank() }.joinToString(" · "),
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            // AII-223: this chat's reminders, soonest first; tap one to jump to its message, X to cancel.
+            if (mine.isNotEmpty() && onReminder != null) {
+                Text(stringResource(R.string.reminders), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+                mine.forEach { r ->
+                    Row(Modifier.fillMaxWidth().clickable { onReminder(r.msg) }.padding(start = 0.dp).testTag("details-reminder"), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f).padding(vertical = 6.dp)) {
+                            Text(r.text.replace('\n', ' '), style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text("⏰ " + sendTime(java.time.Instant.ofEpochMilli(r.at).toString()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        }
+                        androidx.compose.material3.IconButton(onClick = {
+                            cancelReminder(ctx, repo, r.id); mine = com.smizflark.aigile.messenger.data.Remind.inChat(repo.store.reminders(), ref.key)
+                        }, modifier = Modifier.testTag("details-reminder-x")) {
+                            Icon(androidx.compose.material.icons.Icons.Filled.Close, stringResource(R.string.cancel_reminder))
+                        }
                     }
                 }
             }

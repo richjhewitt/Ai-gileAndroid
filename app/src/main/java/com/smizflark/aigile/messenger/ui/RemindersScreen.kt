@@ -50,8 +50,7 @@ fun RemindersScreen(repo: Repo, onBack: () -> Unit) {
     val ctx = LocalContext.current
     var all by remember { mutableStateOf(Remind.sorted(repo.store.reminders())) }
     fun cancel(r: Reminder) {
-        repo.store.setReminders(Remind.cancel(repo.store.reminders(), r.id))
-        RemindWorker.cancel(ctx, r.id)
+        cancelReminder(ctx, repo, r.id)
         all = Remind.sorted(repo.store.reminders())
     }
     Scaffold(
@@ -72,6 +71,12 @@ fun RemindersScreen(repo: Repo, onBack: () -> Unit) {
             }
         }
     }
+}
+
+/** Cancels one reminder: off the list and its WorkManager job stopped (AII-209; also used by the chat details, AII-223). */
+fun cancelReminder(ctx: android.content.Context, repo: Repo, id: String) {
+    repo.store.setReminders(Remind.cancel(repo.store.reminders(), id))
+    RemindWorker.cancel(ctx, id)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
