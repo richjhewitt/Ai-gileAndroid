@@ -1,14 +1,14 @@
 package com.smizflark.aigile.messenger.data
 
 /** What the chat details view lists (AII-80): the cards still open and the pictures sent in the chat. */
-data class ChatInfo(val openCards: List<Target>, val pictures: List<Pic>, val links: List<ChatLink> = emptyList(), val files: List<Pic> = emptyList())
+data class ChatInfo(val openCards: List<Target>, val pictures: List<Pic>, val links: List<ChatLink> = emptyList(), val files: List<Pic> = emptyList(), val about: About? = null)
 
 /** Open cards are the ones waiting on you; pictures are newest first, each only once. */
 fun chatInfo(c: Conversation?): ChatInfo {
     if (c == null) return ChatInfo(emptyList(), emptyList())
     val open = c.targets.filter { it.id != null && it.waiting }
     val pics = c.bubbles.asReversed().flatMap { it.pics }.filter { it.image }.distinctBy { it.path }
-    return ChatInfo(open, pics, Links.of(c.bubbles.map { it.text }), files(c))
+    return ChatInfo(open, pics, Links.of(c.bubbles.map { it.text }), files(c), about(c))
 }
 
 /** AII-197: every file that is not a picture, newest first, each once. */
@@ -35,3 +35,18 @@ fun fileMime(p: Pic): String {
         else -> "*/*"
     }
 }
+
+/** AII-203: how many messages the app has for a chat, how many are yours, and the day of the oldest. */
+data class About(val total: Int, val mine: Int, val since: java.time.LocalDate?)
+
+/** Only messages that have reached the chat count (not waiting, sending or failed ones). */
+fun about(c: Conversation, zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): About? {
+    val sent = c.bubbles.filter { it.state == SendState.SENT }
+    if (sent.isEmpty()) return null
+    val first = sent.mapNotNull { runCatching { java.time.Instant.parse(it.at) }.getOrNull() }.minOrNull()
+    return About(sent.size, sent.count { it.mine }, first?.atZone(zone)?.toLocalDate())
+}
+
+/** "3 Oct" in the phone's language; the year joins it when it is not this year. */
+fun aboutDate(d: java.time.LocalDate, today: java.time.LocalDate = Now.today(), locale: java.util.Locale = java.util.Locale.getDefault()): String =
+    java.time.format.DateTimeFormatter.ofPattern(if (d.year == today.year) "d MMM" else "d MMM yyyy", locale).format(d)

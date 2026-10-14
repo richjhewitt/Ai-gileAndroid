@@ -71,4 +71,18 @@ class ChatInfoTest {
         assertEquals(2, pics.size)
         assertTrue(pics.all { it.local && it.image })
     }
+
+    @Test fun aboutCountsSentMessagesAndFirstDay() {
+        fun m(at: String, mine: Boolean, st: com.smizflark.aigile.messenger.data.SendState = com.smizflark.aigile.messenger.data.SendState.SENT) =
+            Bubble(at, "a", "t", at, mine, state = st)
+        val conv = Conversation(ref, listOf(m("2026-10-03T08:00:00Z", false), m("2026-10-04T08:00:00Z", true), m("2026-10-05T08:00:00Z", true, com.smizflark.aigile.messenger.data.SendState.FAILED)))
+        val ab = com.smizflark.aigile.messenger.data.about(conv, java.time.ZoneOffset.UTC)!!
+        assertEquals(2, ab.total); assertEquals(1, ab.mine); assertEquals(java.time.LocalDate.of(2026, 10, 3), ab.since)
+        assertEquals(null, com.smizflark.aigile.messenger.data.about(Conversation(ref, emptyList())))
+    }
+    @Test fun aboutDateAddsYearOnlyWhenNotThisYear() {
+        val today = java.time.LocalDate.of(2026, 10, 14)
+        assertEquals("3 Oct", com.smizflark.aigile.messenger.data.aboutDate(java.time.LocalDate.of(2026, 10, 3), today, java.util.Locale.ENGLISH))
+        assertEquals("3 Oct 2025", com.smizflark.aigile.messenger.data.aboutDate(java.time.LocalDate.of(2025, 10, 3), today, java.util.Locale.ENGLISH))
+    }
 }
