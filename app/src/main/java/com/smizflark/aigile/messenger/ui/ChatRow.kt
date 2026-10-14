@@ -54,6 +54,7 @@ import com.smizflark.aigile.messenger.data.Mute
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.SwipeAction
+import com.smizflark.aigile.messenger.data.SwipeChoice
 import com.smizflark.aigile.messenger.data.swipeAction
 
 
@@ -62,27 +63,39 @@ import com.smizflark.aigile.messenger.data.swipeAction
 internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>, draft: String?, closed: Boolean,
                     onRead: () -> Unit, onUnread: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClose: (Boolean) -> Unit, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
-    // Swipe right = mark read, left = mute/unmute (AII-61). The row always springs back.
+    // Swipes do what Settings says (AII-216; starting: right = mark read, left = mute/unmute, AII-61). The row always springs back.
     val mutedNow by rememberUpdatedState(muted)
+    val closedNow by rememberUpdatedState(closed)
+    val right = Appearance.swipeRight
+    val left = Appearance.swipeLeft
     val box = rememberSwipeToDismissBoxState(confirmValueChange = { v ->
-        when (swipeAction(when (v) { SwipeToDismissBoxValue.StartToEnd -> true; SwipeToDismissBoxValue.EndToStart -> false; else -> null }, mutedNow)) {
+        when (swipeAction(when (v) { SwipeToDismissBoxValue.StartToEnd -> true; SwipeToDismissBoxValue.EndToStart -> false; else -> null }, mutedNow, right, left)) {
             SwipeAction.READ -> onRead()
             SwipeAction.MUTE -> onMute(true)
             SwipeAction.UNMUTE -> onMute(false)
+            SwipeAction.PIN -> onPin()
+            SwipeAction.CLOSE -> onClose(!closedNow)
             null -> {}
         }
         false
     })
-    SwipeToDismissBox(box, modifier = Modifier.testTag("swipe:${c.key}"), backgroundContent = {
+    SwipeToDismissBox(box, modifier = Modifier.testTag("swipe:${c.key}"), enableDismissFromStartToEnd = right != SwipeChoice.NOTHING,
+        enableDismissFromEndToStart = left != SwipeChoice.NOTHING, backgroundContent = {
         val toRead = box.dismissDirection == SwipeToDismissBoxValue.StartToEnd
         val idle = box.dismissDirection == SwipeToDismissBoxValue.Settled
+        val pick = if (toRead) right else left
         Box(Modifier.fillMaxSize().background(when {
             idle -> Color.Transparent
             toRead -> MaterialTheme.colorScheme.primaryContainer
             else -> MaterialTheme.colorScheme.secondaryContainer
         }).padding(horizontal = 24.dp), contentAlignment = if (toRead) Alignment.CenterStart else Alignment.CenterEnd) {
-            if (!idle) Icon(if (toRead) Icons.Default.DoneAll else if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff,
-                stringResource(if (toRead) R.string.mark_read else if (muted) R.string.unmute else R.string.mute))
+            if (!idle) when (pick) {
+                SwipeChoice.READ -> Icon(Icons.Default.DoneAll, stringResource(R.string.mark_read))
+                SwipeChoice.MUTE -> Icon(if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff, stringResource(if (muted) R.string.unmute else R.string.mute))
+                SwipeChoice.PIN -> Icon(Icons.Default.PushPin, stringResource(if (pinned) R.string.unpin else R.string.pin))
+                SwipeChoice.CLOSE -> Icon(Icons.Default.Close, stringResource(if (closed) R.string.reopen_chat else R.string.close_chat))
+                SwipeChoice.NOTHING -> {}
+            }
         }
     }) {
     Row(

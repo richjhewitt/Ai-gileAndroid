@@ -139,6 +139,13 @@ class Store(context: Context) {
     var gifs: Boolean
         get() = settings.getBoolean("gifs", true)
         set(v) = settings.edit().putBoolean("gifs", v).apply()
+    /** AII-216: what swiping a chat right / left does (SwipeChoice ids). */
+    var swipeRight: String
+        get() = settings.getString("swipeRight", SWIPE_RIGHT_DEFAULT.id) ?: SWIPE_RIGHT_DEFAULT.id
+        set(v) = settings.edit().putString("swipeRight", v).apply()
+    var swipeLeft: String
+        get() = settings.getString("swipeLeft", SWIPE_LEFT_DEFAULT.id) ?: SWIPE_LEFT_DEFAULT.id
+        set(v) = settings.edit().putString("swipeLeft", v).apply()
     /** AII-205: the little buzz on send and on a new reply (AII-49); off keeps the phone still. */
     var buzz: Boolean
         get() = settings.getBoolean("buzz", true)
@@ -287,7 +294,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "enterSends", "undoSend", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "enterSends", "undoSend", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
 
         /** One-time move of the settings out of the pairing file, so the pairing file can stay out of backup. */
         fun moveSettings(from: SharedPreferences, to: SharedPreferences) {

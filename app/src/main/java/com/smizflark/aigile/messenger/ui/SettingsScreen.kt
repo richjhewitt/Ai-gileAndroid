@@ -38,6 +38,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -138,6 +143,8 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             Toggle(stringResource(R.string.compact_list), stringResource(R.string.compact_list_sub), Appearance.compact, Modifier.testTag("compact")) {
                 Appearance.compact = it; s.compact = it
             }
+            SwipePick(stringResource(R.string.swipe_right), Appearance.swipeRight, "swipeRight") { Appearance.swipeRight = it; s.swipeRight = it.id }
+            SwipePick(stringResource(R.string.swipe_left), Appearance.swipeLeft, "swipeLeft") { Appearance.swipeLeft = it; s.swipeLeft = it.id }
             Toggle(stringResource(R.string.buzz), stringResource(R.string.buzz_sub), Appearance.buzz, Modifier.testTag("buzz")) {
                 Appearance.buzz = it; s.buzz = it
             }
@@ -334,4 +341,37 @@ private fun Stepper(label: String, value: Int, onChange: (Int) -> Unit) {
         Text(hour(value), style = MaterialTheme.typography.titleMedium)
         TextButton(onClick = { onChange((value + 1) % 24) }) { Text("+") }
     }
+}
+
+/** The words for a swipe choice (AII-216). */
+@Composable
+internal fun swipeLabel(c: com.smizflark.aigile.messenger.data.SwipeChoice) = stringResource(when (c) {
+    com.smizflark.aigile.messenger.data.SwipeChoice.READ -> R.string.mark_read
+    com.smizflark.aigile.messenger.data.SwipeChoice.MUTE -> R.string.mute
+    com.smizflark.aigile.messenger.data.SwipeChoice.PIN -> R.string.pin
+    com.smizflark.aigile.messenger.data.SwipeChoice.CLOSE -> R.string.close_chat
+    com.smizflark.aigile.messenger.data.SwipeChoice.NOTHING -> R.string.swipe_nothing
+})
+
+/** A row showing what a swipe does now; tap it for the pick list (AII-216). */
+@Composable
+private fun SwipePick(title: String, value: com.smizflark.aigile.messenger.data.SwipeChoice, tag: String, onPick: (com.smizflark.aigile.messenger.data.SwipeChoice) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(role = androidx.compose.ui.semantics.Role.Button) { open = true }.testTag(tag),
+        verticalArrangement = Arrangement.Center) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(swipeLabel(value), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    if (open) AlertDialog(onDismissRequest = { open = false }, title = { Text(title) },
+        text = {
+            Column(Modifier.selectableGroup()) {
+                com.smizflark.aigile.messenger.data.SwipeChoice.entries.forEach { c ->
+                    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected = c == value, role = androidx.compose.ui.semantics.Role.RadioButton) { onPick(c); open = false }
+                        .testTag("$tag:${c.id}"), verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = c == value, onClick = null)
+                        Text(swipeLabel(c), Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+        }, confirmButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.cancel)) } })
 }

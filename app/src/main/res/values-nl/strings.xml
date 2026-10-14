@@ -209,6 +209,9 @@
     <string name="saved_pictures">Opgeslagen afbeeldingen: %1$s</string>
     <string name="clear_pictures_title">Opgeslagen afbeeldingen wissen?</string>
     <string name="clear_pictures_text">Afbeeldingen en geopende bestanden die op deze telefoon staan, worden verwijderd. Ze worden weer van het bord geladen als je een chat opent. Afbeeldingen die nog verstuurd moeten worden, blijven bewaard.</string>
+    <string name="swipe_right">Naar rechts vegen</string>
+    <string name="swipe_left">Naar links vegen</string>
+    <string name="swipe_nothing">Niets</string>
     <string name="buzz">Trilling</string>
     <string name="buzz_sub">Een korte trilling bij versturen en als er een antwoord binnenkomt</string>
     <string name="enter_sends_sub">Enter verstuurt het bericht; Shift+Enter maakt een nieuwe regel</string>

@@ -209,6 +209,9 @@
     <string name="saved_pictures">Saved pictures: %1$s</string>
     <string name="clear_pictures_title">Clear saved pictures?</string>
     <string name="clear_pictures_text">Pictures and opened files saved on this phone are deleted. They load again from the board when you open a chat. Pictures waiting to be sent are kept.</string>
+    <string name="swipe_right">Swipe right</string>
+    <string name="swipe_left">Swipe left</string>
+    <string name="swipe_nothing">Nothing</string>
     <string name="buzz">Buzz</string>
     <string name="buzz_sub">A little buzz when you send and when a reply comes in</string>
     <string name="enter_sends_sub">Enter sends the message; Shift+Enter makes a new line</string>
