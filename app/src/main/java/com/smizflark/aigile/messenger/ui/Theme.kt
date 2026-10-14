@@ -181,13 +181,14 @@ fun MessengerTheme(store: Store? = null, content: @Composable () -> Unit) {
 @Composable
 fun AppearanceSettings(store: Store) {
     Appearance.load(store)
+    val ctx = androidx.compose.ui.platform.LocalContext.current.applicationContext
     Text(stringResource(R.string.look), style = MaterialTheme.typography.titleMedium)
     Column(Modifier.selectableGroup()) {
         Look.entries.forEach { l ->
             Row(
                 Modifier.fillMaxWidth().heightIn(min = 52.dp)
                     .selectable(selected = Appearance.look == l, role = Role.RadioButton) {
-                        Appearance.look = l; store.look = l.id
+                        Appearance.look = l; store.look = l.id; com.smizflark.aigile.messenger.widget.LatestWidget.refresh(ctx)
                     }
                     .testTag("look:${l.id}"),
                 verticalAlignment = Alignment.CenterVertically,

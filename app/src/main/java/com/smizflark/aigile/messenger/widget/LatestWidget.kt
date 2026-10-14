@@ -15,6 +15,8 @@ import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.Store
+import com.smizflark.aigile.messenger.ui.Look
+import com.smizflark.aigile.messenger.ui.isDark
 import com.smizflark.aigile.messenger.work.CheckWorker
 import java.time.Duration
 import java.time.Instant
@@ -51,6 +53,20 @@ object WidgetRows {
             m < 60 * 24 -> Words.hours.format(m / 60)
             else -> Words.days.format(m / (60 * 24))
         }
+    }
+}
+
+/* ---------- look: the widget's colours for the app's look (AII-230), pure so it can be tested ---------- */
+
+object WidgetLook {
+    /** [bg]: 0 light, 1 dark, 2 black (which background drawable to use). */
+    data class Colours(val bg: Int, val title: Int, val sub: Int, val brand: Int)
+
+    /** Light, dark or pure black; "follow the phone" is the phone's night mode. */
+    fun colours(look: Look, systemDark: Boolean): Colours = when {
+        look == Look.Black -> Colours(2, 0xFFF3F4F6.toInt(), 0xFF9CA3AF.toInt(), 0xFF4ADE80.toInt())
+        isDark(look, systemDark) -> Colours(1, 0xFFF3F4F6.toInt(), 0xFF9CA3AF.toInt(), 0xFF4ADE80.toInt())
+        else -> Colours(0, 0xFF1F2937.toInt(), 0xFF6B7280.toInt(), 0xFF16A34A.toInt())
     }
 }
 
@@ -95,6 +111,11 @@ class LatestWidget : AppWidgetProvider() {
             val unread = chats.associate { it.key to News.unread(it, seen[it.key], store.cachedConversation(it.key)) }
             val rows = if (store.connected) WidgetRows.rows(chats, seen, Instant.now(), unread = unread, muted = store.muted()) else emptyList()
             val v = RemoteViews(context.packageName, R.layout.widget_latest)
+            val nightOn = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+            val c = WidgetLook.colours(Look.of(store.look), nightOn)
+            v.setInt(R.id.root, "setBackgroundResource", intArrayOf(R.drawable.widget_bg_light, R.drawable.widget_bg_dark, R.drawable.widget_bg_black)[c.bg])
+            v.setTextColor(R.id.header, c.brand)
+            v.setTextColor(R.id.empty, c.sub)
             v.setOnClickPendingIntent(R.id.header, open(context, 0, null))
             v.setViewVisibility(R.id.empty, if (rows.isEmpty()) View.VISIBLE else View.GONE)
             v.setTextViewText(R.id.empty, context.getString(if (store.connected) R.string.widget_no_chats else R.string.widget_connect))
@@ -104,6 +125,7 @@ class LatestWidget : AppWidgetProvider() {
                 val r = rows.getOrNull(n)
                 v.setViewVisibility(row, if (r == null) View.GONE else View.VISIBLE)
                 if (r == null) return@forEachIndexed
+                v.setTextColor(title, c.title); v.setTextColor(sub, c.sub); v.setTextColor(ago, c.sub); v.setTextColor(dot, c.brand)
                 v.setTextViewText(title, r.title)
                 v.setTextViewText(sub, r.subtitle)
                 v.setTextViewText(ago, r.ago)
