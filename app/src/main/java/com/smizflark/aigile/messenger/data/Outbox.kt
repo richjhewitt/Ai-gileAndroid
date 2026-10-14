@@ -20,6 +20,13 @@ object Outbox {
     fun moveTo(l: List<Pending>, id: String, at: java.time.Instant) =
         l.map { if (it.id == id) it.copy(sendAt = at.toString()) else it }
 
+    /** Every Send later message still waiting, in every chat, soonest first (AII-166); messages of chats no longer listed are left out. */
+    fun waiting(l: List<Pending>, chats: List<ChatRef>, now: java.time.Instant): List<Pair<ChatRef, Pending>> {
+        val byKey = chats.associateBy { it.key }
+        return l.filter { com.smizflark.aigile.messenger.work.later(it, now) }
+            .mapNotNull { p -> byKey[p.chat]?.let { it to p } }.sortedBy { java.time.Instant.parse(it.second.sendAt) }
+    }
+
     /** Failed for good: the server refused, or the tries ran out. These get the red mark. */
     fun failedForGood(l: List<Pending>) = l.filter { it.failed && !it.offline }
 

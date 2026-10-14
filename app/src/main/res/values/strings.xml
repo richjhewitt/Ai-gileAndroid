@@ -25,6 +25,8 @@
     <string name="empty_friends">No friends yet</string>
     <string name="empty_scheduled">No messages waiting to send later</string>
     <string name="empty_show_all">Show all chats</string>
+    <string name="waiting_title">Waiting to send</string>
+    <string name="waiting_all">See every waiting message</string>
     <string name="empty_loading">Loading chats…</string>
     <string name="search_hint">Type at least 2 letters to search every chat</string>
     <string name="search_searching">Searching…</string>

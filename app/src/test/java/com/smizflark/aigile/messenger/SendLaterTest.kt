@@ -52,4 +52,13 @@ class SendLaterTest {
         assertEquals("2026-10-14T08:00:00Z", r[0].b.at)
         assertEquals(SendState.SENDING, r[1].b.state)
     }
+
+    /** AII-166: every waiting Send later message, in every chat, soonest first; sent-at-once and gone chats left out. */
+    @Test fun waitingListSoonestFirst() {
+        val a = com.smizflark.aigile.messenger.data.ChatRef(com.smizflark.aigile.messenger.data.Kind.LEAD, "a", "AI-gile", "", "")
+        val b = com.smizflark.aigile.messenger.data.ChatRef(com.smizflark.aigile.messenger.data.Kind.FRIEND, "b", "Davy", "", "")
+        val l = listOf(p("late", "2026-10-15T09:00:00Z").copy(chat = a.key), p("now").copy(chat = a.key),
+            p("soon", "2026-10-14T05:00:00Z").copy(chat = b.key), p("gone", "2026-10-14T04:00:00Z").copy(chat = "lead:old"))
+        assertEquals(listOf(b to "soon", a to "late"), Outbox.waiting(l, listOf(a, b), now).map { (c, x) -> c to x.id })
+    }
 }

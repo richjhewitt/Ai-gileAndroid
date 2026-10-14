@@ -25,6 +25,8 @@
     <string name="empty_friends">Nog geen vrienden</string>
     <string name="empty_scheduled">Geen berichten die later verstuurd worden</string>
     <string name="empty_show_all">Alle chats tonen</string>
+    <string name="waiting_title">Wacht op verzenden</string>
+    <string name="waiting_all">Alle wachtende berichten bekijken</string>
     <string name="empty_loading">Chats laden…</string>
     <string name="search_hint">Typ minstens 2 letters om in alle chats te zoeken</string>
     <string name="search_searching">Zoeken…</string>
