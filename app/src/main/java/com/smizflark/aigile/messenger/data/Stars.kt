@@ -40,6 +40,12 @@ object Stars {
     fun outOfStep(all: List<Star>, chat: String, board: List<String>?) =
         board != null && board.toSet() != all.filter { it.chat == chat }.map { boardKey(it) }.toSet()
 
+    /** The starred messages whose words or sender have [query] in them, any case (AII-164); a blank query keeps them all. */
+    fun <T> matching(list: List<Pair<T, Star>>, query: String): List<Pair<T, Star>> {
+        val q = query.trim()
+        return if (q.isEmpty()) list else list.filter { (_, s) -> s.text.contains(q, ignoreCase = true) || s.author.contains(q, ignoreCase = true) }
+    }
+
     /** Every chat's stars, newest message first (AII-140); stars of chats this phone no longer has are left out, as they can't open. */
     fun everywhere(all: List<Star>, chats: List<ChatRef>): List<Pair<ChatRef, Star>> {
         val byKey = chats.associateBy { it.key }

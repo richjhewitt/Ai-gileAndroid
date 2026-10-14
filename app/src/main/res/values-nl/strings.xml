@@ -249,6 +249,7 @@
     <string name="unstar">Ster weghalen</string>
     <string name="starred">Met ster</string>
     <string name="no_starred">Houd een bericht ingedrukt en tik op Ster geven om het hier te bewaren.</string>
+    <string name="search_starred">Zoeken in sterren</string>
     <string name="star_not_loaded">Dat bericht staat te ver terug om te tonen.</string>
     <string name="close_chat">Chat sluiten</string>
     <string name="reopen_chat">Chat weer openen</string>

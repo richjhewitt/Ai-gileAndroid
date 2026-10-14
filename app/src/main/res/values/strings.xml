@@ -249,6 +249,7 @@
     <string name="unstar">Remove star</string>
     <string name="starred">Starred</string>
     <string name="no_starred">Hold a message and tap Star to keep it here.</string>
+    <string name="search_starred">Search starred</string>
     <string name="star_not_loaded">That message is too far back to show.</string>
     <string name="close_chat">Close chat</string>
     <string name="reopen_chat">Reopen chat</string>
