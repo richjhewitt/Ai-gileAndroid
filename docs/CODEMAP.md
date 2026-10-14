@@ -48,6 +48,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ChatComposer.kt: the message input with pictures, reply and dictation.
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
 - ui/ChatsScreen.kt: every chat in one list.
+- ui/ChatRow.kt: one row of the chats list (swipe, hold menu, badges) and its preview, draft and unsent labels.
 - ui/ConnectScreen.kt: connect the phone to a board, or try the demo.
 - ui/Dictate.kt: voice to text with the phone's recogniser.
 - ui/Find.kt: find in a chat (pure).

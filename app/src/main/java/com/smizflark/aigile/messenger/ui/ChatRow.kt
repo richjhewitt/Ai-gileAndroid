@@ -1,0 +1,165 @@
+package com.smizflark.aigile.messenger.ui
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material3.Badge
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.smizflark.aigile.messenger.R
+import com.smizflark.aigile.messenger.data.ChatRef
+import com.smizflark.aigile.messenger.data.Kind
+import com.smizflark.aigile.messenger.data.Now
+import com.smizflark.aigile.messenger.data.Pending
+import com.smizflark.aigile.messenger.data.Repo
+import com.smizflark.aigile.messenger.data.SwipeAction
+import com.smizflark.aigile.messenger.data.swipeAction
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>, draft: String?, closed: Boolean,
+                    onRead: () -> Unit, onUnread: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClose: (Boolean) -> Unit, onClick: () -> Unit) {
+    var menu by remember { mutableStateOf(false) }
+    // Swipe right = mark read, left = mute/unmute (AII-61). The row always springs back.
+    val mutedNow by rememberUpdatedState(muted)
+    val box = rememberSwipeToDismissBoxState(confirmValueChange = { v ->
+        when (swipeAction(when (v) { SwipeToDismissBoxValue.StartToEnd -> true; SwipeToDismissBoxValue.EndToStart -> false; else -> null }, mutedNow)) {
+            SwipeAction.READ -> onRead()
+            SwipeAction.MUTE -> onMute(true)
+            SwipeAction.UNMUTE -> onMute(false)
+            null -> {}
+        }
+        false
+    })
+    SwipeToDismissBox(box, modifier = Modifier.testTag("swipe:${c.key}"), backgroundContent = {
+        val toRead = box.dismissDirection == SwipeToDismissBoxValue.StartToEnd
+        val idle = box.dismissDirection == SwipeToDismissBoxValue.Settled
+        Box(Modifier.fillMaxSize().background(when {
+            idle -> Color.Transparent
+            toRead -> MaterialTheme.colorScheme.primaryContainer
+            else -> MaterialTheme.colorScheme.secondaryContainer
+        }).padding(horizontal = 24.dp), contentAlignment = if (toRead) Alignment.CenterStart else Alignment.CenterEnd) {
+            if (!idle) Icon(if (toRead) Icons.Default.DoneAll else if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff,
+                stringResource(if (toRead) R.string.mark_read else if (muted) R.string.unmute else R.string.mute))
+        }
+    }) {
+    Row(
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).combinedClickable(onClickLabel = stringResource(R.string.open_chat), role = Role.Button, onClick = onClick,
+            onLongClick = { menu = true }, onLongClickLabel = stringResource(R.string.options))
+            .padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            // Read chats offer Mark as unread instead (AII-119); the Lead Scrum Master goes by the board's count, so it can't.
+            if (fresh || c.kind == Kind.WATCHMAN) DropdownMenuItem(text = { Text(stringResource(R.string.mark_read)) }, enabled = fresh, onClick = { menu = false; onRead() })
+            else DropdownMenuItem(text = { Text(stringResource(R.string.mark_unread)) }, onClick = { menu = false; onUnread() }, modifier = Modifier.testTag("menu-unread"))
+            DropdownMenuItem(text = { Text(stringResource(if (pinned) R.string.unpin else R.string.pin)) }, leadingIcon = { Icon(Icons.Default.PushPin, null) },
+                onClick = { menu = false; onPin() }, modifier = Modifier.testTag("pin"))
+            // AII-103: mute here too, not only on the swipe.
+            DropdownMenuItem(text = { Text(stringResource(if (muted) R.string.unmute else R.string.mute)) },
+                leadingIcon = { Icon(if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff, null) },
+                onClick = { menu = false; onMute(!muted) }, modifier = Modifier.testTag("menu-mute"))
+            // AII-131: off the list until a newer message, on the board's Messages list too.
+            DropdownMenuItem(text = { Text(stringResource(if (closed) R.string.reopen_chat else R.string.close_chat)) }, leadingIcon = { Icon(Icons.Default.Close, null) },
+                onClick = { menu = false; onClose(!closed) }, modifier = Modifier.testTag("menu-close"))
+        }
+        Avatar(c, repo)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Name with its pin and mute icons takes the room; the time stays at the right edge.
+                Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                    Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        fontWeight = if (fresh) FontWeight.Bold else FontWeight.Medium, modifier = Modifier.weight(1f, fill = false))
+                    if (pinned) Icon(Icons.Default.PushPin, stringResource(R.string.pinned), Modifier.padding(start = 4.dp).size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (muted) Icon(Icons.Default.NotificationsOff, stringResource(R.string.muted), Modifier.padding(start = 4.dp).size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Text(shortTime(c.last), style = MaterialTheme.typography.labelMedium,
+                    color = if (fresh) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val waiting = unsentLabel(unsent) ?: draftLabel(draft)
+                val newDesc = stringResource(R.string.new_messages)
+                Text(
+                    waiting ?: previewLabel(c),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = when {
+                        waiting == null && c.working -> MaterialTheme.colorScheme.primary
+                        waiting == null -> MaterialTheme.colorScheme.onSurfaceVariant
+                        unsent.any { it.failed && !it.offline } -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.primary
+                    },
+                    maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
+                )
+                if (c.waiting > 0) Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
+                    Text(stringResource(R.string.waiting, c.waiting), Modifier.padding(horizontal = 4.dp))
+                }
+                if (fresh && unread > 0) Badge(containerColor = MaterialTheme.colorScheme.primary, modifier = Modifier.testTag("unread:${c.key}")) {
+                    Text(if (unread > 99) "99+" else "$unread", Modifier.padding(horizontal = 2.dp))
+                } else if (fresh && c.waiting == 0) Box(Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .semantics { contentDescription = newDesc })
+            }
+        }
+    }
+    }
+}
+
+/** What a chat row says about messages typed on the phone that haven't reached the board (AII-52); null when none. */
+fun unsentLabel(unsent: List<Pending>, now: java.time.Instant = Now.instant()): String? {
+    if (unsent.isEmpty()) return null
+    val failed = unsent.count { it.failed && !it.offline }   // offline ones still go by themselves (AII-55)
+    // AII-148: only Send later ones left: say when the first goes.
+    val held = unsent.filter { com.smizflark.aigile.messenger.work.later(it, now) }
+    if (failed == 0 && held.size == unsent.size) return Words.sendsAt.format(clock(held.minBy { java.time.Instant.parse(it.sendAt) }.sendAt))
+    return if (failed > 0) Words.unsentFailed.format(failed) else Words.unsentWaiting.format(unsent.size - held.size)
+}
+
+/** The line under a chat's name: "working…" while the team is at work (AII-112), else its newest message ("You: ..." when it is yours, AII-106), else the chat's subtitle. */
+fun previewLabel(c: ChatRef): String = if (c.working) Words.working else c.preview?.let { if (c.previewMine) Words.you.format(it) else it } ?: c.subtitle
+
+/** "Draft: ..." for a chat with a half-typed reply (AII-98), on one line; null when there is none. */
+fun draftLabel(draft: String?): String? =
+    draft?.replace(Regex("\\s+"), " ")?.trim()?.takeIf { it.isNotEmpty() }?.let { Words.draft.format(it) }
