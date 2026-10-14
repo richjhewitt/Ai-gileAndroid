@@ -48,6 +48,10 @@ import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Hit
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.Search
+import com.smizflark.aigile.messenger.data.Recent
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material3.TextButton
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -63,9 +67,14 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
     var fetching by remember { mutableStateOf(true) }
     val hits = remember(query, convs) { Search.run(query, chats, convs) }
     val focus = remember { FocusRequester() }
+    var recent by remember { mutableStateOf(repo.store.recentSearches()) }
+    /** AII-155: a search counts once you press Search or open a result. */
+    fun keep(q: String) { recent = Recent.add(recent, q); repo.store.setRecentSearches(recent) }
 
     LaunchedEffect(Unit) {
-        focus.requestFocus()
+        // After the first frame, so the box is laid out; never crash Search over the keyboard not popping up.
+        androidx.compose.runtime.withFrameNanos { }
+        runCatching { focus.requestFocus() }
         // Chats never opened on this phone aren't cached yet; one quiet fetch each, failures just keep the cached copy.
         coroutineScope { chats.map { c -> async { runCatching { repo.conversation(c) } } }.awaitAll() }
         convs = repo.cachedConversations(chats); fetching = false
@@ -81,6 +90,7 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
                         placeholder = { Text(stringResource(R.string.search_all)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { keep(query) }),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
                             focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
@@ -95,15 +105,36 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
         Column(Modifier.fillMaxSize().padding(pad)) {
             if (fetching) LinearProgressIndicator(Modifier.fillMaxWidth())
             val q = query.trim()
-            if (q.length < 2) EmptyState(androidx.compose.ui.res.stringResource(R.string.search_hint))
+            if (q.length < 2 && recent.isNotEmpty()) RecentList(recent, onPick = { query = it; keep(it) }) { recent = emptyList(); repo.store.setRecentSearches(recent) }
+            else if (q.length < 2) EmptyState(androidx.compose.ui.res.stringResource(R.string.search_hint))
             else if (hits.isEmpty() && fetching) EmptyState(androidx.compose.ui.res.stringResource(R.string.search_searching))
             else if (hits.isEmpty()) EmptyState(androidx.compose.ui.res.stringResource(R.string.search_no_results, q),
                 button = androidx.compose.ui.res.stringResource(R.string.search_clear)) { query = "" }
             LazyColumn(Modifier.fillMaxSize()) {
                 items(hits, key = { "${it.ref.key}|${it.bubble?.key}" }) { h ->
-                    HitRow(h, repo) { onOpen(h.ref, h.bubble?.key) }
+                    HitRow(h, repo) { keep(query); onOpen(h.ref, h.bubble?.key) }
                     HorizontalDivider(Modifier.padding(start = 68.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
+            }
+        }
+    }
+}
+
+/** AII-155: the last searches, shown before you type; tap one to search it again. */
+@Composable
+private fun RecentList(recent: List<String>, onPick: (String) -> Unit, onClear: () -> Unit) {
+    Column(Modifier.fillMaxWidth().testTag("recent")) {
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.search_recent), style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
+            TextButton(onClick = onClear, modifier = Modifier.testTag("recent-clear")) { Text(stringResource(R.string.search_recent_clear)) }
+        }
+        recent.forEach { r ->
+            Row(Modifier.fillMaxWidth().clickable { onPick(r) }.padding(horizontal = 16.dp, vertical = 12.dp).testTag("recent:$r"),
+                verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.History, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.width(16.dp))
+                Text(r, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }

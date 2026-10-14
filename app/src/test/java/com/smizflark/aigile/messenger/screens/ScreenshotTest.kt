@@ -31,6 +31,7 @@ import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.ui.ChatScreen
 import com.smizflark.aigile.messenger.ui.ChatsScreen
 import com.smizflark.aigile.messenger.ui.ConnectScreen
+import com.smizflark.aigile.messenger.ui.SearchScreen
 import com.smizflark.aigile.messenger.ui.MessengerTheme
 import com.smizflark.aigile.messenger.ui.Appearance
 import com.smizflark.aigile.messenger.ui.Look
@@ -190,6 +191,27 @@ class ScreenshotTest {
         rule.waitForIdle()
         org.junit.Assert.assertFalse(c.key in repo.store.closed())
         rule.onNodeWithTag("chat:${c.key}").assertExists()
+    }
+    /** AII-155: a search shows under Recent searches next time; tap it to search again, Clear empties the list. */
+    @Test fun recentSearchesLight() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        repo.store.setRecentSearches(listOf("export", "playlist"))
+        rule.setContent { MessengerTheme { SearchScreen(repo, { _, _ -> }, {}) } }
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/search_recent_light.png")
+        rule.onNodeWithTag("recent:playlist").performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertEquals(listOf("playlist", "export"), repo.store.recentSearches())
+        rule.onNodeWithTag("recent").assertDoesNotExist()
+        rule.onNodeWithContentDescription("Clear").performClick()
+        rule.onNodeWithTag("search").performTextInput("tunio")
+        rule.onNodeWithTag("search").performImeAction()
+        rule.waitForIdle()
+        org.junit.Assert.assertEquals(listOf("tunio", "playlist", "export"), repo.store.recentSearches())
+        rule.onNodeWithContentDescription("Clear").performClick()
+        rule.onNodeWithTag("recent-clear").performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertEquals(emptyList<String>(), repo.store.recentSearches())
     }
     /** AII-125: the Unread chip keeps only chats with a badge. */
     @Test fun unreadChipLight() {
