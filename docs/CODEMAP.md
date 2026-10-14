@@ -21,7 +21,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Mapper.kt: turns the board's answers into what the screens show.
 - data/Models.kt: data classes for the board's chats and messages.
 - data/News.kt: what is new since you last looked, and quiet hours.
-- data/Remind.kt: Remind me about a message (AII-201): in 1 hour, this evening 18:00 (hidden after), tomorrow 9:00; reminders kept in Store, fired by work/RemindWorker.kt as an alert that opens the chat at the message.
+- data/Remind.kt: chatKeys = chats with a reminder (AII-226). Remind me about a message (AII-201): in 1 hour, this evening 18:00 (hidden after), tomorrow 9:00, or Pick a time… (day then time, Pause.onDay, AII-225); reminders kept in Store, fired by work/RemindWorker.kt as an alert that opens the chat at the message.
 - data/Silent.kt: Silent alerts for one chat (AII-207): its alerts show with no sound or buzz (setSilent in work/ChatNotifier.kt); Mute still wins; switch in chat details and the chat menu.
 - data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
 - data/Mute.kt: mute a chat for 1 hour, 8 hours or until unmuted (AII-157); timed mutes end by themselves.
@@ -59,7 +59,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ChatComposer.kt: the message input with pictures, reply, dictation and quick replies (AII-179).
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
 - ui/ChatsScreen.kt: every chat in one list.
-- ui/ChatRow.kt: one row of the chats list (swipe, hold menu, badges) and its preview, draft and unsent labels.
+- ui/ChatRow.kt: one row of the chats list (swipe, hold menu, badges, a bell when the chat has a reminder AII-226) and its preview, draft and unsent labels.
 - ui/ConnectScreen.kt: connect the phone to a board, or try the demo.
 - ui/Dictate.kt: voice to text with the phone's recogniser.
 - ui/Find.kt: find in a chat (pure).
@@ -81,7 +81,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/Theme.kt: colours and Material theme.
 
 ## widget/
-- work/RemindReceiver.kt: the Remind me in 1 hour button on message alerts (AII-210); the alert keeps its newest message's key and text in its extras (work/ChatNotifier.kt).
+- work/RemindReceiver.kt: the Remind me in 1 hour button on message alerts (AII-210) and Again in 1 hour on the reminder alert itself (AII-224, extra remind_notify = that alert's id, which it dismisses); the alert keeps its newest message's key and text in its extras (work/ChatNotifier.kt).
 - widget/LatestWidget.kt: home screen widget with the newest chats.
 
 ## work/ (background)

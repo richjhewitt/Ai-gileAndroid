@@ -38,6 +38,9 @@ object Remind {
     /** This chat's reminders for the chat details (AII-223): soonest first. */
     fun inChat(all: List<Reminder>, chat: String) = sorted(all.filter { it.chat == chat })
 
+    /** The chats that have a reminder (AII-226), for the bell on the chats list. */
+    fun chatKeys(all: List<Reminder>): Set<String> = all.map { it.chat }.toSet()
+
     /** Cancelling one (AII-209): gone from the list; the caller also cancels its WorkManager job. */
     fun cancel(all: List<Reminder>, id: String) = all.filterNot { it.id == id }
 
