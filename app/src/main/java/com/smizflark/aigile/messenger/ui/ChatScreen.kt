@@ -6,6 +6,7 @@ import java.time.Instant
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -316,7 +317,13 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             goToDate = false
             val to = com.smizflark.aigile.messenger.data.GoToDate.target(days, picked)
             val i = if (to == null) -1 else items.indexOfFirst { it.id == "day:$to" }
-            scope.launch { list.animateScrollToItem(if (i < 0) 0 else i + 1) }   // +1: the spacer at the bottom
+            scope.launch {
+                if (i < 0) { list.animateScrollToItem(0); return@launch }
+                // The list runs upside down, so the day row lands at the bottom: push it up to the top so its messages show below it.
+                list.scrollToItem(i + 1)   // +1: the spacer at the bottom
+                val day = list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == i + 1 } ?: return@launch
+                list.animateScrollBy(-(list.layoutInfo.viewportSize.height - day.size).toFloat().coerceAtLeast(0f))
+            }
         })
     }
     Scaffold(
