@@ -188,6 +188,7 @@
     <string name="enter_sends_sub">Enter sends the message; Shift+Enter makes a new line</string>
     <string name="quick_replies">Quick replies</string>
     <string name="quick_replies_sub">Ready-made replies above an empty message box; a tap puts one in</string>
+    <string name="quick_replies_mine">Your replies, one per line (clear for the starting ones)</string>
     <string-array name="quick_replies_list">
         <item>👍 Go</item>
         <item>Not yet</item>

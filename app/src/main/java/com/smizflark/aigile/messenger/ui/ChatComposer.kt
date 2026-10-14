@@ -253,7 +253,7 @@ private fun SendButton(canSend: Boolean, onSend: () -> Unit, onSendLater: ((Inst
 @Composable
 private fun QuickReplies(onPick: (String) -> Unit) {
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("quick-replies"), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        stringArrayResource(R.array.quick_replies_list).forEach { reply ->
+        Appearance.replies.ifEmpty { stringArrayResource(R.array.quick_replies_list).toList() }.forEach { reply ->
             SuggestionChip(onClick = { onPick(reply) }, label = { Text(reply, maxLines = 1) })
         }
     }

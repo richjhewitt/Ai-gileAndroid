@@ -134,6 +134,11 @@ class Store(context: Context) {
         get() = settings.getBoolean("quickReplies", true)
         set(v) = settings.edit().putBoolean("quickReplies", v).apply()
 
+    /** Your own quick replies, one per line (AII-180); empty means the starting ones. */
+    var quickReplyText: String
+        get() = settings.getString("quickReplyText", "") ?: ""
+        set(v) = settings.edit().putString("quickReplyText", v).apply()
+
     /** Chats pinned to the top of the list (AII-47), by chat key. */
     var pinned: Set<String>
         get() = settings.getStringSet("pinned", emptySet())?.toSet() ?: emptySet()
@@ -246,7 +251,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "quietOn", "look", "phoneColours", "textSize", "enterSends", "quickReplies", "pinned", "muted")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "quietOn", "look", "phoneColours", "textSize", "enterSends", "quickReplies", "quickReplyText", "pinned", "muted")
 
         /** One-time move of the settings out of the pairing file, so the pairing file can stay out of backup. */
         fun moveSettings(from: SharedPreferences, to: SharedPreferences) {

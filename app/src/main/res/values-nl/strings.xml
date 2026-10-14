@@ -188,6 +188,7 @@
     <string name="enter_sends_sub">Enter verstuurt het bericht; Shift+Enter maakt een nieuwe regel</string>
     <string name="quick_replies">Snelle antwoorden</string>
     <string name="quick_replies_sub">Kant-en-klare antwoorden boven een leeg berichtvak; tik en het staat erin</string>
+    <string name="quick_replies_mine">Jouw antwoorden, één per regel (leeg voor de standaard)</string>
     <string-array name="quick_replies_list">
         <item>👍 Ga je gang</item>
         <item>Nog niet</item>

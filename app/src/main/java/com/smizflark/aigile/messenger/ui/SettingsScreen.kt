@@ -58,6 +58,8 @@ import com.smizflark.aigile.messenger.BuildConfig
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Crash
 import com.smizflark.aigile.messenger.data.Repo
+import com.smizflark.aigile.messenger.data.Replies
+import androidx.compose.ui.res.stringArrayResource
 import com.smizflark.aigile.messenger.work.CheckWorker
 import kotlinx.coroutines.launch
 
@@ -108,6 +110,13 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
             }
             Toggle(stringResource(R.string.quick_replies), stringResource(R.string.quick_replies_sub), Appearance.quickReplies, Modifier.testTag("quickReplies")) {
                 Appearance.quickReplies = it; s.quickReplies = it
+            }
+            // AII-180: write your own, one per line; clear the box to get the starting ones back.
+            if (Appearance.quickReplies) {
+                val starting = stringArrayResource(R.array.quick_replies_list).joinToString("\n")
+                var mine by remember { mutableStateOf(s.quickReplyText.ifBlank { starting }) }
+                OutlinedTextField(mine, { mine = it; s.quickReplyText = it; Appearance.replies = Replies.parse(it) },
+                    Modifier.fillMaxWidth().testTag("quickReplyText"), label = { Text(stringResource(R.string.quick_replies_mine)) }, minLines = 2)
             }
             HorizontalDivider()
 

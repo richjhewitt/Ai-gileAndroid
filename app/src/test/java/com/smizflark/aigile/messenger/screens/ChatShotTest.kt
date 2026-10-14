@@ -287,6 +287,23 @@ class ChatShotTest : ShotBase() {
         rule.onNodeWithTag("quickReplies").onChildren().filterToOne(androidx.compose.ui.test.isToggleable()).performClick()
         try { org.junit.Assert.assertFalse(repo.store.quickReplies || Appearance.quickReplies) } finally { Appearance.quickReplies = false; repo.store.quickReplies = true }
     }
+    /** AII-180: type your own replies in Settings; the chat shows them; clear the box and the starting ones are back. */
+    @Test fun ownQuickReplies() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }; prime(c)
+        var settings by androidx.compose.runtime.mutableStateOf(true)
+        rule.setContent { MessengerTheme { if (settings) SettingsScreen(repo, {}, {}) else ChatScreen(repo, c, onBack = {}) } }
+        try {
+            rule.onNodeWithTag("quickReplyText").performScrollTo().performTextReplacement("On my way\n\nBack at 5")
+            org.junit.Assert.assertEquals(listOf("On my way", "Back at 5"), Appearance.replies)
+            settings = false; rule.waitForIdle()
+            rule.onNodeWithText("Back at 5").performClick()
+            rule.onNodeWithTag("input").assertTextEquals("Back at 5", includeEditableText = true)
+            rule.onAllNodesWithText("Not yet").assertCountEquals(0)
+            settings = true; rule.waitForIdle()
+            rule.onNodeWithTag("quickReplyText").performScrollTo().performTextReplacement("")
+            org.junit.Assert.assertEquals(emptyList<String>(), Appearance.replies)
+        } finally { Appearance.quickReplies = false; Appearance.replies = emptyList(); repo.store.quickReplyText = "" }
+    }
     /** AII-122: on a short screen, scroll to the bottom of the chats, tap the title: back at the first chat. */
     @Test @Config(qualifiers = "w411dp-h300dp-xxhdpi") fun titleTapGoesToTop() {
         RuntimeEnvironment.setQualifiers("+notnight")
