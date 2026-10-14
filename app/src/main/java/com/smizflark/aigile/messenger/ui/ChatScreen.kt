@@ -352,6 +352,12 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         scope.launch { list.animateScrollToItem(i + 1); flash = key; delay(1500); if (flash == key) flash = null }   // +1: the spacer at the bottom
     }
 
+    // AII-242: My last message scrolls to your newest sent message (the list is newest first), same jump as a starred one.
+    fun jumpToMine() {
+        val m = items.firstOrNull { it is Row.Msg && it.b.mine }
+        if (m == null) Toast.makeText(view.context, R.string.no_my_message, Toast.LENGTH_SHORT).show() else jumpToStar(m.id)
+    }
+
     if (details) ChatDetails(ref, repo, chatInfo(convo), onFind = { details = false; finding = true },
         starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
         onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> {
@@ -384,7 +390,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         topBar = {
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
                 onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true },
-                onGoToDate = { goToDate = true }, onOpenCard = onOpenCard, silent = silent,
+                onGoToDate = { goToDate = true }, onMyLast = { jumpToMine() }, onOpenCard = onOpenCard, silent = silent,
                 onSilent = { repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent })
         },
     ) { pad ->
