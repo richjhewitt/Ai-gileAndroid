@@ -170,6 +170,13 @@ class BoardSource(
             val ids = upload("_watchman", files)
             call("POST", "/api/chats/_watchman", buildJsonObject { put("text", text); if (ids.isNotEmpty()) put("attachments", ids) }); null
         }
+        target == LEAD_CHAT -> {
+            val ids = upload(ref.id, files)
+            call("POST", "/api/projects/${ref.id}/leadchat", buildJsonObject {
+                put("author", owner()); put("text", text); if (ids.isNotEmpty()) put("attachments", ids)
+            })
+            target
+        }
         target != null -> {
             val ids = upload(ref.id, files)
             call("POST", "/api/projects/${ref.id}/cards/$target/comments", buildJsonObject {

@@ -6,6 +6,7 @@ import com.smizflark.aigile.messenger.data.ChatSummary
 import com.smizflark.aigile.messenger.data.Contact
 import com.smizflark.aigile.messenger.data.FriendMsg
 import com.smizflark.aigile.messenger.data.Kind
+import com.smizflark.aigile.messenger.data.LEAD_CHAT
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.OpenCard
 import com.smizflark.aigile.messenger.data.WireMsg
@@ -69,6 +70,15 @@ class MapperTest {
             cards = mapOf("A-1" to CardInfo("💬 Hi", "idea")),
         ))
         assertEquals("A-1", c.defaultTarget)
+    }
+
+    @Test fun `AII-134 the board's Lead chat is a reply target by its name`() {
+        val c = Mapper.conversation(lead, thread(
+            WireMsg("_lead", "💬 Lead chat", "Lead", "Morning!", "2026-10-13T01:00:00Z"),
+            cards = mapOf("_lead" to CardInfo("💬 Lead chat", "lead")),
+        ))
+        assertEquals(LEAD_CHAT, c.defaultTarget)
+        assertEquals("💬 Lead chat", c.targets.first().label)
     }
 
     @Test fun doneCardsAreNotReplyTargets() {
