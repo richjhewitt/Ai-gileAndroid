@@ -353,7 +353,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
 
     if (details) ChatDetails(ref, repo, chatInfo(convo), onFind = { details = false; finding = true },
-        starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) },
+        starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
         onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> {
             // AII-139: the whole chat as text through the phone's share menu.
             val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")

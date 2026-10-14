@@ -51,4 +51,12 @@ class RemindTest {
         assertEquals(listOf(a), Remind.cancel(listOf(a, b), "b"))
         assertEquals("remind-c|m1", Remind.workName(Remind.idOf("c", "m1")))
     }
+
+    @Test fun chatDetailsListsOnlyThisChatsRemindersSoonestFirst() {
+        val a = Reminder("c|1", "c", "C", "1", "one", 300)
+        val b = Reminder("c|2", "c", "C", "2", "two", 100)
+        val o = Reminder("d|1", "d", "D", "1", "other", 50)
+        assertEquals(listOf(b, a), Remind.inChat(listOf(a, o, b), "c"))
+        assertEquals(emptyList<Reminder>(), Remind.inChat(listOf(o), "c"))
+    }
 }
