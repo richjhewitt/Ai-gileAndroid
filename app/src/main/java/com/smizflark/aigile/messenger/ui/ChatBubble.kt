@@ -269,6 +269,11 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     // Android 13+ shows its own "copied" note; a toast as well would say it twice.
                     if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
                 })
+                DropdownMenuItem(text = { Text(stringResource(R.string.copy_quote)) }, modifier = Modifier.testTag("copy-quote"), onClick = {
+                    menu = false
+                    clipboard.setText(AnnotatedString(com.smizflark.aigile.messenger.data.Quote.copy(Markdown.plain(shown))))
+                    if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
+                })
                 if (shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.select_text)) }, modifier = Modifier.testTag("select"),
                     onClick = { menu = false; selecting = true })
                 // AII-129: copy a link in the message on its own; several links get one line each.

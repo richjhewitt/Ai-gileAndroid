@@ -20,6 +20,7 @@
     <string name="stop_reading">Stop reading</string>
     <string name="forward_to">Forward to…</string>
     <string name="forward_search">Search chats</string>
+    <string name="copy_quote">Copy as quote</string>
     <string name="copied">Copied</string>
     <string name="empty_chats">No chats yet</string>
     <string name="empty_chats_new">New message</string>
