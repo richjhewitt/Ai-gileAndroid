@@ -1,6 +1,8 @@
 package com.smizflark.aigile.messenger.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.smizflark.aigile.messenger.work.waitingToSend
+import java.time.Instant
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -146,6 +148,18 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         deliver(repo.queue(ref, t, to, files))
     }
 
+    /** What is typed in the box, now or (Send later, AII-146) at [at]. */
+    fun sendTyped(at: Instant? = null) {
+        val body = Quote.with(quoting, text.trim()).takeIf { text.isNotBlank() } ?: text
+        val to = if (ref.kind == Kind.LEAD) focus ?: target else null
+        if (at == null) send(body, to, pics)
+        else if (body.isNotBlank() || pics.isNotEmpty()) {
+            repo.later(ref, body.trim(), to, pics, at); pending = repo.pendingFor(ref.key)
+            scope.launch { list.animateScrollToItem(0) }
+        }
+        text = ""; pics = emptyList(); picNote = null; quoting = null
+    }
+
     // Pictures (AII-27): the system photo picker needs no permission; each pick is copied into the app at once.
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(MAX_PICS)) { uris ->
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
@@ -185,10 +199,15 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(ref.key) {
         // Anything left from last time goes first (it was saved before sending, so nothing is lost).
-        repo.pendingFor(ref.key).filter { !it.failed || it.offline }.forEach { deliver(it) }
+        waitingToSend(repo.pendingFor(ref.key)).forEach { deliver(it) }
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             // Live: every 3 s while the chat is busy, easing off to 30 s when it is quiet; never in the background.
-            while (true) { pace.after(load()); pace.sleep() }
+            while (true) {
+                pace.after(load())
+                // Send later (AII-146): one that came due while the chat is open goes now (in the demo this is the only way).
+                waitingToSend(pending.filter { it.sendAt != null }).forEach { deliver(it) }
+                pace.sleep()
+            }
         }
     }
 
@@ -324,6 +343,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                             }, onForward = { forwarding = it.text }, cards = if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onCard = onOpenCard,
                                 onOption = { send(it, r.b.card) },
                                 onRetry = { p -> deliver(p) },
+                                onSendNow = { p -> pending = repo.pendingFor(ref.key); scope.launch { repo.sendNow(ref, p).onSuccess { load() }.onFailure { error = it.message }; pending = repo.pendingFor(ref.key) } },
                                 onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) },
                                 onQuote = { q -> jumpToQuote(q, r.id) },
                                 starred = Stars.has(stars, ref.key, r.b.key),
@@ -345,9 +365,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 onRemovePic = { f -> pics = pics - f; File(f).delete() },
                 onPasteCopied = if (copied.available && pics.size < MAX_PICS) ::pasteCopied else null,
                 quote = quoting, onClearQuote = { quoting = null },
-            ) {
-                send(Quote.with(quoting, text.trim()).takeIf { text.isNotBlank() } ?: text, if (ref.kind == Kind.LEAD) focus ?: target else null, pics); text = ""; pics = emptyList(); picNote = null; quoting = null
-            }
+                onSendLater = { at -> sendTyped(at) },
+            ) { sendTyped() }
         }
     }
 }

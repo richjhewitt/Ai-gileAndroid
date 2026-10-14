@@ -12,6 +12,8 @@ import androidx.work.WorkerParameters
 import com.smizflark.aigile.messenger.App
 import com.smizflark.aigile.messenger.data.BoardError
 import com.smizflark.aigile.messenger.data.Pending
+import java.time.Duration
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 /**
@@ -40,11 +42,24 @@ class SendWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 .build()
             WorkManager.getInstance(context).enqueueUniqueWork(NAME, ExistingWorkPolicy.KEEP, req)
         }
+
+        /** Send later (AII-146): wakes at [at] to send what is due, even with the app closed. */
+        fun scheduleAt(context: Context, id: String, at: Instant) {
+            val req = OneTimeWorkRequestBuilder<SendWorker>()
+                .setInitialDelay(Duration.between(Instant.now(), at).toMillis().coerceAtLeast(0), TimeUnit.MILLISECONDS)
+                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork("$NAME-$id", ExistingWorkPolicy.REPLACE, req)
+        }
     }
 }
+
+/** Send later (AII-146): still held back at [now]. */
+fun later(p: Pending, now: Instant = Instant.now()) = p.sendAt?.let { runCatching { Instant.parse(it) > now }.getOrNull() } == true
 
 /** The board couldn't be reached at all (no signal, PC off), as opposed to the board saying no. */
 fun isOffline(e: Throwable) = e is BoardError && e.code == 0
 
-/** Messages that should still go by themselves: never tried, or stopped only by having no connection. */
-fun waitingToSend(outbox: List<Pending>) = outbox.filter { !it.failed || it.offline }
+/** Messages that should still go by themselves: never tried, or stopped only by having no connection; Send later ones once due. */
+fun waitingToSend(outbox: List<Pending>, now: Instant = Instant.now()) = outbox.filter { (!it.failed || it.offline) && !later(it, now) }

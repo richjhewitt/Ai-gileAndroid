@@ -285,6 +285,23 @@ class ScreenshotTest {
             rule.waitUntil(5_000) { rule.onAllNodesWithTag("mine").fetchSemanticsNodes().size > before }
         } finally { Appearance.enterSends = false }
     }
+    /** AII-146: hold Send, Send in 1 hour: it waits marked "Sends at"; tap the mark, Send now: it goes. */
+    @Test fun sendLater() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }; prime(c); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, c, onBack = {}) } }
+        rule.onNodeWithTag("input").performTextInput("Morning! Coffee later?")
+        rule.onNodeWithTag("send").performTouchInput { longClick() }
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/send_later_menu_light.png")
+        rule.onNodeWithTag("send-hour").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("later-mark").assertIsDisplayed()
+        org.junit.Assert.assertEquals("2026-10-13T14:00:00Z", repo.pendingFor(c.key).single().sendAt)
+        rule.onRoot().captureRoboImage("../docs/shots/send_later_light.png")
+        rule.onNodeWithTag("later-mark").performClick()
+        rule.onNodeWithTag("send-now").performClick()
+        rule.waitUntil(5_000) { repo.pendingFor(c.key).isEmpty() }
+    }
     @Test fun enterSendsSetting() {
         rule.setContent { MessengerTheme { SettingsScreen(repo, {}, {}) } }
         rule.onNodeWithTag("enterSends").performScrollTo()

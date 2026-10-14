@@ -50,6 +50,12 @@
     <string name="not_sent">Not sent</string>
     <string name="not_sent_desc">Not sent. Tap to retry or delete</string>
     <string name="retry_or_delete">Retry or delete</string>
+    <string name="send_later">Send later</string>
+    <string name="send_in_hour">Send in 1 hour</string>
+    <string name="send_morning">Send at 8:00 in the morning</string>
+    <string name="sends_at">Sends at %1$s</string>
+    <string name="send_now">Send now</string>
+    <string name="later_options">Send now or delete</string>
     <string name="retry">Retry</string>
     <string name="delete">Delete</string>
     <string name="chat_empty">No messages yet. Say hello below.</string>

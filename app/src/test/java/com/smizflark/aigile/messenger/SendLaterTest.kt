@@ -1,0 +1,47 @@
+package com.smizflark.aigile.messenger
+
+import com.smizflark.aigile.messenger.data.Now
+import com.smizflark.aigile.messenger.data.Pending
+import com.smizflark.aigile.messenger.data.SendState
+import com.smizflark.aigile.messenger.ui.Row
+import com.smizflark.aigile.messenger.ui.rows
+import com.smizflark.aigile.messenger.work.later
+import com.smizflark.aigile.messenger.work.waitingToSend
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+
+/** Send later (AII-146): held back until its time, then it goes like any waiting message. */
+class SendLaterTest {
+    private val now = Instant.parse("2026-10-14T03:00:00Z")
+    private fun p(id: String, sendAt: String? = null, failed: Boolean = false, offline: Boolean = false) =
+        Pending(id, "lead:ai-gile", "hi", null, "2026-10-14T02:59:00Z", failed, offline = offline, sendAt = sendAt)
+
+    @After fun clock() { Now.clock = Clock.systemDefaultZone() }
+
+    @Test fun heldUntilItsTime() {
+        assertTrue(later(p("a", "2026-10-14T08:00:00Z"), now))
+        assertFalse(later(p("b", "2026-10-14T02:00:00Z"), now))
+        assertFalse(later(p("c"), now))
+        assertFalse(later(p("d", "not a time"), now))
+    }
+
+    @Test fun onlyDueOnesGoByThemselves() {
+        val out = listOf(p("now"), p("later", "2026-10-14T08:00:00Z"), p("due", "2026-10-14T02:30:00Z"),
+            p("due-offline", "2026-10-14T02:30:00Z", failed = true, offline = true))
+        assertEquals(listOf("now", "due", "due-offline"), waitingToSend(out, now).map { it.id })
+    }
+
+    @Test fun theChatShowsItsSendTime() {
+        Now.clock = Clock.fixed(now, ZoneOffset.UTC)
+        val r = rows(null, listOf(p("a", "2026-10-14T08:00:00Z"), p("b")), "Rich").filterIsInstance<Row.Msg>()
+        assertEquals(SendState.LATER, r[0].b.state)
+        assertEquals("2026-10-14T08:00:00Z", r[0].b.at)
+        assertEquals(SendState.SENDING, r[1].b.state)
+    }
+}

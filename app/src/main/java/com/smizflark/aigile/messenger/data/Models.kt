@@ -145,7 +145,8 @@ data class ChatRef(
     val key get() = "${kind.name.lowercase()}:$id"
 }
 
-enum class SendState { SENT, SENDING, FAILED }
+/** LATER: held back by Send later (AII-146) until its time. */
+enum class SendState { SENT, SENDING, FAILED, LATER }
 
 @Serializable
 data class Bubble(
@@ -198,4 +199,6 @@ data class Pending(
     val files: List<String> = emptyList(),
     /** Failed only for want of a connection: it goes by itself when the phone is back online (AII-55). */
     val offline: Boolean = false,
+    /** Send later (AII-146): it waits until this time (ISO instant); null sends at once. */
+    val sendAt: String? = null,
 )
