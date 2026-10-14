@@ -9,6 +9,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 ## data/ (pure logic, mostly unit tested)
 - data/ChatInfo.kt: a chat's open cards and pictures, for the chat details sheet.
 - data/ChatInfo.kt also lists non-picture files and guesses their MIME type (AII-197).
+- data/ChatInfo.kt also counts a chat's messages, yours and the first day, for the About this chat line (AII-203).
 - data/Links.kt: every web link in a chat (http links, [name](url), bare addresses), newest first, once each, at most 50, for the chat details Links list (AII-194).
 - data/Crash.kt: keeps the last crash and turns it into a bug message for the team.
 - data/Demo.kt: made-up chats that answer back, for trying the app with no board.

@@ -67,6 +67,12 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                     Text(ref.subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+            // AII-203: what the app has for this chat.
+            info.about?.let { ab ->
+                val n = androidx.compose.ui.res.pluralStringResource(R.plurals.about_chat_count, ab.total, ab.total)
+                Text(if (ab.since != null) stringResource(R.string.about_chat, n, com.smizflark.aigile.messenger.data.aboutDate(ab.since), ab.mine) else stringResource(R.string.about_chat_nodate, n, ab.mine),
+                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp).testTag("details-about"))
+            }
             // AII-128: straight to the find bar from here.
             FlowRow(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (onFind != null) OutlinedButton(onClick = onFind, modifier = Modifier.testTag("details-find")) {

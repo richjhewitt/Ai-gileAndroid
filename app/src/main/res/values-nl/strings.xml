@@ -278,6 +278,12 @@
         <item quantity="one">%1$d foto toevoegen…</item>
         <item quantity="other">%1$d foto’s toevoegen…</item>
     </plurals>
+    <plurals name="about_chat_count">
+        <item quantity="one">%1$d bericht</item>
+        <item quantity="other">%1$d berichten</item>
+    </plurals>
+    <string name="about_chat">%1$s sinds %2$s · %3$d van jou</string>
+    <string name="about_chat_nodate">%1$s · %2$d van jou</string>
     <string name="open_cards">Open kaarten</string>
     <string name="no_open_cards">Er wacht niets op je.</string>
     <string name="chat_pictures">Foto\'s in deze chat</string>
