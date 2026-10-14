@@ -18,4 +18,10 @@ object Outbox {
 
     /** Failed for good: the server refused, or the tries ran out. These get the red mark. */
     fun failedForGood(l: List<Pending>) = l.filter { it.failed && !it.offline }
+
+    /** Failed for good between [before] and [after] (AII-151): these get a Not sent alert, once. */
+    fun newlyFailed(before: List<Pending>, after: List<Pending>): List<Pending> {
+        val had = failedForGood(before).map { it.id }.toSet()
+        return failedForGood(after).filter { it.id !in had }
+    }
 }

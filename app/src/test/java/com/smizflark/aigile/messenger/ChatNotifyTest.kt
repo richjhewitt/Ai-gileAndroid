@@ -36,6 +36,16 @@ class ChatNotifyTest {
         return NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(n)!!.messages.map { it.text.toString() }
     }
 
+    /** AII-151: a message that gave up gets its own alert, outside the chat stack, so no summary is made. */
+    @Test fun notSentAlertSaysWhichMessage() {
+        ChatNotifier.notSent(context, "lead:a", "AI-gile", "p1", "Morning team")
+        val n = nm.activeNotifications.single()
+        assertEquals("AI-gile", n.notification.extras.getString(Notification.EXTRA_TITLE))
+        assertEquals("Not sent: “Morning team”. Tap to retry or delete.", n.notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+        ChatNotifier.post(context, item("lead:b", "Tunio", "yo"))
+        assertNull(nm.activeNotifications.firstOrNull { it.id == ChatNotifier.SUMMARY })
+    }
+
     @Test fun twoMessagesInOneChatGiveOneNotificationWithTwoLines() {
         ChatNotifier.post(context, item("lead:a", "AI-gile", "first"))
         ChatNotifier.post(context, item("lead:a", "AI-gile", "second"))

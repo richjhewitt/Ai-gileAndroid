@@ -222,6 +222,7 @@
     <string name="notify_me">Ik</string>
     <string name="notify_sent">Verstuurd ✓</string>
     <string name="notify_not_sent">Niet verstuurd: %1$s. Open de chat om het opnieuw te proberen.</string>
+    <string name="notify_gave_up">Niet verstuurd: “%1$s”. Tik om opnieuw te proberen of te verwijderen.</string>
     <string name="notify_no_connection">geen verbinding</string>
     <string name="notify_chat_missing">chat niet gevonden</string>
     <string name="time_now">nu</string>

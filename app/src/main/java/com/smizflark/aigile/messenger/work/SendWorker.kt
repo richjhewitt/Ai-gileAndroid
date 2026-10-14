@@ -11,6 +11,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.smizflark.aigile.messenger.App
 import com.smizflark.aigile.messenger.data.BoardError
+import com.smizflark.aigile.messenger.data.Outbox
 import com.smizflark.aigile.messenger.data.Pending
 import java.time.Duration
 import java.time.Instant
@@ -26,7 +27,13 @@ class SendWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         val repo = (applicationContext as App).repo
         if (!repo.store.connected || repo.store.demo) return Result.success()
         val giveUp = runAttemptCount >= MAX_TRIES
+        val before = repo.store.outbox()
         val left = repo.sendWaiting(giveUp)
+        // AII-151: one that gave up while you weren't looking gets an alert.
+        val names = repo.store.cachedChats().orEmpty().associate { it.key to it.name }
+        Outbox.newlyFailed(before, repo.store.outbox()).forEach { p ->
+            ChatNotifier.notSent(applicationContext, p.chat, names[p.chat] ?: p.chat, p.id, p.text)
+        }
         return if (left > 0 && !giveUp) Result.retry() else Result.success()
     }
 
