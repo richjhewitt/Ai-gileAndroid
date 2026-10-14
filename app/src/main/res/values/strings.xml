@@ -225,4 +225,8 @@
     <string name="no_open_cards">Nothing is waiting on you.</string>
     <string name="chat_pictures">Pictures in this chat</string>
     <string name="no_chat_pictures">No pictures yet.</string>
+    <string name="close_chat">Close chat</string>
+    <string name="reopen_chat">Reopen chat</string>
+    <string name="closed_show">Show %1$d closed</string>
+    <string name="closed_hide">Hide closed</string>
 </resources>

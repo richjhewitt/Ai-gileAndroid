@@ -157,6 +157,11 @@ class Store(context: Context) {
     fun setMuted(chat: String, on: Boolean) =
         settings.edit().putStringSet("muted", if (on) muted() + chat else muted() - chat).apply()
 
+    /* ---------- closed chats: off the list until a newer message (AII-131), per board ---------- */
+
+    fun closed(): Map<String, String> = read("closed.json") ?: emptyMap()
+    fun setClosed(all: Map<String, String>) = write("closed.json", all)
+
     /* ---------- seen: the newest message from them you have looked at, per chat ---------- */
 
     fun seen(): Map<String, String> = read("seen.json") ?: emptyMap()
