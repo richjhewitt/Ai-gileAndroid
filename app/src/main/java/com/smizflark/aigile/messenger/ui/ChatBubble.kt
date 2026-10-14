@@ -37,6 +37,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -219,12 +220,18 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 }
             }
         }
+        val pop = remember { Animatable(0f) }   // AII-206: the ★ that pops on a double-tap
+        Box {
         Surface(
             color = bg,
             border = when (mark) { 2 -> BorderStroke(3.dp, cs.tertiary); 1 -> BorderStroke(1.5.dp, cs.tertiary.copy(alpha = 0.6f)); else -> null },   // AII-78: find matches
             shape = RoundedCornerShape(18.dp, 18.dp, if (b.mine) 4.dp else 18.dp, if (b.mine) 18.dp else 4.dp),
             modifier = Modifier.widthIn(max = 320.dp).semantics(mergeDescendants = true) {}.testTag(if (b.mine) "mine" else "theirs")
-                .combinedClickable(onClick = { showTime = !showTime }, onLongClick = { menu = true }),
+                .combinedClickable(onClick = { showTime = !showTime }, onLongClick = { menu = true },
+                    onDoubleClick = if (onStar != null && b.state == SendState.SENT && !b.unverified) { {
+                        if (!starred) scope.launch { pop.snapTo(0f); pop.animateTo(1f, tween(450)) }
+                        onStar()
+                    } } else null),
         ) {
             // AII-201: Remind me picks a time; at that time an alert shows the message and opens the chat at it.
             DropdownMenu(expanded = remindMenu, onDismissRequest = { remindMenu = false }) {
@@ -330,6 +337,11 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     modifier = Modifier.align(Alignment.End),
                 )
             }
+        }
+        if (pop.value > 0f && pop.value < 1f) Text("★", color = cs.primary, style = MaterialTheme.typography.displaySmall,
+            modifier = Modifier.align(Alignment.Center).graphicsLayer {
+                val t = pop.value; val sc = 0.5f + 1.0f * t; scaleX = sc; scaleY = sc; alpha = 1f - t * t
+            })
         }
         }
         if (selecting) SelectText(shown.text) { selecting = false }
