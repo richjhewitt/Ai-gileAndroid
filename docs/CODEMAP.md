@@ -11,6 +11,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Crash.kt: keeps the last crash and turns it into a bug message for the team.
 - data/Demo.kt: made-up chats that answer back, for trying the app with no board.
 - data/Drafts.kt: half-typed replies, one per chat.
+- data/GoToDate.kt: Go to date in a chat (AII-193): which day to land on, and the picker's range (dialog: ui/GoToDateDialog.kt).
 - data/Filter.kt: the chips above the chats list.
 - data/Forward.kt: forwarding a message to another chat.
 - data/Mapper.kt: turns the board's answers into what the screens show.

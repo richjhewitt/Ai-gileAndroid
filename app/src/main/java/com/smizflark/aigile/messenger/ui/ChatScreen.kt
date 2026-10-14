@@ -308,10 +308,22 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         } }) { details = false; muted = ref.key in repo.store.muted() }
     if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false },
         onDismiss = { muteAsk = false })
+    // AII-193: Go to date lands on that day's day row, else the next later day with messages, else the newest.
+    var goToDate by remember { mutableStateOf(false) }
+    if (goToDate) {
+        val days = items.mapNotNull { (it as? Row.Day)?.id?.removePrefix("day:")?.let { d -> runCatching { java.time.LocalDate.parse(d) }.getOrNull() } }
+        GoToDateDialog(days, onDismiss = { goToDate = false }, onPick = { picked ->
+            goToDate = false
+            val to = com.smizflark.aigile.messenger.data.GoToDate.target(days, picked)
+            val i = if (to == null) -1 else items.indexOfFirst { it.id == "day:$to" }
+            scope.launch { list.animateScrollToItem(if (i < 0) 0 else i + 1) }   // +1: the spacer at the bottom
+        })
+    }
     Scaffold(
         topBar = {
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
-                onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true })
+                onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true },
+                onGoToDate = { goToDate = true })
         },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {

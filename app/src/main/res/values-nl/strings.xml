@@ -42,6 +42,7 @@
     <string name="back">Terug</string>
     <string name="more">Meer</string>
     <string name="search">Zoeken</string>
+    <string name="go_to_date">Ga naar datum</string>
     <string name="find_in_chat">Zoeken in dit gesprek</string>
     <string name="share_chat">Gesprek delen</string>
     <string name="find_hint">Zoek</string>
