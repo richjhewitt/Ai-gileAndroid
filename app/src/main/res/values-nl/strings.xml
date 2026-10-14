@@ -65,7 +65,7 @@
     <string name="retry_or_delete">Opnieuw proberen of verwijderen</string>
     <string name="send_later">Later versturen</string>
     <string name="send_in_hour">Over 1 uur versturen</string>
-    <string name="send_morning">'s Ochtends versturen, %1$s</string>
+    <string name="send_morning">\'s Ochtends versturen, %1$s</string>
     <string name="morning_time">Ochtendtijd voor Later versturen</string>
     <string name="send_pick_time">Kies een tijd…</string>
     <string name="send_pick_day">Kies een dag…</string>
