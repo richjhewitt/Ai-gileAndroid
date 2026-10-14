@@ -199,6 +199,9 @@
     <string name="message_sent_undo">Verzenden over 5 seconden</string>
     <string name="play_gifs">GIF-links afspelen</string>
     <string name="play_gifs_sub">GIF-links (giphy, tenor) spelen af in het gesprek; uit laat ze als link staan</string>
+    <string name="swipe_right">Naar rechts vegen</string>
+    <string name="swipe_left">Naar links vegen</string>
+    <string name="swipe_nothing">Niets</string>
     <string name="buzz">Trilling</string>
     <string name="buzz_sub">Een korte trilling bij versturen en als er een antwoord binnenkomt</string>
     <string name="enter_sends_sub">Enter verstuurt het bericht; Shift+Enter maakt een nieuwe regel</string>
