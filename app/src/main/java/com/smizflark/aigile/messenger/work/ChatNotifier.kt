@@ -14,6 +14,8 @@ import com.smizflark.aigile.messenger.MainActivity
 import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.QuickReply
+import com.smizflark.aigile.messenger.data.Replies
+import com.smizflark.aigile.messenger.data.Store
 import java.time.Instant
 
 /**
@@ -47,6 +49,13 @@ object ChatNotifier {
     private fun chatCount(context: Context) = context.getSystemService(NotificationManager::class.java)
         .activeNotifications.count { it.id != SUMMARY && it.notification.group == GROUP && it.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0 }
 
+    /** AII-181: your quick replies as one-tap chips on the alert, or none when they are switched off. */
+    fun choices(context: Context): Array<CharSequence>? {
+        val store = Store(context)
+        if (!store.quickReplies) return null
+        return Replies.parse(store.quickReplyText).ifEmpty { context.resources.getStringArray(R.array.quick_replies_list).toList() }.toTypedArray()
+    }
+
     /** A chat's notification with the lines of [style], and its Reply button. */
     private fun build(context: Context, chat: String, name: String, style: NotificationCompat.MessagingStyle): NotificationCompat.Builder {
         val id = QuickReply.notificationId(chat)
@@ -54,7 +63,8 @@ object ChatNotifier {
         val replyPi = PendingIntent.getBroadcast(context, id, reply,
             PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0))
         val action = NotificationCompat.Action.Builder(R.drawable.ic_notify, context.getString(R.string.reply), replyPi)
-            .addRemoteInput(RemoteInput.Builder(ReplyReceiver.KEY_TEXT).setLabel(context.getString(R.string.notify_reply_to, name)).build())
+            .addRemoteInput(RemoteInput.Builder(ReplyReceiver.KEY_TEXT).setLabel(context.getString(R.string.notify_reply_to, name))
+                .setChoices(choices(context)).build())
             .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
             .setShowsUserInterface(false)
             .build()

@@ -46,6 +46,24 @@ class ChatNotifyTest {
         assertNull(nm.activeNotifications.firstOrNull { it.id == ChatNotifier.SUMMARY })
     }
 
+    private fun choices(chat: String) = NotificationCompat.getAction(nm.activeNotifications.first { it.id == QuickReply.notificationId(chat) }.notification, 0)!!
+        .remoteInputs!!.single().choices?.map { it.toString() }
+
+    /** AII-181: the alert's Reply offers your quick replies; your own when written, none when switched off. */
+    @Test fun alertOffersQuickReplies() {
+        val store = com.smizflark.aigile.messenger.data.Store(context)
+        try {
+            ChatNotifier.post(context, item("lead:a", "AI-gile", "hi"))
+            assertEquals(listOf("👍 Go", "Not yet", "Looks good, thanks!", "👉 any update?"), choices("lead:a"))
+            store.quickReplyText = "On my way\nLater"
+            ChatNotifier.post(context, item("lead:a", "AI-gile", "again"))
+            assertEquals(listOf("On my way", "Later"), choices("lead:a"))
+            store.quickReplies = false
+            ChatNotifier.post(context, item("lead:a", "AI-gile", "and again"))
+            assertNull(choices("lead:a"))
+        } finally { store.quickReplies = true; store.quickReplyText = "" }
+    }
+
     @Test fun twoMessagesInOneChatGiveOneNotificationWithTwoLines() {
         ChatNotifier.post(context, item("lead:a", "AI-gile", "first"))
         ChatNotifier.post(context, item("lead:a", "AI-gile", "second"))
