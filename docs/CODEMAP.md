@@ -24,6 +24,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Pins.kt: pinned chats first.
 - data/QuickReply.kt: replying from the notification.
 - data/Quote.kt: quoting a message in a reply.
+- data/Recent.kt: recent searches, newest first, at most 5 (AII-155).
 - data/Repo.kt: the one place screens and background checks get chats from.
 - data/ScrollPlace.kt: remembers where you left each chat.
 - data/Seal.kt: seals every board call end to end (AES-256-GCM, key from pairing; vectors in docs/SEALED.md).

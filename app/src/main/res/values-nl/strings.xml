@@ -30,6 +30,8 @@
     <string name="search_searching">Zoeken…</string>
     <string name="search_no_results">Niets gevonden voor “%1$s”</string>
     <string name="search_clear">Zoekopdracht wissen</string>
+    <string name="search_recent">Recente zoekopdrachten</string>
+    <string name="search_recent_clear">Wissen</string>
     <string name="empty_pick_team">Nog geen chats om naar te schrijven</string>
     <string name="back">Terug</string>
     <string name="more">Meer</string>
