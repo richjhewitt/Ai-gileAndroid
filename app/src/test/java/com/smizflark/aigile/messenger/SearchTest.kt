@@ -5,6 +5,7 @@ import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Conversation
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Search
+import com.smizflark.aigile.messenger.data.Star
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -33,6 +34,19 @@ class SearchTest {
         assertEquals("loco-radio", hits[0].ref.id); assertNull(hits[0].bubble)
         assertEquals(listOf("AIG-1"), hits.drop(1).map { it.bubble?.card })
         assertEquals(listOf("AIG-2", "LOC-9", "AIG-1"), Search.run("is", listOf(), convs).map { it.bubble?.card })
+    }
+
+    @Test fun starredKeepsOnlyStarredMessagesThatMatchNewestFirst() {   // AII-246
+        val all = listOf(gile, radio, ann)
+        val stars = listOf(
+            Star("lead:ai-gile", "AIG-1:2026-10-01T10:00:00Z", "Lead", "x", "2026-10-01T10:00:00Z"),
+            Star("lead:loco-radio", "LOC-9:2026-10-02T10:00:00Z", "Lead", "x", "2026-10-02T10:00:00Z"),
+            Star("lead:ai-gile", "gone:1", "Lead", "x", "2026-10-05T10:00:00Z"),
+        )
+        assertEquals(listOf("LOC-9", "AIG-1"), Search.run("", all, convs, starred = stars).map { it.bubble?.card })
+        assertEquals(listOf("AIG-1"), Search.run("player", all, convs, starred = stars).map { it.bubble?.card })
+        assertTrue(Search.run("cafe", all, convs, starred = stars).isEmpty())
+        assertTrue(Search.run("", all, convs, starred = emptyList()).isEmpty())
     }
 
     @Test fun ignoresCaseAndAccents() {
