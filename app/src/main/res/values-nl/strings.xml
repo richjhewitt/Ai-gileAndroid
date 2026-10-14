@@ -20,6 +20,7 @@
     <string name="stop_reading">Stoppen met voorlezen</string>
     <string name="forward_to">Doorsturen naar…</string>
     <string name="forward_search">Chats zoeken</string>
+    <string name="copy_quote">Kopiëren als citaat</string>
     <string name="copied">Gekopieerd</string>
     <string name="empty_chats">Nog geen chats</string>
     <string name="empty_chats_new">Nieuw bericht</string>

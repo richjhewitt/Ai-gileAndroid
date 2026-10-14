@@ -16,6 +16,9 @@ object Quote {
         return "> " + (if (author.isNotBlank()) "**$author:** " else "") + cut
     }
 
+    /** A whole message as markdown quote lines ("> " before each line), then a blank line (AII-236). */
+    fun copy(plain: String) = plain.trim('\n').lines().joinToString("\n") { "> $it" } + "\n\n"
+
     /** The message to send: the quote, a blank line, then the reply. */
     fun with(quote: String?, reply: String) = if (quote.isNullOrBlank()) reply else "$quote\n\n$reply"
 

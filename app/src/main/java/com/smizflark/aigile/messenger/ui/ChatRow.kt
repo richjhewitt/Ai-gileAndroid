@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.Badge
 import androidx.compose.material3.DropdownMenu
@@ -52,6 +53,7 @@ import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Now
 import com.smizflark.aigile.messenger.data.Mute
+import com.smizflark.aigile.messenger.data.Silent
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.SwipeAction
@@ -134,6 +136,9 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
                     // AII-226: a bell when a message in this chat has a reminder.
                     if (reminded) Icon(Icons.Default.NotificationsActive, stringResource(R.string.has_reminder), Modifier.padding(start = 4.dp).size(14.dp).testTag("row-reminder"),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // AII-235: silent alerts show a speaker-off icon; muted wins.
+                    if (!muted && Silent.quiet(repo.store.silent, emptySet(), c.key)) Icon(Icons.AutoMirrored.Filled.VolumeOff, stringResource(R.string.silent_alerts),
+                        Modifier.padding(start = 4.dp).size(16.dp).testTag("row-silent"), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     // AII-165: a timed mute shows when it ends.
                     repo.store.mutedUntil()[c.key]?.takeIf { muted }?.let { end ->
                         Text(stringResource(R.string.muted_until, Mute.endTime(end)), style = MaterialTheme.typography.labelSmall, maxLines = 1,
