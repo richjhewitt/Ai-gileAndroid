@@ -177,7 +177,11 @@ private fun HitRow(h: Hit, repo: Repo, onClick: () -> Unit) {
                 if (b != null) Text(shortTime(b.at), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(
-                if (b == null) stringResource(R.string.open_chat) else h.snippet,
+                if (b == null) androidx.compose.ui.text.AnnotatedString(stringResource(R.string.open_chat))
+                else androidx.compose.ui.text.buildAnnotatedString {
+                    append(h.snippet)
+                    h.marks.forEach { addStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface), it.first, it.last + 1) }
+                },
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2, overflow = TextOverflow.Ellipsis,
             )
