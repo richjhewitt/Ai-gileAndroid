@@ -66,6 +66,7 @@ class ScreenshotTest {
         repo = Repo(ApplicationProvider.getApplicationContext<Application>())
         repo.startDemo()
         chats = runBlocking { repo.chats() }
+        repo.store.updateChecked = Now.millis()   // AII-132: no GitHub call in screenshot tests
     }
 
     @After fun tearDown() { Now.clock = java.time.Clock.systemDefaultZone() }
@@ -88,6 +89,16 @@ class ScreenshotTest {
         repo.store.pausedUntil = Now.today().plusDays(1).atTime(8, 0).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         shot("chats_paused", false) { ChatsScreen(repo, {}, {}, {}) }
         repo.store.pausedUntil = 0L
+    }
+    @Test fun newVersionLight() {   // AII-132
+        repo.store.release = com.smizflark.aigile.messenger.data.Release(com.smizflark.aigile.messenger.BuildConfig.VERSION_CODE + 1, "https://example.com/a.apk")
+        shot("chats_new_version", false) { ChatsScreen(repo, {}, {}, {}) }
+        rule.onNodeWithTag("newVersion").assertExists()
+    }
+    @Test fun noBarWhenUpToDate() {
+        repo.store.release = com.smizflark.aigile.messenger.data.Release(com.smizflark.aigile.messenger.BuildConfig.VERSION_CODE, "https://example.com/a.apk")
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        rule.onNodeWithTag("newVersion").assertDoesNotExist()
     }
     @Test fun draftLight() {
         repo.store.saveDraft(lead().key, "Sounds good, I'll check the\nscreenshot tonight")

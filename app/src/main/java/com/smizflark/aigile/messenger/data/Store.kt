@@ -133,6 +133,15 @@ class Store(context: Context) {
         get() = prefs.getLong("lastSync", 0)
         set(v) = prefs.edit().putLong("lastSync", v).apply()
 
+    /** 'New version' bar (AII-132): when GitHub was last asked, and the newest release it named. */
+    var updateChecked: Long
+        get() = prefs.getLong("updateChecked", 0)
+        set(v) = prefs.edit().putLong("updateChecked", v).apply()
+
+    var release: Release?
+        get() = prefs.getString("releaseUrl", null)?.let { Release(prefs.getInt("releaseBuild", 0), it) }
+        set(v) = prefs.edit().putInt("releaseBuild", v?.build ?: 0).putString("releaseUrl", v?.url).apply()
+
     fun signOut() {
         prefs.edit().clear().apply()
         settings.edit().clear().apply()
