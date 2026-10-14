@@ -178,6 +178,8 @@ data class Bubble(
 @Serializable
 data class Pic(val path: String, val name: String = "", val type: String = "") {
     val local get() = path.startsWith("file:") || path.startsWith("content:") || path.startsWith("android.resource:")
+    /** A GIF linked in the text (AII-188), straight from the web. */
+    val web get() = path.startsWith("https://")
     val image get() = type.startsWith("image/") || Regex("(?i)\\.(png|jpe?g|gif|webp|bmp|heic)$").containsMatchIn(name.ifEmpty { path })
 }
 

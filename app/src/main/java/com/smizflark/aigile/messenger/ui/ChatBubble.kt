@@ -101,6 +101,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.smizflark.aigile.messenger.data.Bubble
+import com.smizflark.aigile.messenger.data.Gif
 import com.smizflark.aigile.messenger.data.CardDetail
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Conversation
@@ -269,7 +270,9 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 if (!b.mine && ref.kind != Kind.FRIEND && b.author.isNotBlank()) {
                     Text(b.author, style = MaterialTheme.typography.labelMedium, color = cs.primary)
                 }
-                if (b.pics.isNotEmpty()) MessagePictures(b.pics, repo)
+                // AII-188: GIF links in the text play here too, like on the board.
+                val pics = remember(b.pics, b.text, b.unverified) { if (b.unverified) b.pics else b.pics + Gif.pics(b.text) }
+                if (pics.isNotEmpty()) MessagePictures(pics, repo)
                 val (forwarded, body) = Forward.split(b.text)
                 if (forwarded) Text(stringResource(R.string.forwarded_label), style = MaterialTheme.typography.labelSmall, color = fg.copy(alpha = 0.6f), modifier = Modifier.testTag("forwarded"))
                 val (quoted, rest) = Quote.split(body)
