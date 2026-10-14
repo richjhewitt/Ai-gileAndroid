@@ -77,6 +77,8 @@ object Appearance {
     /** Enter sends (AII-126): read by the message box. */
     var enterSends by mutableStateOf(false)
     var gifs by mutableStateOf(true)
+    /** Compact chats list (AII-212). */
+    var compact by mutableStateOf(false)
     /** Undo send (AII-202): Send waits 5 seconds with an Undo bar. */
     var undoSend by mutableStateOf(false)
     /** Buzz on send and on a new reply (AII-205). */
@@ -89,7 +91,7 @@ object Appearance {
     var replies by mutableStateOf(emptyList<String>())
 
     fun load(store: Store) {
-        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; morning = store.morning; buzz = store.buzz; undoSend = store.undoSend; quickReplies = store.quickReplies; replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
+        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; compact = store.compact; morning = store.morning; buzz = store.buzz; undoSend = store.undoSend; quickReplies = store.quickReplies; replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
     }
 }
 

@@ -59,6 +59,10 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [34], qualifiers = "w411dp-h891dp-xxhdpi")
 class ChatsListShotTest : ShotBase() {
     @Test fun chatsLight() = shot("chats", false) { ChatsScreen(repo, {}, {}, {}) }
+    @Test fun compactLight() {   // AII-212
+        com.smizflark.aigile.messenger.ui.Appearance.compact = true
+        try { shot("chats_compact", false) { ChatsScreen(repo, {}, {}, {}) } } finally { com.smizflark.aigile.messenger.ui.Appearance.compact = false }
+    }
     @Test fun pausedLight() {
         repo.store.pausedUntil = Now.today().plusDays(1).atTime(8, 0).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         shot("chats_paused", false) { ChatsScreen(repo, {}, {}, {}) }

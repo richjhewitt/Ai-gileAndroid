@@ -88,7 +88,7 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
     Row(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).combinedClickable(onClickLabel = stringResource(R.string.open_chat), role = Role.Button, onClick = onClick,
             onLongClick = { menu = true }, onLongClickLabel = stringResource(R.string.options))
-            .padding(horizontal = 16.dp, vertical = 12.dp).testTag("chat:${c.key}"),
+            .padding(horizontal = 16.dp, vertical = if (Appearance.compact) 6.dp else 12.dp).testTag("chat:${c.key}"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
@@ -105,7 +105,7 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
             DropdownMenuItem(text = { Text(stringResource(if (closed) R.string.reopen_chat else R.string.close_chat)) }, leadingIcon = { Icon(Icons.Default.Close, null) },
                 onClick = { menu = false; onClose(!closed) }, modifier = Modifier.testTag("menu-close"))
         }
-        Avatar(c, repo)
+        Avatar(c, repo, if (Appearance.compact) 36.dp else 48.dp)   // AII-212
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
