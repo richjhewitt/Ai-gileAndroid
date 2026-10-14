@@ -110,15 +110,18 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                     Icon(Icons.Default.Done, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.save_chat))
                 }
             }
-            SwitchRow(stringResource(R.string.mute_alerts), muted, "details-mute") {
-                if (it) muteAsk = true else { muted = false; muteEnds = null; repo.store.setMuted(ref.key, false) }
+            // AII-245: Mute and Silent alerts side by side.
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                SwitchRow(stringResource(R.string.mute_alerts), muted, "details-mute", Modifier.weight(1f)) {
+                    if (it) muteAsk = true else { muted = false; muteEnds = null; repo.store.setMuted(ref.key, false) }
+                }
+                SwitchRow(stringResource(R.string.silent_alerts), silent, "details-silent", Modifier.weight(1f)) {
+                    repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent
+                }
             }
             muteEnds?.takeIf { muted }?.let { end ->
                 Text(stringResource(R.string.muted_until, com.smizflark.aigile.messenger.data.Mute.endTime(end)), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("details-mute-ends"))
-            }
-            SwitchRow(stringResource(R.string.silent_alerts), silent, "details-silent") {
-                repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent
             }
             SwitchRow(stringResource(R.string.pin), pinned, "details-pin") {
                 repo.store.pinned = togglePin(repo.store.pinned, ref.key); pinned = ref.key in repo.store.pinned
@@ -189,9 +192,9 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
 }
 
 @Composable
-private fun SwitchRow(label: String, on: Boolean, tag: String, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodyLarge)
+private fun SwitchRow(label: String, on: Boolean, tag: String, modifier: Modifier = Modifier.fillMaxWidth(), onChange: (Boolean) -> Unit) {
+    Row(modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp))
         Switch(checked = on, onCheckedChange = onChange, modifier = Modifier.testTag(tag))
     }
 }
