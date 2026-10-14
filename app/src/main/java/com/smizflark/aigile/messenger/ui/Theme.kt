@@ -81,6 +81,7 @@ object Appearance {
     var compact by mutableStateOf(false)
     /** Muted chats sink to the bottom of the chats list (AII-221). */
     var mutedLast by mutableStateOf(false)
+    var sortAz by mutableStateOf(false)   // AII-241
     /** Undo send (AII-202): Send waits 5 seconds with an Undo bar. */
     var undoSend by mutableStateOf(false)
     var undoSeconds by mutableStateOf(5)
@@ -101,7 +102,7 @@ object Appearance {
 
     /** Reads everything again, so the screen follows a reset at once (AII-217). */
     fun reload(store: Store) {
-        run { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; compact = store.compact; mutedLast = store.mutedLast; morning = store.morning; buzz = store.buzz; undoSend = store.undoSend; undoSeconds = store.undoSeconds; quickReplies = store.quickReplies; showTimes = store.showTimes; swipeRight = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeRight, com.smizflark.aigile.messenger.data.SWIPE_RIGHT_DEFAULT); swipeLeft = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeLeft, com.smizflark.aigile.messenger.data.SWIPE_LEFT_DEFAULT); replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
+        run { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; compact = store.compact; mutedLast = store.mutedLast; sortAz = store.sortChats == "az"; morning = store.morning; buzz = store.buzz; undoSend = store.undoSend; undoSeconds = store.undoSeconds; quickReplies = store.quickReplies; showTimes = store.showTimes; swipeRight = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeRight, com.smizflark.aigile.messenger.data.SWIPE_RIGHT_DEFAULT); swipeLeft = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeLeft, com.smizflark.aigile.messenger.data.SWIPE_LEFT_DEFAULT); replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
     }
 }
 
@@ -182,12 +183,13 @@ fun MessengerTheme(store: Store? = null, content: @Composable () -> Unit) {
 @Composable
 fun AppearanceSettings(store: Store) {
     Appearance.load(store)
+    val ctx = androidx.compose.ui.platform.LocalContext.current.applicationContext
     Column(Modifier.selectableGroup()) {
         Look.entries.forEach { l ->
             Row(
                 Modifier.fillMaxWidth().heightIn(min = 52.dp)
                     .selectable(selected = Appearance.look == l, role = Role.RadioButton) {
-                        Appearance.look = l; store.look = l.id
+                        Appearance.look = l; store.look = l.id; com.smizflark.aigile.messenger.widget.LatestWidget.refresh(ctx)
                     }
                     .testTag("look:${l.id}"),
                 verticalAlignment = Alignment.CenterVertically,

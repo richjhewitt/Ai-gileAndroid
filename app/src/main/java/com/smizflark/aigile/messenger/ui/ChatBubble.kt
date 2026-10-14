@@ -236,6 +236,13 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             // AII-201: Remind me picks a time; at that time an alert shows the message and opens the chat at it.
             DropdownMenu(expanded = remindMenu, onDismissRequest = { remindMenu = false }) {
                 val nowMs = com.smizflark.aigile.messenger.data.Now.millis()
+                val setRemind = { at: Long ->
+                    val r = com.smizflark.aigile.messenger.data.Reminder(com.smizflark.aigile.messenger.data.Remind.idOf(ref.key, b.key), ref.key, ref.name, b.key,
+                        Markdown.plain(shown).trim(), at)
+                    repo.store.setReminders(com.smizflark.aigile.messenger.data.Remind.add(repo.store.reminders(), r))
+                    com.smizflark.aigile.messenger.work.RemindWorker.schedule(ctx, r)
+                    Toast.makeText(ctx, ctx.getString(R.string.remind_set, com.smizflark.aigile.messenger.data.Mute.endTime(at)), Toast.LENGTH_SHORT).show()
+                }
                 com.smizflark.aigile.messenger.data.Remind.choices(nowMs).forEach { w ->
                     val label = when (w) {
                         com.smizflark.aigile.messenger.data.Remind.When.HOUR -> R.string.remind_hour
@@ -244,14 +251,19 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     }
                     DropdownMenuItem(text = { Text(stringResource(label)) }, modifier = Modifier.testTag("remind-$w"), onClick = {
                         remindMenu = false
-                        val at = com.smizflark.aigile.messenger.data.Remind.at(com.smizflark.aigile.messenger.data.Now.millis(), w) ?: return@DropdownMenuItem
-                        val r = com.smizflark.aigile.messenger.data.Reminder(com.smizflark.aigile.messenger.data.Remind.idOf(ref.key, b.key), ref.key, ref.name, b.key,
-                            Markdown.plain(shown).trim(), at)
-                        repo.store.setReminders(com.smizflark.aigile.messenger.data.Remind.add(repo.store.reminders(), r))
-                        com.smizflark.aigile.messenger.work.RemindWorker.schedule(ctx, r)
-                        Toast.makeText(ctx, ctx.getString(R.string.remind_set, com.smizflark.aigile.messenger.data.Mute.endTime(at)), Toast.LENGTH_SHORT).show()
+                        setRemind(com.smizflark.aigile.messenger.data.Remind.at(com.smizflark.aigile.messenger.data.Now.millis(), w) ?: return@DropdownMenuItem)
                     })
                 }
+                // AII-225: any day and time, like Send later's pick a day; a time already gone rolls to the next one (Pause.onDay).
+                DropdownMenuItem(text = { Text(stringResource(R.string.remind_pick)) }, modifier = Modifier.testTag("remind-pick"), onClick = {
+                    remindMenu = false
+                    val today = com.smizflark.aigile.messenger.data.Now.today()
+                    android.app.DatePickerDialog(ctx, { _, y, mo, d ->
+                        val day = java.time.LocalDate.of(y, mo + 1, d)
+                        android.app.TimePickerDialog(ctx, { _, h, m -> setRemind(com.smizflark.aigile.messenger.data.Pause.onDay(com.smizflark.aigile.messenger.data.Now.millis(), day, h, m)) },
+                            9, 0, android.text.format.DateFormat.is24HourFormat(ctx)).show()
+                    }, today.year, today.monthValue - 1, today.dayOfMonth).apply { datePicker.minDate = com.smizflark.aigile.messenger.data.Now.millis() - 1000 }.show()
+                })
             }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                 if (b.state == SendState.SENT && !b.unverified && shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.remind_me)) }, modifier = Modifier.testTag("remind"),
@@ -267,6 +279,11 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     menu = false
                     clipboard.setText(AnnotatedString(Markdown.plain(shown)))
                     // Android 13+ shows its own "copied" note; a toast as well would say it twice.
+                    if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
+                })
+                DropdownMenuItem(text = { Text(stringResource(R.string.copy_quote)) }, modifier = Modifier.testTag("copy-quote"), onClick = {
+                    menu = false
+                    clipboard.setText(AnnotatedString(com.smizflark.aigile.messenger.data.Quote.copy(Markdown.plain(shown))))
                     if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
                 })
                 if (shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.select_text)) }, modifier = Modifier.testTag("select"),

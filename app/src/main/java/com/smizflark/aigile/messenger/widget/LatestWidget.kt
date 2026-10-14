@@ -13,7 +13,10 @@ import android.widget.RemoteViews
 import com.smizflark.aigile.messenger.MainActivity
 import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.ChatRef
+import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.Store
+import com.smizflark.aigile.messenger.ui.Look
+import com.smizflark.aigile.messenger.ui.isDark
 import com.smizflark.aigile.messenger.work.CheckWorker
 import java.time.Duration
 import java.time.Instant
@@ -21,10 +24,11 @@ import java.time.Instant
 /* ---------- rows: what the widget shows, worked out without Android so it can be tested ---------- */
 
 object WidgetRows {
-    data class Row(val chat: String, val title: String, val subtitle: String, val ago: String, val new: Boolean)
+    data class Row(val chat: String, val title: String, val subtitle: String, val ago: String, val new: Boolean, val badge: String = "")
 
     /** The newest chats first, at most [max]. A chat is new when its last message is newer than the one you saw. */
-    fun rows(chats: List<ChatRef>, seen: Map<String, String>, now: Instant, max: Int = 4): List<Row> =
+    fun rows(chats: List<ChatRef>, seen: Map<String, String>, now: Instant, max: Int = 4,
+             unread: Map<String, Int> = emptyMap(), muted: Set<String> = emptySet()): List<Row> =
         chats.sortedByDescending { it.last ?: "" }.take(max).map { c ->
             Row(
                 chat = c.key,
@@ -32,8 +36,12 @@ object WidgetRows {
                 subtitle = com.smizflark.aigile.messenger.ui.previewLabel(c),   // newest message, as on the chats list (AII-106)
                 ago = ago(c.last, now),
                 new = c.last != null && c.last > (seen[c.key] ?: ""),
+                badge = if (c.key in muted || !com.smizflark.aigile.messenger.data.News.fresh(c, seen[c.key])) "" else badge(unread[c.key] ?: 0),
             )
         }
+
+    /** The unread badge text, as on the chats list: nothing for 0, "99+" over 99 (AII-218). */
+    fun badge(n: Int): String = if (n <= 0) "" else if (n > 99) "99+" else "$n"
 
     /** "now", "5m", "3h", "2d": short enough for a widget. */
     fun ago(iso: String?, now: Instant): String {
@@ -48,6 +56,20 @@ object WidgetRows {
     }
 }
 
+/* ---------- look: the widget's colours for the app's look (AII-230), pure so it can be tested ---------- */
+
+object WidgetLook {
+    /** [bg]: 0 light, 1 dark, 2 black (which background drawable to use). */
+    data class Colours(val bg: Int, val title: Int, val sub: Int, val brand: Int)
+
+    /** Light, dark or pure black; "follow the phone" is the phone's night mode. */
+    fun colours(look: Look, systemDark: Boolean): Colours = when {
+        look == Look.Black -> Colours(2, 0xFFF3F4F6.toInt(), 0xFF9CA3AF.toInt(), 0xFF4ADE80.toInt())
+        isDark(look, systemDark) -> Colours(1, 0xFFF3F4F6.toInt(), 0xFF9CA3AF.toInt(), 0xFF4ADE80.toInt())
+        else -> Colours(0, 0xFF1F2937.toInt(), 0xFF6B7280.toInt(), 0xFF16A34A.toInt())
+    }
+}
+
 /* ---------- widget: latest chats on the home screen, from the phone's cache (no network here) ---------- */
 
 class LatestWidget : AppWidgetProvider() {
@@ -59,10 +81,10 @@ class LatestWidget : AppWidgetProvider() {
 
     companion object {
         private val ROWS = listOf(
-            intArrayOf(R.id.row0, R.id.title0, R.id.sub0, R.id.ago0, R.id.dot0),
-            intArrayOf(R.id.row1, R.id.title1, R.id.sub1, R.id.ago1, R.id.dot1),
-            intArrayOf(R.id.row2, R.id.title2, R.id.sub2, R.id.ago2, R.id.dot2),
-            intArrayOf(R.id.row3, R.id.title3, R.id.sub3, R.id.ago3, R.id.dot3),
+            intArrayOf(R.id.row0, R.id.title0, R.id.sub0, R.id.ago0, R.id.dot0, R.id.badge0),
+            intArrayOf(R.id.row1, R.id.title1, R.id.sub1, R.id.ago1, R.id.dot1, R.id.badge1),
+            intArrayOf(R.id.row2, R.id.title2, R.id.sub2, R.id.ago2, R.id.dot2, R.id.badge2),
+            intArrayOf(R.id.row3, R.id.title3, R.id.sub3, R.id.ago3, R.id.dot3, R.id.badge3),
         )
 
         /** Redraws every widget on the home screen. Called when the chat list is fetched or you sign out. */
@@ -84,20 +106,32 @@ class LatestWidget : AppWidgetProvider() {
 
         private fun render(context: Context): RemoteViews {
             val store = Store(context)
-            val rows = if (store.connected) WidgetRows.rows(store.cachedChats().orEmpty(), store.seen(), Instant.now()) else emptyList()
+            val chats = store.cachedChats().orEmpty()
+            val seen = store.seen()
+            val unread = chats.associate { it.key to News.unread(it, seen[it.key], store.cachedConversation(it.key)) }
+            val rows = if (store.connected) WidgetRows.rows(chats, seen, Instant.now(), unread = unread, muted = store.muted()) else emptyList()
             val v = RemoteViews(context.packageName, R.layout.widget_latest)
+            val nightOn = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+            val c = WidgetLook.colours(Look.of(store.look), nightOn)
+            v.setInt(R.id.root, "setBackgroundResource", intArrayOf(R.drawable.widget_bg_light, R.drawable.widget_bg_dark, R.drawable.widget_bg_black)[c.bg])
+            v.setTextColor(R.id.header, c.brand)
+            v.setTextColor(R.id.empty, c.sub)
             v.setOnClickPendingIntent(R.id.header, open(context, 0, null))
             v.setViewVisibility(R.id.empty, if (rows.isEmpty()) View.VISIBLE else View.GONE)
             v.setTextViewText(R.id.empty, context.getString(if (store.connected) R.string.widget_no_chats else R.string.widget_connect))
             v.setOnClickPendingIntent(R.id.empty, open(context, 0, null))
-            ROWS.forEachIndexed { n, (row, title, sub, ago, dot) ->
+            ROWS.forEachIndexed { n, ids ->
+                val (row, title, sub, ago, dot) = ids; val badge = ids[5]
                 val r = rows.getOrNull(n)
                 v.setViewVisibility(row, if (r == null) View.GONE else View.VISIBLE)
                 if (r == null) return@forEachIndexed
+                v.setTextColor(title, c.title); v.setTextColor(sub, c.sub); v.setTextColor(ago, c.sub); v.setTextColor(dot, c.brand)
                 v.setTextViewText(title, r.title)
                 v.setTextViewText(sub, r.subtitle)
                 v.setTextViewText(ago, r.ago)
                 v.setViewVisibility(dot, if (r.new) View.VISIBLE else View.GONE)
+                v.setViewVisibility(badge, if (r.badge.isEmpty()) View.GONE else View.VISIBLE)
+                v.setTextViewText(badge, r.badge)
                 v.setOnClickPendingIntent(row, open(context, n + 1, r.chat))
             }
             return v

@@ -50,4 +50,9 @@ class QuoteTest {
         val (q, rest) = Quote.split("plain text")
         assertNull(q); assertEquals("plain text", rest)
     }
+
+    @Test fun copyAsQuote() {
+        assertEquals("> hi\n> there\n> \n> bye\n\n", Quote.copy("hi\nthere\n\nbye"))
+        assertEquals("> one\n\n", Quote.copy("one\n"))
+    }
 }

@@ -163,3 +163,27 @@ internal fun SwipePick(title: String, value: com.smizflark.aigile.messenger.data
             }
         }, confirmButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.cancel)) } })
 }
+
+/** Sort chats (AII-241): Newest first or A to Z. */
+@Composable
+internal fun SortPick(az: Boolean, onPick: (Boolean) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    val title = stringResource(R.string.sort_chats)
+    Column(Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(role = androidx.compose.ui.semantics.Role.Button) { open = true }.testTag("sortChats"),
+        verticalArrangement = Arrangement.Center) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(if (az) R.string.sort_az else R.string.sort_newest), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    if (open) AlertDialog(onDismissRequest = { open = false }, title = { Text(title) },
+        text = {
+            Column(Modifier.selectableGroup()) {
+                listOf(false to R.string.sort_newest, true to R.string.sort_az).forEach { (v, label) ->
+                    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected = v == az, role = androidx.compose.ui.semantics.Role.RadioButton) { onPick(v); open = false }
+                        .testTag("sortChats:${if (v) "az" else "newest"}"), verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = v == az, onClick = null)
+                        Text(stringResource(label), Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+        }, confirmButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.cancel)) } })
+}

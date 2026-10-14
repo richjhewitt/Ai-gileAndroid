@@ -18,7 +18,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.Badge
 import androidx.compose.material3.DropdownMenu
@@ -51,6 +53,7 @@ import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Now
 import com.smizflark.aigile.messenger.data.Mute
+import com.smizflark.aigile.messenger.data.Silent
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.SwipeAction
@@ -60,7 +63,7 @@ import com.smizflark.aigile.messenger.data.swipeAction
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>, draft: String?, closed: Boolean,
+internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, reminded: Boolean, unsent: List<Pending>, draft: String?, closed: Boolean,
                     onRead: () -> Unit, onUnread: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClose: (Boolean) -> Unit, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     // Swipes do what Settings says (AII-216; starting: right = mark read, left = mute/unmute, AII-61). The row always springs back.
@@ -105,6 +108,15 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            // AII-240: Remind me in 1 hour about the chat's newest message (from the cache; hidden when there is none).
+            val newest = remember(menu) { if (menu) repo.store.cachedConversation(c.key)?.bubbles?.lastOrNull() else null }
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            if (newest != null) DropdownMenuItem(text = { Text(stringResource(R.string.remind_in_hour)) }, leadingIcon = { Icon(Icons.Default.NotificationsActive, null) },
+                onClick = {
+                    menu = false
+                    val at = com.smizflark.aigile.messenger.work.RemindWorker.inAnHour(ctx, repo.store, c.key, c.name, newest.key, Markdown.plain(Markdown.render(newest.text, Color.Transparent, Color.Transparent)).trim())
+                    if (at != null) android.widget.Toast.makeText(ctx, ctx.getString(R.string.remind_set, Mute.endTime(at)), android.widget.Toast.LENGTH_SHORT).show()
+                }, modifier = Modifier.testTag("menu-remind"))
             // Read chats offer Mark as unread instead (AII-119); the Lead Scrum Master goes by the board's count, so it can't.
             if (fresh || c.kind == Kind.WATCHMAN) DropdownMenuItem(text = { Text(stringResource(R.string.mark_read)) }, enabled = fresh, onClick = { menu = false; onRead() })
             else DropdownMenuItem(text = { Text(stringResource(R.string.mark_unread)) }, onClick = { menu = false; onUnread() }, modifier = Modifier.testTag("menu-unread"))
@@ -130,6 +142,12 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (muted) Icon(Icons.Default.NotificationsOff, stringResource(R.string.muted), Modifier.padding(start = 4.dp).size(16.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // AII-226: a bell when a message in this chat has a reminder.
+                    if (reminded) Icon(Icons.Default.NotificationsActive, stringResource(R.string.has_reminder), Modifier.padding(start = 4.dp).size(14.dp).testTag("row-reminder"),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // AII-235: silent alerts show a speaker-off icon; muted wins.
+                    if (!muted && Silent.quiet(repo.store.silent, emptySet(), c.key)) Icon(Icons.AutoMirrored.Filled.VolumeOff, stringResource(R.string.silent_alerts),
+                        Modifier.padding(start = 4.dp).size(16.dp).testTag("row-silent"), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     // AII-165: a timed mute shows when it ends.
                     repo.store.mutedUntil()[c.key]?.takeIf { muted }?.let { end ->
                         Text(stringResource(R.string.muted_until, Mute.endTime(end)), style = MaterialTheme.typography.labelSmall, maxLines = 1,

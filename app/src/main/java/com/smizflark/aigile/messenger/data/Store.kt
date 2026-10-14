@@ -87,9 +87,9 @@ class Store(context: Context) {
         get() = prefs.getBoolean("lock", false)
         set(v) = prefs.edit().putBoolean("lock", v).apply()
 
-    /** AII-234: seconds away before the lock asks again; 0 = straight away. Kept with [lock], so not backed up. */
+    /** AII-234: seconds away before the lock asks again; 0 = straight away, default 60 as before. Kept with [lock], so not backed up. */
     var lockAfter: Int
-        get() = prefs.getInt("lockAfter", 0)
+        get() = prefs.getInt("lockAfter", 60)
         set(v) = prefs.edit().putInt("lockAfter", v).apply()
 
     /** AII-208: the hour "Send in the morning" uses (Send later, AII-146). */
@@ -98,6 +98,10 @@ class Store(context: Context) {
         set(v) = settings.edit().putInt("morning", v).apply()
 
     /** AII-212: smaller chats list rows, so more chats fit. */
+    /** Sort chats (AII-241): "newest" (default) or "az". */
+    var sortChats: String
+        get() = settings.getString("sortChats", "newest") ?: "newest"
+        set(v) = settings.edit().putString("sortChats", v).apply()
     var mutedLast: Boolean
         get() = settings.getBoolean("mutedLast", false)
         set(v) = settings.edit().putBoolean("mutedLast", v).apply()
@@ -309,7 +313,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "enterSends", "undoSend", "undoSeconds", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
 
         /** What "Reset settings" clears (AII-217): every backed-up setting except the ones that are your data. */
         val KEPT_ON_RESET = setOf("pinned", "muted", "silent")

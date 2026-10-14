@@ -2,7 +2,7 @@
 <!-- Home-screen widget: the latest chats, newest first (filled in by widget/LatestWidget.kt) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:padding="12dp" android:background="@drawable/widget_bg">
+    android:orientation="vertical" android:padding="12dp" android:background="@drawable/widget_bg_light" android:id="@+id/root">
     <TextView android:id="@+id/header" android:layout_width="match_parent" android:layout_height="wrap_content"
         android:text="@string/app_name" android:textColor="@color/brand" android:textSize="13sp" android:textStyle="bold"
         android:paddingBottom="4dp" />
@@ -19,6 +19,10 @@
                 <TextView android:id="@+id/sub0" android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:maxLines="1" android:ellipsize="end" android:textColor="#FF6B7280" android:textSize="13sp" />
             </LinearLayout>
+            <TextView android:id="@+id/badge0" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp" android:background="@drawable/widget_badge" android:minWidth="18dp" android:gravity="center"
+                android:paddingStart="5dp" android:paddingEnd="5dp" android:textColor="#FFFFFFFF" android:textSize="11sp" android:textStyle="bold"
+                android:maxLines="1" android:visibility="gone" />
             <TextView android:id="@+id/ago0" android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:paddingStart="8dp" android:textColor="#FF6B7280" android:textSize="12sp" />
         </LinearLayout>
@@ -32,6 +36,10 @@
                 <TextView android:id="@+id/sub1" android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:maxLines="1" android:ellipsize="end" android:textColor="#FF6B7280" android:textSize="13sp" />
             </LinearLayout>
+            <TextView android:id="@+id/badge1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp" android:background="@drawable/widget_badge" android:minWidth="18dp" android:gravity="center"
+                android:paddingStart="5dp" android:paddingEnd="5dp" android:textColor="#FFFFFFFF" android:textSize="11sp" android:textStyle="bold"
+                android:maxLines="1" android:visibility="gone" />
             <TextView android:id="@+id/ago1" android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:paddingStart="8dp" android:textColor="#FF6B7280" android:textSize="12sp" />
         </LinearLayout>
@@ -45,6 +53,10 @@
                 <TextView android:id="@+id/sub2" android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:maxLines="1" android:ellipsize="end" android:textColor="#FF6B7280" android:textSize="13sp" />
             </LinearLayout>
+            <TextView android:id="@+id/badge2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp" android:background="@drawable/widget_badge" android:minWidth="18dp" android:gravity="center"
+                android:paddingStart="5dp" android:paddingEnd="5dp" android:textColor="#FFFFFFFF" android:textSize="11sp" android:textStyle="bold"
+                android:maxLines="1" android:visibility="gone" />
             <TextView android:id="@+id/ago2" android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:paddingStart="8dp" android:textColor="#FF6B7280" android:textSize="12sp" />
         </LinearLayout>
@@ -58,6 +70,10 @@
                 <TextView android:id="@+id/sub3" android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:maxLines="1" android:ellipsize="end" android:textColor="#FF6B7280" android:textSize="13sp" />
             </LinearLayout>
+            <TextView android:id="@+id/badge3" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp" android:background="@drawable/widget_badge" android:minWidth="18dp" android:gravity="center"
+                android:paddingStart="5dp" android:paddingEnd="5dp" android:textColor="#FFFFFFFF" android:textSize="11sp" android:textStyle="bold"
+                android:maxLines="1" android:visibility="gone" />
             <TextView android:id="@+id/ago3" android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:paddingStart="8dp" android:textColor="#FF6B7280" android:textSize="12sp" />
         </LinearLayout>

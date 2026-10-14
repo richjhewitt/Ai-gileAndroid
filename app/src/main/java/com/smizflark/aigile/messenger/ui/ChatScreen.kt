@@ -352,6 +352,12 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         scope.launch { list.animateScrollToItem(i + 1); flash = key; delay(1500); if (flash == key) flash = null }   // +1: the spacer at the bottom
     }
 
+    // AII-242: My last message scrolls to your newest sent message (the list is newest first), same jump as a starred one.
+    fun jumpToMine() {
+        val m = items.firstOrNull { it is Row.Msg && it.b.mine }
+        if (m == null) Toast.makeText(view.context, R.string.no_my_message, Toast.LENGTH_SHORT).show() else jumpToStar(m.id)
+    }
+
     if (details) ChatDetails(ref, repo, chatInfo(convo), onFind = { details = false; finding = true },
         starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
         onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> {
@@ -359,6 +365,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
                 .putExtra(android.content.Intent.EXTRA_SUBJECT, ref.name).putExtra(android.content.Intent.EXTRA_TEXT, Transcript.of(c, owner) { fullTime(it) })
             runCatching { view.context.startActivity(android.content.Intent.createChooser(send, null)) }
+        } },
+        onSave = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> {
+            // AII-229: the same text, saved as a .txt in Downloads.
+            val ok = saveTextFile(view.context, Transcript.fileName(ref.name, com.smizflark.aigile.messenger.data.Now.today()), Transcript.of(c, owner) { fullTime(it) })
+            Toast.makeText(view.context, if (ok) R.string.saved_to_downloads else R.string.save_failed, Toast.LENGTH_SHORT).show()
         } }) { details = false; muted = ref.key in repo.store.muted() }
     if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false },
         onDismiss = { muteAsk = false })
@@ -384,7 +395,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         topBar = {
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
                 onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true },
-                onGoToDate = { goToDate = true }, onOpenCard = onOpenCard, silent = silent,
+                onGoToDate = { goToDate = true }, onMyLast = { jumpToMine() }, onOpenCard = onOpenCard, silent = silent,
                 onSilent = { repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent })
         },
     ) { pad ->

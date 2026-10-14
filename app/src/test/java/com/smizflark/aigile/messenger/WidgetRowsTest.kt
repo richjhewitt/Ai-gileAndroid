@@ -42,4 +42,21 @@ class WidgetRowsTest {
         assertEquals("", WidgetRows.ago(null, now))
         assertEquals("", WidgetRows.ago("garbage", now))
     }
+
+    @Test fun badgeCountsLikeTheList() {
+        assertEquals("", WidgetRows.badge(0))
+        assertEquals("7", WidgetRows.badge(7))
+        assertEquals("99", WidgetRows.badge(99))
+        assertEquals("99+", WidgetRows.badge(100))
+    }
+
+    @Test fun mutedAndReadChatsShowNoBadge() {
+        val l = listOf(chat("a", "2026-10-13T11:00:00Z"), chat("b", "2026-10-13T11:00:00Z"), chat("c", "2026-10-13T11:00:00Z"))
+        val seen = mapOf("lead:c" to "2026-10-13T11:00:00Z")
+        val unread = mapOf("lead:a" to 3, "lead:b" to 5, "lead:c" to 2)
+        val by = WidgetRows.rows(l, seen, now, unread = unread, muted = setOf("lead:b")).associateBy { it.chat }
+        assertEquals("3", by["lead:a"]!!.badge)
+        assertEquals("", by["lead:b"]!!.badge)
+        assertEquals("", by["lead:c"]!!.badge)
+    }
 }

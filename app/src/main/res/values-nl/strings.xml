@@ -20,6 +20,7 @@
     <string name="stop_reading">Stoppen met voorlezen</string>
     <string name="forward_to">Doorsturen naar…</string>
     <string name="forward_search">Chats zoeken</string>
+    <string name="copy_quote">Kopiëren als citaat</string>
     <string name="copied">Gekopieerd</string>
     <string name="empty_chats">Nog geen chats</string>
     <string name="empty_chats_new">Nieuw bericht</string>
@@ -45,9 +46,15 @@
     <string name="back">Terug</string>
     <string name="more">Meer</string>
     <string name="search">Zoeken</string>
+    <string name="my_last_message">Mijn laatste bericht</string>
+    <string name="no_my_message">Je hebt hier nog geen bericht verstuurd</string>
     <string name="go_to_date">Ga naar datum</string>
     <string name="find_in_chat">Zoeken in dit gesprek</string>
     <string name="share_chat">Gesprek delen</string>
+    <string name="save_chat">Opslaan als bestand</string>
+    <string name="saved_to_downloads">Opgeslagen in Downloads</string>
+    <string name="save_failed">Bestand opslaan mislukt</string>
+    <string name="first_message">Eerste bericht</string>
     <string name="find_hint">Zoek</string>
     <string name="find_count">%1$d van %2$d</string>
     <string name="find_none">Geen resultaten</string>
@@ -214,6 +221,9 @@
     <string name="play_gifs">GIF-links afspelen</string>
     <string name="play_gifs_sub">GIF-links (giphy, tenor) spelen af in het gesprek; uit laat ze als link staan</string>
     <string name="compact_list">Compacte lijst</string>
+    <string name="sort_chats">Gesprekken sorteren</string>
+    <string name="sort_newest">Nieuwste eerst</string>
+    <string name="sort_az">A tot Z</string>
     <string name="muted_last">Gedempte gesprekken onderaan</string>
     <string name="muted_last_sub">Gedempte gesprekken staan onder alle andere</string>
     <string name="compact_list_sub">Kleinere rijen, zodat er meer gesprekken op het scherm passen</string>
@@ -328,6 +338,9 @@
     <string name="empty_reminders">Geen herinneringen</string>
     <string name="cancel_reminder">Annuleren</string>
     <string name="remind_in_hour">Herinner me over 1 uur</string>
+    <string name="remind_again">Opnieuw over 1 uur</string>
+    <string name="remind_pick">Kies een tijd…</string>
+    <string name="has_reminder">Heeft een herinnering</string>
     <string name="unstar">Ster weghalen</string>
     <string name="starred">Met ster</string>
     <string name="no_starred">Houd een bericht ingedrukt en tik op Ster geven om het hier te bewaren.</string>
@@ -350,4 +363,5 @@
     <string name="reset_settings">Instellingen herstellen</string>
     <string name="reset_settings_text">Alle instellingen herstellen? Je bordverbinding, vastgezette en gedempte chats blijven staan.</string>
     <string name="reset">Herstel</string>
+    <string name="go_to_message">Ga naar bericht</string>
 </resources>

@@ -20,6 +20,7 @@
     <string name="stop_reading">Stop reading</string>
     <string name="forward_to">Forward to…</string>
     <string name="forward_search">Search chats</string>
+    <string name="copy_quote">Copy as quote</string>
     <string name="copied">Copied</string>
     <string name="empty_chats">No chats yet</string>
     <string name="empty_chats_new">New message</string>
@@ -45,9 +46,15 @@
     <string name="back">Back</string>
     <string name="more">More</string>
     <string name="search">Search</string>
+    <string name="my_last_message">My last message</string>
+    <string name="no_my_message">You have not sent a message here yet</string>
     <string name="go_to_date">Go to date</string>
     <string name="find_in_chat">Find in this chat</string>
     <string name="share_chat">Share this chat</string>
+    <string name="save_chat">Save as file</string>
+    <string name="saved_to_downloads">Saved to Downloads</string>
+    <string name="save_failed">Could not save the file</string>
+    <string name="first_message">First message</string>
     <string name="find_hint">Find</string>
     <string name="find_count">%1$d of %2$d</string>
     <string name="find_none">No matches</string>
@@ -214,6 +221,9 @@
     <string name="play_gifs">Play GIF links</string>
     <string name="play_gifs_sub">GIF links (giphy, tenor) play in the chat; off keeps them as links</string>
     <string name="compact_list">Compact list</string>
+    <string name="sort_chats">Sort chats</string>
+    <string name="sort_newest">Newest first</string>
+    <string name="sort_az">A to Z</string>
     <string name="muted_last">Muted chats at the bottom</string>
     <string name="muted_last_sub">Muted chats move below all the others</string>
     <string name="compact_list_sub">Smaller rows, so more chats fit on the screen</string>
@@ -328,6 +338,9 @@
     <string name="empty_reminders">No reminders</string>
     <string name="cancel_reminder">Cancel</string>
     <string name="remind_in_hour">Remind me in 1 hour</string>
+    <string name="remind_again">Again in 1 hour</string>
+    <string name="remind_pick">Pick a time…</string>
+    <string name="has_reminder">Has a reminder</string>
     <string name="unstar">Remove star</string>
     <string name="starred">Starred</string>
     <string name="no_starred">Hold a message and tap Star to keep it here.</string>
@@ -350,4 +363,5 @@
     <string name="reset_settings">Reset settings</string>
     <string name="reset_settings_text">Reset all settings? Your board connection, pins and mutes stay.</string>
     <string name="reset">Reset</string>
+    <string name="go_to_message">Go to message</string>
 </resources>
