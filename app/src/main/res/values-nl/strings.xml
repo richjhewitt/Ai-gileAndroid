@@ -282,6 +282,12 @@
     <string name="file_not_opened">Dit bestand kon niet worden geopend.</string>
     <string name="file_no_app">Geen app op deze telefoon kan dit bestand openen.</string>
     <string name="star">Ster geven</string>
+    <string name="remind_me">Herinner mij</string>
+    <string name="remind_hour">Over 1 uur</string>
+    <string name="remind_evening">Vanavond (18:00)</string>
+    <string name="remind_tomorrow">Morgen 9:00</string>
+    <string name="remind_set">Herinnering ingesteld voor %1$s</string>
+    <string name="notify_remind">Herinnering: %1$s</string>
     <string name="unstar">Ster weghalen</string>
     <string name="starred">Met ster</string>
     <string name="no_starred">Houd een bericht ingedrukt en tik op Ster geven om het hier te bewaren.</string>

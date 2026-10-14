@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.smizflark.aigile.messenger.data.Reminder
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
 import androidx.core.app.RemoteInput
@@ -32,10 +33,11 @@ object ChatNotifier {
         .setAutoCancel(true)
         .setOnlyAlertOnce(true)
 
-    fun openChat(context: Context, chat: String?, code: Int): PendingIntent {
+    fun openChat(context: Context, chat: String?, code: Int, msg: String? = null): PendingIntent {
         val open = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             if (chat != null) putExtra(CheckWorker.EXTRA_CHAT, chat)
+            if (msg != null) putExtra(CheckWorker.EXTRA_MSG, msg)
         }
         return PendingIntent.getActivity(context, code, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
@@ -132,6 +134,14 @@ object ChatNotifier {
         val n = QuickReply.notificationId("sentlater:$id")
         NotificationManagerCompat.from(context).notify(n, base(context).setContentTitle(name)
             .setContentText(context.getString(R.string.notify_sent_later, text)).setContentIntent(openChat(context, chat, n)).build())
+    }
+
+    /** A reminder (AII-201) came due: show the message; tapping opens its chat at that message. */
+    fun remind(context: Context, r: Reminder) {
+        val n = QuickReply.notificationId("remind:${r.id}")
+        NotificationManagerCompat.from(context).notify(n, base(context).setContentTitle(context.getString(R.string.notify_remind, r.chatName))
+            .setContentText(r.text).setStyle(NotificationCompat.BigTextStyle().bigText(r.text))
+            .setContentIntent(openChat(context, r.chat, n, r.msg)).build())
     }
 
     /** The summary shows only while two or more chats have a notification. */
