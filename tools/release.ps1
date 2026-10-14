@@ -7,7 +7,7 @@
 #
 # Signed with keystore\messenger.jks (kept out of git; see app\build.gradle.kts). Without it the build uses the debug key
 # and the script stops: an APK signed with another key can't update the one on the phone.
-param([switch]$Serve, [switch]$Stop)
+param([switch]$Serve, [switch]$Stop, [switch]$GitHub)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $tailscale = 'C:\Program Files\Tailscale\tailscale.exe'
@@ -47,6 +47,14 @@ Write-Host "SHA-256 $sha"
 # AII-132: the app's 'New version' bar reads the build number at the end of the GitHub release tag (= versionCode).
 $build = (git -C $root rev-list --count HEAD).Trim()
 Write-Host "GitHub release tag: build-$build (attach $named)"
+
+if ($GitHub) {
+    # The phone's 'New version' bar picks up the newest release whose tag ends in a higher build number.
+    $copy = Join-Path $dist 'aigile-messenger.apk'
+    & gh release create "build-$build" $copy --repo richjhewitt/Ai-gileAndroid --target main --title "Messenger $version (build $build)" --notes "Install: tap aigile-messenger.apk on the phone."
+    if ($LASTEXITCODE -ne 0) { throw 'gh release create failed: run gh auth login first, and push master to main' }
+    Write-Host "Released build-$build" -ForegroundColor Green
+}
 
 if ($Serve) {
     & $tailscale serve --bg --https=443 --set-path=$path $dist
