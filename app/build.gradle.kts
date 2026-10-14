@@ -16,7 +16,9 @@ android {
         applicationId = "com.smizflark.aigile.messenger"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
+        // Goes up with every commit, so Android installs a newer APK over an older one (AII-133)
+        versionCode = providers.exec { commandLine("git", "rev-list", "--count", "HEAD"); isIgnoreExitValue = true }
+            .standardOutput.asText.get().trim().toIntOrNull() ?: 1
         versionName = "0.1.0"
     }
 
