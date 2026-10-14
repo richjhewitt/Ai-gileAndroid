@@ -53,6 +53,8 @@
         <receiver android:name=".work.ReplyReceiver" android:exported="false" />
         <!-- Mark as read button on message alerts (AII-116) -->
         <receiver android:name=".work.ReadReceiver" android:exported="false" />
+        <!-- Remind me in 1 hour button on message alerts (AII-210) -->
+        <receiver android:name=".work.RemindReceiver" android:exported="false" />
         <!-- Home-screen widget: latest chats -->
         <receiver
             android:name=".widget.LatestWidget"

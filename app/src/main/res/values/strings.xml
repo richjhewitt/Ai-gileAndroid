@@ -297,6 +297,7 @@
     <string name="reminders">Reminders</string>
     <string name="empty_reminders">No reminders</string>
     <string name="cancel_reminder">Cancel</string>
+    <string name="remind_in_hour">Remind me in 1 hour</string>
     <string name="unstar">Remove star</string>
     <string name="starred">Starred</string>
     <string name="no_starred">Hold a message and tap Star to keep it here.</string>
