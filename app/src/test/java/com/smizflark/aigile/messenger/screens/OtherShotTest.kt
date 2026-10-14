@@ -118,6 +118,21 @@ class OtherShotTest : ShotBase() {
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun emptyChatsLight() = shot("empty_chats", false) { EmptyState("No chats yet", button = "New message") }
     @Test fun emptySearchDark() = shot("empty_search", true) { EmptyState("No results for “zebra”", button = "Clear search") }
+    /** AII-192: Search with the Links chip on and no query. */
+    @Test fun searchLinksLight() {
+        chats.forEach { prime(it) }
+        // A chat the demo doesn't know, so the screen's own fetch leaves the seeded messages alone.
+        val zed = com.smizflark.aigile.messenger.data.ChatRef(com.smizflark.aigile.messenger.data.Kind.FRIEND, "zed", "Zed", "", "🙂")
+        repo.store.cacheChats(repo.store.cachedChats().orEmpty() + zed)
+        fun m(k: String, t: String, at: String) = com.smizflark.aigile.messenger.data.Bubble(k, "Zed", t, at, mine = false)
+        repo.store.cacheConversation(com.smizflark.aigile.messenger.data.Conversation(zed, listOf(
+            m("l1", "Read [the guide](https://dnbloco.com/guide) first", "2026-10-12T09:00:00Z"),
+            m("l2", "Then open dnbloco.com and check it loads.", "2026-10-13T09:00:00Z"))))
+        shot("search_links", false) { SearchScreen(repo, { _, _ -> }, {}) }
+        rule.onNodeWithTag("search-links").performClick()
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("../docs/shots/search_links_light.png")
+    }
     @Test fun settingsLight() = shot("settings", false) { SettingsScreen(repo, {}, {}) }
     @Test fun settingsDark() = shot("settings", true) { SettingsScreen(repo, {}, {}) }
     /** AII-175: Settings has the Sent alert switch for Send later, on by default; turning it off is kept. */

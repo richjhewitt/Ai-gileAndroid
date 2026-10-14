@@ -4,6 +4,10 @@ import androidx.compose.ui.res.stringResource
 
 import com.smizflark.aigile.messenger.R
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.FilterChip
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -65,7 +69,9 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
     val chats = remember { repo.store.cachedChats() ?: emptyList() }
     var convs by remember { mutableStateOf(repo.cachedConversations(chats)) }
     var fetching by remember { mutableStateOf(true) }
-    val hits = remember(query, convs) { Search.run(query, chats, convs) }
+    var pictures by remember { mutableStateOf(false) }
+    var links by remember { mutableStateOf(false) }
+    val hits = remember(query, convs, pictures, links) { Search.run(query, chats, convs, pictures, links) }
     val focus = remember { FocusRequester() }
     var recent by remember { mutableStateOf(repo.store.recentSearches()) }
     /** AII-155: a search counts once you press Search or open a result. */
@@ -105,7 +111,19 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
         Column(Modifier.fillMaxSize().padding(pad)) {
             if (fetching) LinearProgressIndicator(Modifier.fillMaxWidth())
             val q = query.trim()
-            if (q.length < 2 && recent.isNotEmpty()) RecentList(recent, onPick = { query = it; keep(it) }) { recent = emptyList(); repo.store.setRecentSearches(recent) }
+            // AII-192: the same chips as the chats list.
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = pictures, onClick = { pictures = !pictures }, label = { Text(stringResource(R.string.search_pictures)) },
+                    modifier = Modifier.testTag("search-pictures"))
+                FilterChip(selected = links, onClick = { links = !links }, label = { Text(stringResource(R.string.search_links)) },
+                    modifier = Modifier.testTag("search-links"))
+            }
+            val filtered = pictures || links
+            if (filtered && hits.isEmpty() && fetching) EmptyState(stringResource(R.string.search_searching))
+            else if (filtered && hits.isEmpty()) EmptyState(stringResource(R.string.search_none_filtered))
+            else if (filtered) { }
+            else if (q.length < 2 && recent.isNotEmpty()) RecentList(recent, onPick = { query = it; keep(it) }) { recent = emptyList(); repo.store.setRecentSearches(recent) }
             else if (q.length < 2) EmptyState(androidx.compose.ui.res.stringResource(R.string.search_hint))
             else if (hits.isEmpty() && fetching) EmptyState(androidx.compose.ui.res.stringResource(R.string.search_searching))
             else if (hits.isEmpty()) EmptyState(androidx.compose.ui.res.stringResource(R.string.search_no_results, q),

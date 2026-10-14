@@ -62,4 +62,31 @@ class SearchTest {
         val many = Conversation(gile, (1..300).map { b("ping $it", "2026-10-01T10:%02d:00Z".format(it % 60), "AIG-$it") })
         assertEquals(Search.MAX_HITS, Search.run("ping", listOf(gile), listOf(many)).size)
     }
+
+    // AII-192: Pictures and Links chips
+    private val pic = com.smizflark.aigile.messenger.data.Pic("/api/a.png", "a.png", "image/png")
+    private val chipConvs = listOf(
+        Conversation(gile, listOf(
+            b("Look at this", "2026-10-01T10:00:00Z", "AIG-1").copy(pics = listOf(pic)),
+            b("Read the guide at https://x.io/g now", "2026-10-02T10:00:00Z", "AIG-2"),
+            b("Open dnbloco.com please", "2026-10-03T10:00:00Z", "AIG-3"),
+            b("No link here, just 3.5 and e.g. file.txt", "2026-10-04T10:00:00Z", "AIG-4"),
+            b("doc", "2026-10-05T10:00:00Z", "AIG-5").copy(pics = listOf(com.smizflark.aigile.messenger.data.Pic("/api/a.pdf", "a.pdf", "application/pdf"))),
+        )),
+    )
+
+    @Test fun linksChipListsEveryLinkNewestFirstWithNoQuery() {
+        val hits = Search.run("", listOf(gile), chipConvs, links = true)
+        assertEquals(listOf("AIG-3", "AIG-2"), hits.map { it.bubble?.card })
+    }
+
+    @Test fun picturesChipOnlyTakesImages() {
+        assertEquals(listOf("AIG-1"), Search.run("", listOf(gile), chipConvs, pictures = true).map { it.bubble?.card })
+    }
+
+    @Test fun chipsHideChatsAndStillUseTheQuery() {
+        assertTrue(Search.run("ai-gile", listOf(gile), chipConvs, links = true).isEmpty())
+        assertEquals(listOf("AIG-3"), Search.run("dnbloco", listOf(gile), chipConvs, links = true).map { it.bubble?.card })
+        assertTrue(Search.run("", listOf(gile), chipConvs).isEmpty())
+    }
 }

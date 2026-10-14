@@ -10,16 +10,30 @@ object Search {
     const val MAX_HITS = 100
     private const val AROUND = 40
 
-    fun run(query: String, chats: List<ChatRef>, conversations: List<Conversation>): List<Hit> {
+    /** AII-192: a web address, with http(s):// or bare like dnbloco.com (the same idea as Markdown's). */
+    private val link = Regex("""https?://\S+|(?<![\w@/.:"=-])((?i:(?:[a-z0-9-]+\.)+(?:com|net|org|io|live|dev|app|co|uk|nl|be|ai|me|tv|gg|xyz|info|site|online))(?::\d+)?)(?![\w-])""")
+
+    fun hasLink(text: String) = link.containsMatchIn(text)
+    fun hasPicture(b: Bubble) = b.pics.any { it.image }
+
+    /**
+     * [pictures] / [links] (AII-192): only messages with a picture / a web link; chats are left out, and an empty query
+     * lists every match newest first.
+     */
+    fun run(query: String, chats: List<ChatRef>, conversations: List<Conversation>, pictures: Boolean = false, links: Boolean = false): List<Hit> {
         val q = fold(query.trim())
-        if (q.length < 2) return emptyList()
-        val byName = chats.filter { fold(it.name).contains(q) }.map { Hit(it) }
+        val filtered = pictures || links
+        if (q.length < 2 && !filtered) return emptyList()
+        val typed = q.length >= 2
+        val byName = if (filtered) emptyList() else chats.filter { fold(it.name).contains(q) }.map { Hit(it) }
         val known = chats.associateBy { it.key }
         val inMessages = conversations.flatMap { c ->
             val ref = known[c.ref.key] ?: c.ref
             c.bubbles.mapNotNull { b ->
                 val hay = listOfNotNull(b.text, b.cardTitle, b.author).joinToString("\n")
-                if (fold(hay).contains(q)) Hit(ref, b, snippet(b.text, q).ifEmpty { b.cardTitle ?: b.author }) else null
+                val ok = (!pictures || hasPicture(b)) && (!links || hasLink(b.text)) && (!typed || fold(hay).contains(q))
+                val snip = if (typed) snippet(b.text, q) else b.text.replace(Regex("\\s+"), " ").trim().take(AROUND * 2)
+                if (ok) Hit(ref, b, snip.ifEmpty { b.cardTitle ?: b.author }) else null
             }
         }.sortedByDescending { it.bubble?.at ?: "" }
         return (byName + inMessages).take(MAX_HITS)

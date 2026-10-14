@@ -32,6 +32,9 @@
     <string name="waiting_title">Waiting to send</string>
     <string name="waiting_all">See every waiting message</string>
     <string name="empty_loading">Loading chats…</string>
+    <string name="search_pictures">Pictures</string>
+    <string name="search_links">Links</string>
+    <string name="search_none_filtered">Nothing with a picture or link found</string>
     <string name="search_hint">Type at least 2 letters to search every chat</string>
     <string name="search_searching">Searching…</string>
     <string name="search_no_results">No results for “%1$s”</string>

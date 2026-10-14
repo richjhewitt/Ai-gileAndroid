@@ -30,7 +30,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Repo.kt: the one place screens and background checks get chats from.
 - data/ScrollPlace.kt: remembers where you left each chat.
 - data/Seal.kt: seals every board call end to end (AES-256-GCM, key from pairing; vectors in docs/SEALED.md).
-- data/Search.kt: search results (chats and messages).
+- data/Search.kt: search results (chats and messages); Pictures / Links filters list matching messages newest first (AII-192).
 - data/Share.kt: text shared in from other apps.
 - data/Source.kt: chat source, the real board or the demo.
 - data/Stars.kt: starred messages (AII-138), listed in the chat details; lead chats kept in step with the board (AII-141, Repo syncStars; Starred refreshes them on open, AII-162).
@@ -60,7 +60,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/Parts.kt: small shared UI helpers (colour parsing and similar).
 - ui/ReadAloud.kt: Read aloud from the hold menu with the phone's own voice (AII-185); leaving a chat stops it.
 - ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
-- ui/SearchScreen.kt: search across all chats.
+- ui/SearchScreen.kt: search across all chats, with Pictures and Links chips (AII-192).
 - ui/SettingsScreen.kt: settings.
 - ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); tap one, its chat opens at it.
 - ui/WaitingScreen.kt: every Send later message from all chats, soonest first (AII-166, See every waiting message under the Scheduled chip); tap one, its chat opens at it.
