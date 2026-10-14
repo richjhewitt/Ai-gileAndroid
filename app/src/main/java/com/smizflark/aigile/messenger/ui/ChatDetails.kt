@@ -4,6 +4,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.clickable
@@ -45,10 +46,28 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.smizflark.aigile.messenger.data.togglePin
 import kotlinx.coroutines.launch
 
+/** AII-229: writes [text] to Downloads (MediaStore from Android 10, else the app's own external files folder); true when it worked. */
+internal fun saveTextFile(ctx: android.content.Context, name: String, text: String): Boolean = runCatching {
+    if (android.os.Build.VERSION.SDK_INT >= 29) {
+        val v = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.Downloads.DISPLAY_NAME, name)
+            put(android.provider.MediaStore.Downloads.MIME_TYPE, "text/plain")
+            put(android.provider.MediaStore.Downloads.IS_PENDING, 1)
+        }
+        val res = ctx.contentResolver
+        val uri = res.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v) ?: error("no uri")
+        res.openOutputStream(uri)!!.use { it.write(text.toByteArray()) }
+        res.update(uri, android.content.ContentValues().apply { put(android.provider.MediaStore.Downloads.IS_PENDING, 0) }, null, null)
+    } else {
+        val dir = ctx.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS) ?: error("no dir")
+        dir.mkdirs(); java.io.File(dir, name).writeText(text)
+    }
+}.isSuccess
+
 /** Tap the chat name (AII-80): the team, its open cards, the pictures sent here, and the Mute and Pin switches. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onClose: () -> Unit) {
+fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onSave: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onClose: () -> Unit) {
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var silent by remember { mutableStateOf(ref.key in repo.store.silent) }
     var pinned by remember { mutableStateOf(ref.key in repo.store.pinned) }
@@ -85,6 +104,10 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 // AII-139: the whole chat as text, out to any app.
                 if (onShare != null) OutlinedButton(onClick = onShare, modifier = Modifier.testTag("details-share")) {
                     Icon(Icons.Default.Share, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.share_chat))
+                }
+                // AII-229: the same text as a .txt in Downloads.
+                if (onSave != null) OutlinedButton(onClick = onSave, modifier = Modifier.testTag("details-save")) {
+                    Icon(Icons.Default.Done, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.save_chat))
                 }
             }
             SwitchRow(stringResource(R.string.mute_alerts), muted, "details-mute") {

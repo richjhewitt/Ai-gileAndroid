@@ -48,6 +48,10 @@
     <string name="go_to_date">Ga naar datum</string>
     <string name="find_in_chat">Zoeken in dit gesprek</string>
     <string name="share_chat">Gesprek delen</string>
+    <string name="save_chat">Opslaan als bestand</string>
+    <string name="saved_to_downloads">Opgeslagen in Downloads</string>
+    <string name="save_failed">Bestand opslaan mislukt</string>
+    <string name="first_message">Eerste bericht</string>
     <string name="find_hint">Zoek</string>
     <string name="find_count">%1$d van %2$d</string>
     <string name="find_none">Geen resultaten</string>

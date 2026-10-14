@@ -48,6 +48,10 @@
     <string name="go_to_date">Go to date</string>
     <string name="find_in_chat">Find in this chat</string>
     <string name="share_chat">Share this chat</string>
+    <string name="save_chat">Save as file</string>
+    <string name="saved_to_downloads">Saved to Downloads</string>
+    <string name="save_failed">Could not save the file</string>
+    <string name="first_message">First message</string>
     <string name="find_hint">Find</string>
     <string name="find_count">%1$d of %2$d</string>
     <string name="find_none">No matches</string>

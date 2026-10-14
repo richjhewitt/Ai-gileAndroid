@@ -359,6 +359,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
                 .putExtra(android.content.Intent.EXTRA_SUBJECT, ref.name).putExtra(android.content.Intent.EXTRA_TEXT, Transcript.of(c, owner) { fullTime(it) })
             runCatching { view.context.startActivity(android.content.Intent.createChooser(send, null)) }
+        } },
+        onSave = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> {
+            // AII-229: the same text, saved as a .txt in Downloads.
+            val ok = saveTextFile(view.context, Transcript.fileName(ref.name, com.smizflark.aigile.messenger.data.Now.today()), Transcript.of(c, owner) { fullTime(it) })
+            Toast.makeText(view.context, if (ok) R.string.saved_to_downloads else R.string.save_failed, Toast.LENGTH_SHORT).show()
         } }) { details = false; muted = ref.key in repo.store.muted() }
     if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false },
         onDismiss = { muteAsk = false })
