@@ -95,8 +95,8 @@ private fun ReminderRow(r: Reminder, onCancel: () -> Unit) {
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     Text("⏰ " + sendTime(Instant.ofEpochMilli(r.at).toString()), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 }
-                Text(r.text.replace('\n', ' '), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(Remind.withNote(r), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = if (r.note.isNullOrBlank()) 1 else 2, overflow = TextOverflow.Ellipsis)
             }
             IconButton(onClick = onCancel, modifier = Modifier.testTag("reminder-x")) {
                 Icon(Icons.Filled.Close, stringResource(R.string.cancel_reminder))

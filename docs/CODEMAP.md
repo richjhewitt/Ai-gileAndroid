@@ -21,7 +21,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Mapper.kt: turns the board's answers into what the screens show.
 - data/Models.kt: data classes for the board's chats and messages.
 - data/News.kt: what is new since you last looked, and quiet hours.
-- data/Remind.kt: chatKeys = chats with a reminder (AII-226). Remind me about a message (AII-201): in 1 hour, this evening 18:00 (hidden after), tomorrow 9:00, or Pick a time… (day then time, Pause.onDay, AII-225); reminders kept in Store, fired by work/RemindWorker.kt as an alert that opens the chat at the message.
+- data/Remind.kt: chatKeys = chats with a reminder (AII-226). Remind me about a message (AII-201): in 1 hour, this evening 18:00 (hidden after), tomorrow 9:00, or Pick a time… (day then time, Pause.onDay, AII-225); after the time a Note dialog (Save / Skip) sets Reminder.note, shown as "📝 note" first in the alert and the Reminders list (Remind.withNote, AII-244); reminders kept in Store, fired by work/RemindWorker.kt as an alert that opens the chat at the message.
 - data/Silent.kt: Silent alerts for one chat (AII-207): its alerts show with no sound or buzz (setSilent in work/ChatNotifier.kt); Mute still wins; switch in chat details and the chat menu.
 - data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
 - data/Mute.kt: mute a chat for 1 hour, 8 hours or until unmuted (AII-157); timed mutes end by themselves.
@@ -75,7 +75,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/SettingsScreen.kt: settings.
 - ui/RemindersScreen.kt: every reminder, soonest first (AII-209, a Reminders row in Settings when there are any); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
 - ui/AboutScreen.kt: About, from the bottom of Settings (AII-220): app name, version, build number and a hand-written list of open-source licences (LICENCES, keep in step with app/build.gradle.kts); tap one to open its licence page.
-- ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); tap one, its chat opens at it; chat-name chips (2+ chats, AII-228) show one chat's stars (Stars.onlyChat).
+- ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); Share all in the top bar sends what is listed as text via Stars.asText (AII-243); tap one, its chat opens at it; chat-name chips (2+ chats, AII-228) show one chat's stars (Stars.onlyChat).
 - ui/WaitingScreen.kt: every Send later message from all chats, soonest first (AII-166, See every waiting message under the Scheduled chip); tap one, its chat opens at it.
 - ui/Shortcuts.kt: app icon shortcuts (New message, recent chats).
 - ui/Theme.kt: colours and Material theme.
@@ -83,7 +83,6 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 ## widget/
 - work/RemindReceiver.kt: the Remind me in 1 hour button on message alerts (AII-210) and Again in 1 hour on the reminder alert itself (AII-224, extra remind_notify = that alert's id, which it dismisses); the alert keeps its newest message's key and text in its extras (work/ChatNotifier.kt).
 - widget/LatestWidget.kt: home screen widget with the newest chats.
-- work/RemindReceiver.kt: the Remind me in 1 hour button on message alerts (AII-210); the alert keeps its newest message's key and text in its extras (work/ChatNotifier.kt).
 - widget/LatestWidget.kt: home screen widget with the newest chats. Colours follow the app's look (AII-230): WidgetLook picks light, dark or black backgrounds (res/drawable/widget_bg_*.xml); Settings refreshes it on a look change.
 
 ## work/ (background)

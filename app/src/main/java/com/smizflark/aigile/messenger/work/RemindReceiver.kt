@@ -17,11 +17,12 @@ class RemindReceiver : BroadcastReceiver() {
         // AII-224: from a reminder alert only that alert goes; from a message alert the chat's alert goes.
         val own = intent.getIntExtra(EXTRA_NOTIFY, 0)
         if (own != 0) androidx.core.app.NotificationManagerCompat.from(app).cancel(own) else ChatNotifier.clear(app, chat)
-        RemindWorker.inAnHour(app, app.repo.store, chat, name, msg, text)
+        RemindWorker.inAnHour(app, app.repo.store, chat, name, msg, text, intent.getStringExtra(EXTRA_NOTE))
     }
 
     companion object {
         const val ACTION = "com.smizflark.aigile.messenger.REMIND"
+        const val EXTRA_NOTE = "remind_note"
         const val EXTRA_NOTIFY = "remind_notify"
         const val EXTRA_NAME = "remind_name"
         const val EXTRA_TEXT = "remind_text"

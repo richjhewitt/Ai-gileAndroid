@@ -6,7 +6,7 @@ import java.time.ZoneId
 
 /** A message to be reminded about (AII-201): kept on this phone, with a copy of its text for the alert. */
 @Serializable
-data class Reminder(val id: String, val chat: String, val chatName: String, val msg: String, val text: String, val at: Long)
+data class Reminder(val id: String, val chat: String, val chatName: String, val msg: String, val text: String, val at: Long, val note: String? = null)
 
 /** Remind me about a message (AII-201). Pure, so it is unit tested: the clock and zone are always passed in. */
 object Remind {
@@ -52,6 +52,12 @@ object Remind {
 
     /** The WorkManager job name of a reminder. */
     fun workName(id: String) = "remind-$id"
+
+    /** The alert's / list's text (AII-244): the note, if any, as "📝 note" on the first line above the message. */
+    fun withNote(r: Reminder) = if (r.note.isNullOrBlank()) r.text else "📝 ${r.note.trim()}\n${r.text}"
+
+    /** A typed note (AII-244): trimmed, and null when empty. */
+    fun cleanNote(s: String) = s.trim().ifEmpty { null }
 
     fun idOf(chat: String, msg: String) = "$chat|$msg"
 }
