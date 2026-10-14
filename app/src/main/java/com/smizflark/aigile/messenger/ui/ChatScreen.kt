@@ -324,7 +324,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
     val unread = if (atBottom) 0 else unreadBelow(convo?.bubbles.orEmpty(), seenNewest)
     // AII-204: the next unread chat in chats-list order, worked out as the chats list does it; looked at again whenever you reach the bottom.
-    val nextChat = remember(atBottom, convo) {
+    val nextChat = remember(atBottom, convo, Appearance.nextUnread) {
+        if (!Appearance.nextUnread) return@remember null   // AII-254
         val all = repo.store.cachedChats().orEmpty()
         val seenAll = repo.store.seen()
         val counts = all.associate { it.key to News.unread(it, seenAll[it.key], repo.store.cachedConversation(it.key)) }

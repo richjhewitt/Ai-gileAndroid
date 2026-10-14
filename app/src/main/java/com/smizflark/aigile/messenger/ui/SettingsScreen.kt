@@ -147,6 +147,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             Toggle(stringResource(R.string.enter_sends), stringResource(R.string.enter_sends_sub), Appearance.enterSends, Modifier.testTag("enterSends")) {
                 Appearance.enterSends = it; s.enterSends = it
             }
+            Toggle(stringResource(R.string.next_unread_setting), stringResource(R.string.next_unread_setting_sub), Appearance.nextUnread, Modifier.testTag("nextUnread")) {
+                Appearance.nextUnread = it; s.nextUnread = it
+            }
             // AII-209: only when there are any.
             val reminderCount = remember { s.reminders().size }
             if (reminderCount > 0) {

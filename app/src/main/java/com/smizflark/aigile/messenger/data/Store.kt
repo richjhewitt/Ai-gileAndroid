@@ -178,6 +178,11 @@ class Store(context: Context) {
         get() = settings.getBoolean("enterSends", false)
         set(v) = settings.edit().putBoolean("enterSends", v).apply()
 
+    /** The Next unread button at the bottom of a chat (AII-254). */
+    var nextUnread: Boolean
+        get() = settings.getBoolean("nextUnread", true)
+        set(v) = settings.edit().putBoolean("nextUnread", v).apply()
+
     /** Ready-made replies above an empty message box (AII-179). */
     var quickReplies: Boolean
         get() = settings.getBoolean("quickReplies", true)
@@ -313,7 +318,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "nextUnread", "undoSend", "undoSeconds", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
 
         /** What "Reset settings" clears (AII-217): every backed-up setting except the ones that are your data. */
         val KEPT_ON_RESET = setOf("pinned", "muted", "silent")
