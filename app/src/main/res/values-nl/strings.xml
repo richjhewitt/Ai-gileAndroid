@@ -193,6 +193,9 @@
     <string name="unlock">Ontgrendelen</string>
     <string name="alerts">Meldingen</string>
     <string name="enter_sends">Enter-toets verstuurt</string>
+    <string name="undo_send">Verzenden ongedaan maken</string>
+    <string name="undo_send_sub">Na Verzenden wacht het bericht 5 seconden, zodat je het kunt terugnemen</string>
+    <string name="message_sent_undo">Verzenden over 5 seconden</string>
     <string name="play_gifs">GIF-links afspelen</string>
     <string name="play_gifs_sub">GIF-links (giphy, tenor) spelen af in het gesprek; uit laat ze als link staan</string>
     <string name="enter_sends_sub">Enter verstuurt het bericht; Shift+Enter maakt een nieuwe regel</string>
