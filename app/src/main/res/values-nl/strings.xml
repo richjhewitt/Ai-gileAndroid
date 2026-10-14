@@ -333,4 +333,8 @@
     <string name="closed_hide">Gesloten verbergen</string>
     <string name="copy_card_id">Kaart-id kopiëren</string>
     <string name="open_card_menu">Kaart openen</string>
+    <string name="about">Over</string>
+    <string name="about_sub">Versie en open-sourcelicenties</string>
+    <string name="build_number">Build %1$d</string>
+    <string name="licences">Open-sourcelicenties</string>
 </resources>

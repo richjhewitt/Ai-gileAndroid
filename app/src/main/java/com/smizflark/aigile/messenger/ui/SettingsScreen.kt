@@ -77,6 +77,7 @@ import com.smizflark.aigile.messenger.data.SavedPictures
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onReminders: () -> Unit = {}) {
+fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onAbout: () -> Unit = {}) {
     val s = repo.store
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -223,6 +224,8 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             TextButton(onClick = { confirmSignOut = true }) {
                 Text(stringResource(if (s.demo) R.string.leave_demo else R.string.sign_out), color = MaterialTheme.colorScheme.error)
             }
+            androidx.compose.material3.ListItem(headlineContent = { Text(stringResource(R.string.about)) }, supportingContent = { Text(stringResource(R.string.about_sub)) },
+                modifier = Modifier.clickable(onClick = onAbout).testTag("about"))
             Text(stringResource(R.string.version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
