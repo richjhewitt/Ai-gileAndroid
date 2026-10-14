@@ -32,11 +32,20 @@ object Remind {
     /** Adds a reminder; a second one for the same message replaces the first. */
     fun add(all: List<Reminder>, r: Reminder) = all.filterNot { it.id == r.id } + r
 
+    /** The reminders to list (AII-209): soonest first. */
+    fun sorted(all: List<Reminder>) = all.sortedBy { it.at }
+
+    /** Cancelling one (AII-209): gone from the list; the caller also cancels its WorkManager job. */
+    fun cancel(all: List<Reminder>, id: String) = all.filterNot { it.id == id }
+
     /** Reminders whose time has come at [now], soonest first. */
     fun due(all: List<Reminder>, now: Long) = all.filter { it.at <= now }.sortedBy { it.at }
 
     /** What is left once the due ones have been shown. */
     fun left(all: List<Reminder>, now: Long) = all.filter { it.at > now }
+
+    /** The WorkManager job name of a reminder. */
+    fun workName(id: String) = "remind-$id"
 
     fun idOf(chat: String, msg: String) = "$chat|$msg"
 }

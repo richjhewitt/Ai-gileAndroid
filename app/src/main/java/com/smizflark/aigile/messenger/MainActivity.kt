@@ -31,6 +31,7 @@ import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.PictureHost
 import com.smizflark.aigile.messenger.ui.SearchScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
+import com.smizflark.aigile.messenger.ui.RemindersScreen
 import com.smizflark.aigile.messenger.ui.StarredScreen
 import com.smizflark.aigile.messenger.ui.WaitingScreen
 import com.smizflark.aigile.messenger.ui.Shortcuts
@@ -82,6 +83,9 @@ class MainActivity : FragmentActivity() {
                     composable("waiting") {   // AII-166: every Send later message; tap one, its chat opens at it
                         WaitingScreen(repo, onOpen = { ref, msg -> nav.openChat(ref.key, msg) }, onBack = { nav.popBackStack() })
                     }
+                    composable("reminders") {   // AII-209: see and cancel reminders
+                        RemindersScreen(repo, onBack = { nav.popBackStack() })
+                    }
                     composable("starred") {   // AII-140: every starred message; tap one, its chat opens at it
                         StarredScreen(repo, onOpen = { ref, msg -> nav.openChat(ref.key, msg) }, onBack = { nav.popBackStack() })
                     }
@@ -108,7 +112,7 @@ class MainActivity : FragmentActivity() {
                         })
                     }
                     composable("settings") {
-                        SettingsScreen(repo, onBack = { nav.popBackStack() }, onSignedOut = {
+                        SettingsScreen(repo, onBack = { nav.popBackStack() }, onReminders = { nav.navigate("reminders") }, onSignedOut = {
                             nav.navigate("connect") { popUpTo(0) { inclusive = true } }
                         })
                     }
