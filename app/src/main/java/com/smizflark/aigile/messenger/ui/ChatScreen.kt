@@ -90,7 +90,7 @@ import androidx.compose.ui.platform.LocalView
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}, openAt: String? = null, onOpenChat: (ChatRef) -> Unit = {}) {
+fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}, openAt: String? = null, onOpenChat: (ChatRef) -> Unit = {}, onEditReplies: () -> Unit = {}) {
     var convo by remember { mutableStateOf(repo.store.cachedConversation(ref.key)) }
     val seenAtOpen = rememberSaveable(ref.key) { mutableStateOf(repo.store.seen()[ref.key]) }.value   // AII-100: the "New messages" line stays put while you read
     var pending by remember { mutableStateOf(repo.pendingFor(ref.key)) }
@@ -325,7 +325,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
     val unread = if (atBottom) 0 else unreadBelow(convo?.bubbles.orEmpty(), seenNewest)
     // AII-204: the next unread chat in chats-list order, worked out as the chats list does it; looked at again whenever you reach the bottom.
-    val nextChat = remember(atBottom, convo) {
+    val nextChat = remember(atBottom, convo, Appearance.nextUnread) {
+        if (!Appearance.nextUnread) return@remember null   // AII-254
         val all = repo.store.cachedChats().orEmpty()
         val seenAll = repo.store.seen()
         val counts = all.associate { it.key to News.unread(it, seenAll[it.key], repo.store.cachedConversation(it.key)) }
@@ -470,7 +471,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 onRemovePic = { f -> pics = pics - f; File(f).delete() },
                 onPasteCopied = if (copied.available && pics.size < MAX_PICS) ::pasteCopied else null,
                 quote = quoting, onClearQuote = { quoting = null },
-                onSendLater = { at -> sendTyped(at) },
+                onSendLater = { at -> sendTyped(at) }, onEditReplies = onEditReplies,
             ) { sendTyped() }
         }
     }

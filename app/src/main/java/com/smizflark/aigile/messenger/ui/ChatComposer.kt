@@ -145,6 +145,7 @@ internal fun Composer(
     onPasteCopied: (() -> Unit)? = null,
     quote: String? = null, onClearQuote: () -> Unit = {},
     onSendLater: ((Instant) -> Unit)? = null,
+    onEditReplies: () -> Unit = {},
     onSend: () -> Unit,
 ) {
     Surface(tonalElevation = 2.dp) {
@@ -178,7 +179,7 @@ internal fun Composer(
             )
             if (pics.isNotEmpty()) PickedPictures(pics, onRemovePic)
             // AII-179: ready-made replies while the box is empty; a tap puts one in the box, Send still sends it.
-            if (Appearance.quickReplies && text.isEmpty() && pics.isEmpty()) QuickReplies(onText)
+            if (Appearance.quickReplies && text.isEmpty() && pics.isEmpty()) QuickReplies(onText, onEditReplies)
             val canSend = text.isNotBlank() || pics.isNotEmpty()
             Row(verticalAlignment = Alignment.Bottom) {
                 IconButton(onClick = onAttach, enabled = pics.size < MAX_PICS, modifier = Modifier.size(52.dp).testTag("attach")) {
@@ -250,11 +251,22 @@ private fun SendButton(canSend: Boolean, onSend: () -> Unit, onSendLater: ((Inst
 }
 
 /** One row of ready-made replies that scrolls sideways (AII-179). */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun QuickReplies(onPick: (String) -> Unit) {
+private fun QuickReplies(onPick: (String) -> Unit, onEdit: () -> Unit) {
+    val view = LocalView.current
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("quick-replies"), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Appearance.replies.ifEmpty { stringArrayResource(R.array.quick_replies_list).toList() }.forEach { reply ->
-            SuggestionChip(onClick = { onPick(reply) }, label = { Text(reply, maxLines = 1) })
+            // AII-255: hold one to edit your quick replies in Settings.
+            val editLabel = stringResource(R.string.quick_reply_edit)
+            val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+            Box {
+                SuggestionChip(onClick = { onPick(reply) }, label = { Text(reply, maxLines = 1) }, interactionSource = interaction)
+                Box(Modifier.matchParentSize().combinedClickable(interactionSource = interaction, indication = null,
+                    onLongClickLabel = editLabel,
+                    onLongClick = { if (Appearance.buzz) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS); onEdit() },
+                    onClick = { onPick(reply) }).testTag("quick-reply"))
+            }
         }
     }
 }

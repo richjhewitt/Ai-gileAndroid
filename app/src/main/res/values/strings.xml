@@ -238,6 +238,9 @@
     <string name="buzz">Buzz</string>
     <string name="buzz_sub">A little buzz when you send and when a reply comes in</string>
     <string name="enter_sends_sub">Enter sends the message; Shift+Enter makes a new line</string>
+    <string name="next_unread_setting">Next unread button</string>
+    <string name="next_unread_setting_sub">At the bottom of a chat, a button to the next chat with unread messages</string>
+    <string name="quick_reply_edit">Edit quick replies</string>
     <string name="quick_replies">Quick replies</string>
     <string name="quick_replies_sub">Ready-made replies above an empty message box; a tap puts one in</string>
     <string name="quick_replies_mine">Your replies, one per line (clear for the starting ones)</string>

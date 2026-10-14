@@ -52,6 +52,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -76,9 +77,9 @@ import androidx.compose.runtime.LaunchedEffect
 import coil.imageLoader
 import com.smizflark.aigile.messenger.data.SavedPictures
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onReminders: () -> Unit = {}, onAbout: () -> Unit = {}) {
+fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onReminders: () -> Unit = {}, onAbout: () -> Unit = {}, showReplies: Boolean = false) {
     val s = repo.store
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -147,6 +148,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             Toggle(stringResource(R.string.enter_sends), stringResource(R.string.enter_sends_sub), Appearance.enterSends, Modifier.testTag("enterSends")) {
                 Appearance.enterSends = it; s.enterSends = it
             }
+            Toggle(stringResource(R.string.next_unread_setting), stringResource(R.string.next_unread_setting_sub), Appearance.nextUnread, Modifier.testTag("nextUnread")) {
+                Appearance.nextUnread = it; s.nextUnread = it
+            }
             // AII-209: only when there are any.
             val reminderCount = remember { s.reminders().size }
             if (reminderCount > 0) {
@@ -175,8 +179,11 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             if (Appearance.quickReplies) {
                 val starting = stringArrayResource(R.array.quick_replies_list).joinToString("\n")
                 var mine by remember { mutableStateOf(s.quickReplyText.ifBlank { starting }) }
+                // AII-255: coming from a held quick reply, bring the box into view.
+                val bring = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+                if (showReplies) LaunchedEffect(Unit) { bring.bringIntoView() }
                 OutlinedTextField(mine, { mine = it; s.quickReplyText = it; Appearance.replies = Replies.parse(it) },
-                    Modifier.fillMaxWidth().testTag("quickReplyText"), label = { Text(stringResource(R.string.quick_replies_mine)) }, minLines = 2)
+                    Modifier.fillMaxWidth().bringIntoViewRequester(bring).testTag("quickReplyText"), label = { Text(stringResource(R.string.quick_replies_mine)) }, minLines = 2)
             }
 
             SectionHeader(stringResource(R.string.alerts))
