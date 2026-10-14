@@ -183,13 +183,15 @@ internal fun daysAbove(rows: List<Row>): List<String?> {
 
 /** The floating day pill at the top of a chat while it scrolls (AII-117). */
 @Composable
-internal fun BoxScope.DayPill(label: String?) {
+internal fun BoxScope.DayPill(label: String?, onClick: () -> Unit = {}) {
     androidx.compose.animation.AnimatedVisibility(label != null, Modifier.align(Alignment.TopCenter).padding(top = 8.dp),
         enter = androidx.compose.animation.fadeIn(), exit = androidx.compose.animation.fadeOut()) {
         var last by remember { mutableStateOf("") }
         if (label != null) last = label
-        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.secondaryContainer, shadowElevation = 2.dp) {
-            Text(last, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp).testTag("day-pill"))
+        val goTo = stringResource(R.string.go_to_date)   // AII-256
+        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.secondaryContainer, shadowElevation = 2.dp,
+            modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClickLabel = goTo, onClick = onClick).testTag("day-pill")) {
+            Text(last, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp))
         }
     }
 }

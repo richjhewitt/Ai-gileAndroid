@@ -125,4 +125,17 @@ class SearchTest {
         assertEquals(listOf("AIG-3"), Search.run("dnbloco", listOf(gile), chipConvs, links = true).map { it.bubble?.card })
         assertTrue(Search.run("", listOf(gile), chipConvs).isEmpty())
     }
+
+    // AII-258: Last 7 days chip
+    @Test fun last7ChipKeepsOnlyTheLastSevenDaysAndCombinesWithTheQuery() {
+        val z = java.time.ZoneId.systemDefault()
+        val old = com.smizflark.aigile.messenger.data.Now.clock
+        com.smizflark.aigile.messenger.data.Now.clock = java.time.Clock.fixed(java.time.LocalDate.of(2026, 10, 14).atTime(12, 0).atZone(z).toInstant(), z)
+        try {
+            fun at(d: Int) = java.time.LocalDate.of(2026, 10, d).atTime(12, 0).atZone(z).toInstant().toString()
+            val convs = listOf(Conversation(gile, listOf(b("old news", at(7), "AIG-1"), b("edge news", at(8), "AIG-2"), b("fresh news", at(14), "AIG-3"))))
+            assertEquals(listOf("AIG-3", "AIG-2"), Search.run("", listOf(gile), convs, last7 = true).map { it.bubble?.card })
+            assertEquals(listOf("AIG-3"), Search.run("fresh", listOf(gile), convs, last7 = true).map { it.bubble?.card })
+        } finally { com.smizflark.aigile.messenger.data.Now.clock = old }
+    }
 }

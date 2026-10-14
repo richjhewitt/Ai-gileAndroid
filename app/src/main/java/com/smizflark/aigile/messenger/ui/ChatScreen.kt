@@ -486,7 +486,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                         Text(stringResource(R.string.chat_empty), Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                DayPill(if (scrolling) topDay else null)
+                DayPill(if (scrolling) topDay else null, onClick = { goToDate = true })
                 JumpToNewest(show = !atBottom && convo != null, unread = unread) { scope.launch { list.animateScrollToItem(0) } }
                 val next = if (atBottom && convo != null && !finding) nextChat else null   // AII-204
                 NextUnreadButton(next?.name) { next?.let(onOpenChat) }
