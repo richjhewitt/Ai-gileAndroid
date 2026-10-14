@@ -2,7 +2,8 @@
 // seeded with a team and a DM, so tests never touch Rich's real board.
 //   node tools/testboard/testboard.mjs start [--port N] [--board <AI-gile folder>]   prints the address
 //   node tools/testboard/testboard.mjs check    calls every API the app uses, one line each
-//   node tools/testboard/testboard.mjs phone [--https 8443]   serves it to Rich's phone over Tailscale and shows a QR to pair the app
+//   node tools/testboard/testboard.mjs phone [--host test.aigile.lol] [--server Smizflark]   serves it to Rich's phone at
+//     https://test.aigile.lol through an ssh tunnel to the server and shows a QR to pair the app (--tailscale [--https 8443]: the old way)
 //   node tools/testboard/testboard.mjs stop     stops it and deletes its data
 import { execFileSync, spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -95,10 +96,45 @@ async function check() {
 }
 
 /* ---------- phone ---------- */
-// The test board on Rich's phone (AII-67): `tailscale serve` on its own https port, so Rich's real board keeps 443,
-// then an app pairing (the board's POST /api/phone/app, host with that port) shown as a QR on a page that opens on the PC.
+// The test board on Rich's phone (AII-67). Default: https://test.aigile.lol, through an ssh tunnel to the server
+// (ssh -R: the server's 127.0.0.1:4610 reaches this PC's test board; nginx there sends /api/ and /media/ of
+// test.aigile.lol to it, tools/testboard/nginx-testboard.conf). The board lets that Host in only for a paired phone.
+// --tailscale: the old way, `tailscale serve` on its own https port (parked, AII-67).
+// Then an app pairing (the board's POST /api/phone/app) shown as a QR on a page that opens on the PC.
 const tailscale = (...a) => execFileSync('tailscale', a, { encoding: 'utf8', windowsHide: true, timeout: 20000, stdio: 'pipe' });
+// The ssh login of a server saved in the board's Setup > My servers (aigile.local.json), so no address lives in this repo.
+function serverLogin(board, name) {
+  let all = [];
+  try { all = JSON.parse(fs.readFileSync(path.join(board, 'aigile.local.json'), 'utf8')).servers || []; } catch {}
+  const s = all.find(x => x.kind === 'ssh' && x.name.toLowerCase() === name.toLowerCase());
+  if (!s) throw new Error(`no ssh server "${name}" in Setup > My servers: pass --server <name>`);
+  return s.value;
+}
 async function phone() {
+  if (args.includes('--tailscale')) return phoneTailscale();
+  const s = readState();
+  if (!s) throw new Error('no test board: run start first');
+  const host = flag('host') || 'test.aigile.lol';
+  const remote = Number(flag('remote-port')) || 4610;
+  const login = serverLogin(s.board, flag('server') || 'Smizflark');
+  if (s.tunnel) try { process.kill(s.tunnel); } catch {}
+  const local = new URL(s.url).port;
+  const ssh = spawn('ssh', ['-N', '-o', 'BatchMode=yes', '-o', 'ExitOnForwardFailure=yes', '-o', 'ServerAliveInterval=30',
+    '-R', `127.0.0.1:${remote}:127.0.0.1:${local}`, login], { detached: true, stdio: 'ignore', windowsHide: true });
+  ssh.unref();
+  s.tunnel = ssh.pid; s.host = host; fs.writeFileSync(STATE, JSON.stringify(s, null, 2));
+  // The tunnel is up once the board answers through it on the server.
+  let up = false;
+  for (let i = 0; i < 20 && !up; i++) {
+    await sleep(500);
+    try { up = execFileSync('ssh', ['-o', 'BatchMode=yes', login, `curl -s -o /dev/null -w %{http_code} -H 'Host: ${host}' http://127.0.0.1:${remote}/api/meta`],
+      { encoding: 'utf8', windowsHide: true, timeout: 15000, stdio: 'pipe' }).trim() === '403'; } catch {}
+  }
+  if (!up) throw new Error(`the tunnel to ${flag('server') || 'Smizflark'} did not come up (port ${remote} taken there?)`);
+  const { qr } = await call(s.url, 'POST', '/api/phone/app', { host });
+  pairPage(s, qr, `https://${host}`);
+}
+async function phoneTailscale() {
   const s = readState();
   if (!s) throw new Error('no test board: run start first');
   const https = Number(flag('https')) || 8443;
@@ -113,11 +149,14 @@ async function phone() {
   s.https = https; fs.writeFileSync(STATE, JSON.stringify(s, null, 2));
   const { qr } = await call(s.url, 'POST', '/api/phone/app', { host: `${ts}:${https}` });
   if (!qr.includes(`:${https}&`)) throw new Error('this AI-gile drops the port from the phone address: use one with AII-67 (branch tds/phone-port)');
+  pairPage(s, qr, `https://${ts}:${https}`);
+}
+function pairPage(s, qr, address) {
   const page = path.join(s.dir, 'pair.html');
   fs.writeFileSync(page, `<!doctype html><meta charset="utf-8"><title>Test board: pair the app</title>
 <body style="font:18px system-ui;text-align:center;padding:2em"><h2>📱 Test board</h2><p>In the app: <b>Scan QR code</b></p>
-${qrSvg(s.board, qr)}<p style="color:#666;font-size:14px">https://${ts}:${https} (demo chats, not your real board)</p></body>`);
-  console.log(`serving https://${ts}:${https}\npair the app with: ${page}`);
+${qrSvg(s.board, qr)}<p style="color:#666;font-size:14px">${address} (demo chats, not your real board)</p></body>`);
+  console.log(`serving ${address}\npair the app with: ${page}`);
   if (!args.includes('--no-open')) spawn('explorer', [page], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
 }
 // The QR code from the board's own Setup page (public/js/phone.js), so this tool needs no QR package.
@@ -136,6 +175,7 @@ function stop() {
   const s = readState();
   if (!s) { console.log('not running'); return; }
   if (s.https) try { tailscale('serve', `--https=${s.https}`, 'off'); } catch {}
+  if (s.tunnel) try { process.kill(s.tunnel); } catch {}
   try { process.kill(s.pid); } catch {}
   // The server may hold files a moment after it dies (Windows): retry the delete.
   try { fs.rmSync(s.dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }); } catch {}
