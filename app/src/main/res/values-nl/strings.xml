@@ -113,6 +113,7 @@
     <string name="mute_for">Meldingen dempen voor</string>
     <string name="mute_8h">8 uur</string>
     <string name="mute_always">Tot ik het weer aanzet</string>
+    <string name="muted_until">Tot %1$s</string>
     <string name="muted">Gedempt</string>
     <string name="waiting">%1$d wachtend</string>
     <string name="new_messages">Nieuwe berichten</string>

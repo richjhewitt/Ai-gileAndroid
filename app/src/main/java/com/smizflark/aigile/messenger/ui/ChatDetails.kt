@@ -51,7 +51,8 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var pinned by remember { mutableStateOf(ref.key in repo.store.pinned) }
     var muteAsk by remember { mutableStateOf(false) }   // AII-157: Mute asks how long
-    if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false },
+    var muteEnds by remember { mutableStateOf(repo.store.mutedUntil()[ref.key]) }   // AII-160: when a timed mute ends
+    if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false; muteEnds = repo.store.mutedUntil()[ref.key] },
         onDismiss = { muteAsk = false })
     var shown by remember { mutableStateOf<CardDetail?>(null) }   // AII-85: the open card tapped, shown under its row
     val scope = rememberCoroutineScope()
@@ -76,7 +77,13 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 }
             }
             SwitchRow(stringResource(R.string.mute_alerts), muted, "details-mute") {
-                if (it) muteAsk = true else { muted = false; repo.store.setMuted(ref.key, false) }
+                if (it) muteAsk = true else { muted = false; muteEnds = null; repo.store.setMuted(ref.key, false) }
+            }
+            muteEnds?.takeIf { muted }?.let { end ->
+                val at = java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
+                    .format(java.time.Instant.ofEpochMilli(end).atZone(java.time.ZoneId.systemDefault()))
+                Text(stringResource(R.string.muted_until, at), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("details-mute-ends"))
             }
             SwitchRow(stringResource(R.string.pin), pinned, "details-pin") {
                 repo.store.pinned = togglePin(repo.store.pinned, ref.key); pinned = ref.key in repo.store.pinned

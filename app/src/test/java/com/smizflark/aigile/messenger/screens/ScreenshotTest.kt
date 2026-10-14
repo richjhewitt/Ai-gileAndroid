@@ -460,6 +460,20 @@ class ScreenshotTest {
         rule.waitForIdle()
         rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_dark.png")   // the sheet is its own window
     }
+    /** AII-160: a 1 hour mute shows when it ends under Mute alerts in the chat details. */
+    @Test fun muteEndsLight() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onNodeWithTag("chat-title").performClick()
+        rule.onNodeWithTag("details-mute").performClick()
+        rule.onNodeWithTag("mute-for:HOUR").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("details-mute-ends").assertExists()
+        rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_mute_ends_light.png")   // the sheet is its own window
+        rule.onNodeWithTag("details-mute").performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertTrue(rule.onAllNodesWithTag("details-mute-ends").fetchSemanticsNodes().isEmpty())
+    }
     /** AII-138: hold a message, Star: a ★ by its time, and it shows under Starred in the details; tapping it closes the sheet. */
     @Test fun starredLight() {
         prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
