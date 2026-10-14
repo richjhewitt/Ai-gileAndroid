@@ -21,6 +21,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.ViewConfiguration
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,7 +49,7 @@ import com.smizflark.aigile.messenger.data.Repo
 @Composable
 internal fun ChatTopBar(
     ref: ChatRef, repo: Repo, focus: String?, focusBubble: Bubble?, working: Boolean, workingOn: String?, muted: Boolean,
-    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {}, silent: Boolean = false, onSilent: () -> Unit = {},
+    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {}, onOpenCard: (String) -> Unit = {}, silent: Boolean = false, onSilent: () -> Unit = {},
 ) {
     TopAppBar(
         navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
@@ -57,11 +61,11 @@ internal fun ChatTopBar(
                     Text(if (focus != null) "$focus ${Mapper.clean(focusBubble?.cardTitle ?: "")}" else ref.name,
                         style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val on = workingOn.takeIf { working && focus == null }
-                    Text(if (on != null) stringResource(R.string.working_on, on) else if (focus == null) (if (working) stringResource(R.string.working) else ref.subtitle) else ref.name + if (focusBubble?.waiting == true) " · ⏳ " + stringResource(R.string.waiting_on_you) else "", style = MaterialTheme.typography.labelMedium,
+                    CompositionLocalProvider(LocalViewConfiguration provides NoTouchPadding(LocalViewConfiguration.current)) { Text(if (on != null) stringResource(R.string.working_on, on) else if (focus == null) (if (working) stringResource(R.string.working) else ref.subtitle) else ref.name + if (focusBubble?.waiting == true) " · ⏳ " + stringResource(R.string.waiting_on_you) else "", style = MaterialTheme.typography.labelMedium,
                         color = if (focus == null && working) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        // Not a link of its own: Compose widens a small tap target to 48 dp, which would take taps on the name too (AII-113).
-                        modifier = if (on != null) Modifier.testTag("working-on") else Modifier,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        // AII-219: tap opens that card. No 48 dp touch padding (NoTouchPadding), so taps beside it still reach the name (AII-113).
+                        modifier = if (on != null) Modifier.testTag("working-on").clickable(onClickLabel = stringResource(R.string.open_working_card, on)) { onOpenCard(on) } else Modifier,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 }
             }
         },
@@ -91,4 +95,9 @@ internal fun ChatTopBar(
             }
         },
     )
+}
+
+/** AII-219: Compose widens small tap targets to 48 dp; for the working-on line that would steal taps meant for the chat name (AII-113). */
+private class NoTouchPadding(base: ViewConfiguration) : ViewConfiguration by base {
+    override val minimumTouchTargetSize: DpSize get() = DpSize.Zero
 }
