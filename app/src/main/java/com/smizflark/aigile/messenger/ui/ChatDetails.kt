@@ -93,7 +93,7 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 starred.forEach { s ->
                     Column(Modifier.fillMaxWidth().clickable { onStarred(s.key) }.padding(vertical = 6.dp).testTag("details-star")) {
                         val plain = Markdown.render(s.text, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.primary).text   // without the ** marks
-                        Text("★ " + plain.lines().firstOrNull { it.isNotBlank() }.orEmpty().trim(),style = MaterialTheme.typography.bodyMedium,
+                        Text("★ " + com.smizflark.aigile.messenger.data.Stars.preview(plain),style = MaterialTheme.typography.bodyMedium,
                             maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Text(listOf(s.author, fullTime(s.at)).filter { it.isNotBlank() }.joinToString(" · "),
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

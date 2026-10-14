@@ -38,4 +38,9 @@ class StarsTest {
         val all = listOf(Stars.of(a.key, old), Stars.of(b.key, new), Stars.of("gone", new))
         assertEquals(listOf("Beta" to "k2", "Alpha" to "k1"), Stars.everywhere(all, listOf(a, b)).map { (r, s) -> r.name to s.key })
     }
+
+    @Test fun previewIsTheFirstLineWithoutABullet() {
+        assertEquals("Done: export", Stars.preview("\n• Done: export\nmore"))
+        assertEquals("plain", Stars.preview("plain"))
+    }
 }
