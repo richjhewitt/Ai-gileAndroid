@@ -77,7 +77,9 @@ object ChatNotifier {
             .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
             .setShowsUserInterface(false)
             .build()
-        return base(context).setContentTitle(name).setStyle(style)
+        // AII-207: Silent alerts for this chat: shown, but no sound and no buzz (Mute never gets here).
+        val quiet = Store(context).let { com.smizflark.aigile.messenger.data.Silent.quiet(it.silent, it.muted(), chat) }
+        return base(context).setContentTitle(name).setStyle(style).setSilent(quiet)
             .setContentIntent(openChat(context, chat, id)).addAction(action).addAction(readAction).setGroup(GROUP)
     }
 

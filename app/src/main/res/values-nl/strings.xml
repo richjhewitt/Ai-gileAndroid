@@ -84,6 +84,8 @@
     <string name="waiting_on_you">wacht op jou</string>
     <string name="mute_alerts">Meldingen dempen</string>
     <string name="unmute">Dempen opheffen</string>
+    <string name="silent_alerts">Stille meldingen</string>
+    <string name="silent_alerts_off">Meldingen met geluid</string>
     <string name="jump_unread">%1$d nieuw</string>
     <string name="next_unread">Volgende ongelezen: %1$s →</string>
     <string name="jump_newest">Naar het nieuwste bericht</string>

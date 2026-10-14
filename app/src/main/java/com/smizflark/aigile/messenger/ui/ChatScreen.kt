@@ -105,6 +105,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var forwarding by remember { mutableStateOf<String?>(null) }   // AII-71: the text of the message being forwarded
     var error by remember { mutableStateOf<String?>(null) }
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
+    var silent by remember { mutableStateOf(ref.key in repo.store.silent) }
     var muteAsk by remember { mutableStateOf(false) }   // AII-157: Mute asks how long
     var details by remember { mutableStateOf(false) }   // AII-80: the chat details sheet
     var stars by remember { mutableStateOf(repo.store.stars()) }   // AII-138: starred messages
@@ -383,7 +384,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         topBar = {
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
                 onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true },
-                onGoToDate = { goToDate = true })
+                onGoToDate = { goToDate = true }, silent = silent,
+                onSilent = { repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent })
         },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {

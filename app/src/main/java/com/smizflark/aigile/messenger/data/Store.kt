@@ -188,6 +188,11 @@ class Store(context: Context) {
         if (next != all) write("drafts.json", next)
     }
 
+    /** Chats whose alerts show with no sound and no buzz (AII-207), by chat key. */
+    var silent: Set<String>
+        get() = settings.getStringSet("silent", emptySet())?.toSet() ?: emptySet()
+        set(v) = settings.edit().putStringSet("silent", v).apply()
+
     /* ---------- muted chats: no alerts from them (AII-48) ---------- */
 
     /** Muted now: a mute for a while (AII-157) ends by itself. */
@@ -269,7 +274,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "quietOn", "look", "phoneColours", "textSize", "enterSends", "undoSend", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "quietOn", "look", "phoneColours", "textSize", "enterSends", "undoSend", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent")
 
         /** One-time move of the settings out of the pairing file, so the pairing file can stay out of backup. */
         fun moveSettings(from: SharedPreferences, to: SharedPreferences) {
