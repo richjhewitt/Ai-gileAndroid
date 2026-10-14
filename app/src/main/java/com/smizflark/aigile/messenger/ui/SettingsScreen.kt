@@ -75,6 +75,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
     var sentAlerts by remember { mutableStateOf(s.sentAlerts) }   // AII-175
     var from by remember { mutableStateOf(s.quietFrom) }
     var to by remember { mutableStateOf(s.quietTo) }
+    var morning by remember { mutableStateOf(s.morning) }   // AII-208
     var note by remember { mutableStateOf<String?>(null) }
     var saved by remember { mutableIntStateOf(0) }   // bumps after a change, so the connection text re-reads the store
     var confirmSignOut by remember { mutableStateOf(false) }
@@ -145,6 +146,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
                 } else CheckWorker.cancel(ctx)
             }
             Toggle(stringResource(R.string.alerts_sent_later), stringResource(R.string.alerts_sent_later_sub), sentAlerts, Modifier.testTag("sentAlerts")) { sentAlerts = it; s.sentAlerts = it }
+            Stepper(stringResource(R.string.morning_time), morning) { morning = it; s.morning = it; Appearance.morning = it }
             Toggle(stringResource(R.string.quiet_hours), stringResource(R.string.quiet_sub, hour(from), hour(to)), quietOn) { quietOn = it; s.quietOn = it }
             if (quietOn) {
                 Stepper(stringResource(R.string.quiet_from), from) { from = it; s.quietFrom = it }
