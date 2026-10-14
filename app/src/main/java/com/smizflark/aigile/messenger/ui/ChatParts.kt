@@ -207,7 +207,7 @@ internal fun CardHeader(r: Row.Card, chosen: Boolean, onOpen: (() -> Unit)?, onC
         Surface(
             shape = shape,
             color = if (r.waiting) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.clip(shape).combinedClickable(onClick = onClick,
+            modifier = Modifier.clip(shape).combinedClickable(onClick = onClick, onLongClickLabel = stringResource(R.string.options),
                 onLongClick = if (r.card == LEAD_CHAT) null else ({ menu = true })),
         ) {
             Text(

@@ -342,4 +342,5 @@
     <string name="reset_settings">Instellingen herstellen</string>
     <string name="reset_settings_text">Alle instellingen herstellen? Je bordverbinding, vastgezette en gedempte chats blijven staan.</string>
     <string name="reset">Herstel</string>
+    <string name="go_to_message">Ga naar bericht</string>
 </resources>

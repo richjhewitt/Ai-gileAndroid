@@ -126,7 +126,7 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
             if (mine.isNotEmpty() && onReminder != null) {
                 Text(stringResource(R.string.reminders), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
                 mine.forEach { r ->
-                    Row(Modifier.fillMaxWidth().clickable { onReminder(r.msg) }.padding(start = 0.dp).testTag("details-reminder"), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().clickable(onClickLabel = stringResource(R.string.go_to_message)) { onReminder(r.msg) }.padding(start = 0.dp).testTag("details-reminder"), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f).padding(vertical = 6.dp)) {
                             Text(r.text.replace('\n', ' '), style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text("⏰ " + sendTime(java.time.Instant.ofEpochMilli(r.at).toString()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
