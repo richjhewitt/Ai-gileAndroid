@@ -165,7 +165,7 @@ class Store(context: Context) {
     /** Muted now: a mute for a while (AII-157) ends by itself. */
     fun muted(): Set<String> = Mute.active(settings.getStringSet("muted", null)?.toSet() ?: emptySet(), mutedUntil(), Now.millis())
     /** When each timed mute ends, as "chat<TAB>epoch millis"; a chat not here is muted until unmuted. */
-    private fun mutedUntil(): Map<String, Long> = (settings.getStringSet("mutedUntil", null) ?: emptySet())
+    fun mutedUntil(): Map<String, Long> = (settings.getStringSet("mutedUntil", null) ?: emptySet())
         .mapNotNull { e -> e.split('\t').takeIf { it.size == 2 }?.let { (c, t) -> t.toLongOrNull()?.let { c to it } } }.toMap()
     fun setMuted(chat: String, on: Boolean, until: Long? = null) {
         val ends = mutedUntil() - chat + (if (on && until != null) mapOf(chat to until) else emptyMap())
