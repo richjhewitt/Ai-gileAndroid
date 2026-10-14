@@ -119,7 +119,7 @@
     <string name="pause_alerts">Pause alerts</string>
     <string name="pause_1h">1 hour</string>
     <string name="pause_4h">4 hours</string>
-    <string name="pause_tomorrow">Until 8 in the morning</string>
+    <string name="pause_tomorrow">Until %1$d in the morning</string>
     <string name="paused_until">Alerts paused until %1$s</string>
     <string name="resume">Resume</string>
     <string name="new_version">New version: tap to install</string>
