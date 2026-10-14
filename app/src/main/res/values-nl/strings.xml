@@ -238,6 +238,7 @@
     <string name="enter_sends_sub">Enter verstuurt het bericht; Shift+Enter maakt een nieuwe regel</string>
     <string name="next_unread_setting">Knop Volgende ongelezen</string>
     <string name="next_unread_setting_sub">Onderaan een gesprek een knop naar het volgende gesprek met ongelezen berichten</string>
+    <string name="quick_reply_edit">Snelle antwoorden aanpassen</string>
     <string name="quick_replies">Snelle antwoorden</string>
     <string name="quick_replies_sub">Kant-en-klare antwoorden boven een leeg berichtvak; tik en het staat erin</string>
     <string name="quick_replies_mine">Jouw antwoorden, één per regel (leeg voor de standaard)</string>
