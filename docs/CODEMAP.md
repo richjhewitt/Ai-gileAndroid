@@ -45,7 +45,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ChatScreen.kt: the chat screen itself (list, find, scrolling).
 - ui/ChatTopBar.kt: the chat's top bar (name, 'working on', find, Mute).
 - ui/ChatRows.kt: builds the chat's rows (days, card headers, messages, waiting sends) and counts unread below.
-- ui/ChatBubble.kt: one message bubble (copy, reply, forward, options, retry).
+- ui/ChatBubble.kt: one message bubble (copy, reply, forward, options, retry; long ones fold with Read more, AII-184).
 - ui/ChatComposer.kt: the message input with pictures, reply, dictation and quick replies (AII-179).
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
 - ui/ChatsScreen.kt: every chat in one list.
@@ -80,7 +80,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - tools/: release.ps1 (release build script) and emulator/ (smoke.ps1 emulator helpers).
 - tools/testboard/testboard.mjs: throwaway test board with demo chats (start, check, phone over Tailscale with a pairing QR, stop).
 - docs/shots: reference screenshots (Roborazzi) for each screen and theme.
-- test/.../screens: ShotBase.kt (demo data, fixed clock, shot helpers); ChatsListShotTest (chats list), ChatShotTest (one chat), OtherShotTest (Connect, Starred, New message, Settings, black, Dutch).
+- test/.../screens: ShotBase.kt (demo data, fixed clock, shot helpers); ChatsListShotTest (chats list), ChatShotTest (one chat), OtherShotTest (Connect, Starred, New message, Settings, black, Dutch); LongMessageShotTest (Read more, AII-184).
 
 ## res/xml backup (AII-81)
 - res/xml/backup_rules.xml and res/xml/data_extraction_rules.xml: backup takes only settings.xml (look, text size, pins, mutes, quiet hours); keys, board address, drafts and outbox stay out.

@@ -268,8 +268,22 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 // AII-99: tapping the quote jumps to the message it quotes.
                 if (quoted != null) QuoteBar(Markdown.render(quoted, cs.surfaceVariant, cs.primary), fg,
                     Modifier.clickable(onClickLabel = stringResource(R.string.show_quoted)) { onQuote(quoted) }.testTag("quote"))
-                if (quoted != null && rest.isNotEmpty()) Text(Markdown.render(rest, cs.surfaceVariant, cs.primary, cards, onCard, copy), style = MaterialTheme.typography.bodyLarge, color = fg)
-                else if (quoted == null && body.isNotEmpty()) Text(if (forwarded) Markdown.render(body, cs.surfaceVariant, cs.primary, cards, onCard, copy) else shown, style = MaterialTheme.typography.bodyLarge, color = fg)
+                val text = when {
+                    quoted != null && rest.isNotEmpty() -> Markdown.render(rest, cs.surfaceVariant, cs.primary, cards, onCard, copy)
+                    quoted == null && body.isNotEmpty() -> if (forwarded) Markdown.render(body, cs.surfaceVariant, cs.primary, cards, onCard, copy) else shown
+                    else -> null
+                }
+                // AII-184: a long message shows its first lines and Read more; a find match always shows in full.
+                if (text != null) {
+                    var open by rememberSaveable(b.key) { mutableStateOf(false) }
+                    var long by remember(b.key) { mutableStateOf(false) }
+                    Text(text, style = MaterialTheme.typography.bodyLarge, color = fg,
+                        maxLines = if (open || mark > 0) Int.MAX_VALUE else FOLD_LINES, overflow = TextOverflow.Ellipsis,
+                        onTextLayout = { if (it.hasVisualOverflow) long = true })
+                    if (long && mark == 0) TextButton(onClick = { open = !open }, modifier = Modifier.testTag("read-more")) {
+                        Text(stringResource(if (open) R.string.show_less else R.string.read_more))
+                    }
+                }
                 Text(
                     when (b.state) {
                         SendState.SENDING -> stringResource(R.string.sending)
@@ -308,6 +322,9 @@ private fun SelectText(text: String, onClose: () -> Unit) = AlertDialog(
 )
 
 private val SWIPE_REPLY = 72.dp
+
+/** Lines a long message shows before Read more (AII-184). */
+internal const val FOLD_LINES = 15
 
 /** How far a reply swipe has got, 0 to 1; at 1 letting go starts the reply (AII-101). */
 internal fun replyProgress(drag: Float, reach: Float): Float = if (reach <= 0f) 0f else (drag / reach).coerceIn(0f, 1f)
