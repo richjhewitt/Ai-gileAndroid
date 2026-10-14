@@ -199,6 +199,9 @@
     <string name="message_sent_undo">Sending in 5 seconds</string>
     <string name="play_gifs">Play GIF links</string>
     <string name="play_gifs_sub">GIF links (giphy, tenor) play in the chat; off keeps them as links</string>
+    <string name="saved_pictures">Saved pictures: %1$s</string>
+    <string name="clear_pictures_title">Clear saved pictures?</string>
+    <string name="clear_pictures_text">Pictures and opened files saved on this phone are deleted. They load again from the board when you open a chat. Pictures waiting to be sent are kept.</string>
     <string name="buzz">Buzz</string>
     <string name="buzz_sub">A little buzz when you send and when a reply comes in</string>
     <string name="enter_sends_sub">Enter sends the message; Shift+Enter makes a new line</string>
