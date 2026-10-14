@@ -10,6 +10,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/ChatInfo.kt: a chat's open cards and pictures, for the chat details sheet.
 - data/Crash.kt: keeps the last crash and turns it into a bug message for the team.
 - data/Demo.kt: made-up chats that answer back, for trying the app with no board.
+- data/Gif.kt: GIF links in a message (giphy, tenor, .gif) shown as moving pictures in the bubble, like the board (AII-188).
 - data/Drafts.kt: half-typed replies, one per chat.
 - data/Filter.kt: the chips above the chats list.
 - data/Forward.kt: forwarding a message to another chat.

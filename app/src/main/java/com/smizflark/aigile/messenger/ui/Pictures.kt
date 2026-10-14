@@ -110,7 +110,7 @@ private fun request(pic: Pic, repo: Repo): ImageRequest {
     val b = ImageRequest.Builder(LocalContext.current).crossfade(true)
     val board = repo.boardSource
     return when {
-        pic.local -> b.data(pic.path)
+        pic.local || pic.web -> b.data(pic.path)
         board != null -> b.data(board.url(pic.path)).addHeader("Authorization", "Bearer ${repo.store.key}")
         else -> b.data(pic.path)
     }.build()
@@ -124,10 +124,12 @@ fun MessagePictures(pics: List<Pic>, repo: Repo, onOpened: () -> Unit = {}) {
     val images = pics.filter { it.image }
     val actions = rememberPictureActions()
     var held by remember { mutableStateOf<Pic?>(null) }
+    var failed by remember { mutableStateOf(emptySet<String>()) }   // AII-188: a GIF link that isn't one just hides, like on the board
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.padding(bottom = 6.dp)) {
         pics.forEach { p ->
-            if (p.image) Box {
+            if (p.path in failed) Unit
+            else if (p.image) Box {
                 val req = request(p, repo)
                 SubcomposeAsyncImage(
                     model = req, contentDescription = p.name.ifEmpty { stringResource(R.string.picture) },
@@ -136,7 +138,8 @@ fun MessagePictures(pics: List<Pic>, repo: Repo, onOpened: () -> Unit = {}) {
                         .heightIn(min = 80.dp, max = if (pics.size == 1) 320.dp else 126.dp)
                         .clip(RoundedCornerShape(12.dp)).combinedClickable(onLongClick = { held = p }) { show?.invoke(Shown(images, images.indexOf(p).coerceAtLeast(0), repo)); onOpened() }.testTag("pic"),
                     loading = { Box(Modifier.size(126.dp).background(MaterialTheme.colorScheme.surfaceVariant)) },
-                    error = { Missing(p) },
+                    error = { if (!p.web) Missing(p) },
+                    onError = { if (p.web) failed = failed + p.path },
                 )
                 DropdownMenu(expanded = held == p, onDismissRequest = { held = null }) {
                     actions.save?.let { save -> DropdownMenuItem(text = { Text(stringResource(R.string.save_picture)) }, leadingIcon = { Icon(Icons.Default.SaveAlt, null) },
