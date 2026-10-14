@@ -20,6 +20,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Mapper.kt: turns the board's answers into what the screens show.
 - data/Models.kt: data classes for the board's chats and messages.
 - data/News.kt: what is new since you last looked, and quiet hours.
+- data/Remind.kt: Remind me about a message (AII-201): in 1 hour, this evening 18:00 (hidden after), tomorrow 9:00; reminders kept in Store, fired by work/RemindWorker.kt as an alert that opens the chat at the message.
 - data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
 - data/Mute.kt: mute a chat for 1 hour, 8 hours or until unmuted (AII-157); timed mutes end by themselves.
 - data/Outbox.kt: outbox state changes (retry / delete failed messages, change time) and the list of every waiting Send later message (AII-166).

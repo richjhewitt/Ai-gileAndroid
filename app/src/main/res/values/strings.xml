@@ -282,6 +282,12 @@
     <string name="file_not_opened">Could not open this file.</string>
     <string name="file_no_app">No app on this phone can open this file.</string>
     <string name="star">Star</string>
+    <string name="remind_me">Remind me</string>
+    <string name="remind_hour">In 1 hour</string>
+    <string name="remind_evening">This evening (18:00)</string>
+    <string name="remind_tomorrow">Tomorrow 9:00</string>
+    <string name="remind_set">Reminder set for %1$s</string>
+    <string name="notify_remind">Reminder: %1$s</string>
     <string name="unstar">Remove star</string>
     <string name="starred">Starred</string>
     <string name="no_starred">Hold a message and tap Star to keep it here.</string>

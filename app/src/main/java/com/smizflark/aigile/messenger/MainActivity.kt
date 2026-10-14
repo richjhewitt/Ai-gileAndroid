@@ -40,6 +40,8 @@ class MainActivity : FragmentActivity() {
     /** A pairing link (aigile://pair?...) or a chat to open from an alert. */
     private var pairing by mutableStateOf<Pair<String, String>?>(null)
     private var openChat by mutableStateOf<String?>(null)
+    /** The message to land on when the chat comes from a reminder alert (AII-201). */
+    private var openMsg by mutableStateOf<String?>(null)
     /** Text shared in from another app, waiting to be sent from New message. */
     private var shared by mutableStateOf<String?>(null)
     /** New message from the app icon menu (AII-53). */
@@ -124,8 +126,8 @@ class MainActivity : FragmentActivity() {
                 }
                 LaunchedEffect(openChat) {
                     val c = openChat ?: return@LaunchedEffect
-                    if (repo.store.connected) nav.openChat(c)
-                    openChat = null
+                    if (repo.store.connected) nav.openChat(c, openMsg)
+                    openChat = null; openMsg = null
                 }
                 // Covers everything until unlocked; asks again each time it locks.
                 if (locked) {
@@ -146,7 +148,7 @@ class MainActivity : FragmentActivity() {
 
     private fun read(intent: Intent?) {
         intent?.data?.toString()?.let { Mapper.parsePairing(it) }?.let { pairing = it }
-        intent?.getStringExtra(CheckWorker.EXTRA_CHAT)?.let { openChat = it }
+        intent?.getStringExtra(CheckWorker.EXTRA_CHAT)?.let { openChat = it; openMsg = intent.getStringExtra(CheckWorker.EXTRA_MSG) }
         if (intent?.action == Intent.ACTION_SEND)
             Share.text(intent.getStringExtra(Intent.EXTRA_SUBJECT), intent.getStringExtra(Intent.EXTRA_TEXT))?.let { shared = it }
         if (intent?.action == Shortcuts.ACTION_NEW) openNew = true

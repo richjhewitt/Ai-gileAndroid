@@ -150,6 +150,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
     val shown = Markdown.render(b.text, cs.surfaceVariant, cs.primary, cards, onCard, copy)
     // AII-43: long-press a bubble to copy what it shows (without the ** marks).
     var menu by remember { mutableStateOf(false) }
+    var remindMenu by remember { mutableStateOf(false) }
     var selecting by remember { mutableStateOf(false) }   // AII-127: pick part of a message to copy
     var showTime by remember { mutableStateOf(false) }   // AII-51: tap a bubble for its exact time
     val clipboard = LocalClipboardManager.current
@@ -225,7 +226,29 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             modifier = Modifier.widthIn(max = 320.dp).semantics(mergeDescendants = true) {}.testTag(if (b.mine) "mine" else "theirs")
                 .combinedClickable(onClick = { showTime = !showTime }, onLongClick = { menu = true }),
         ) {
+            // AII-201: Remind me picks a time; at that time an alert shows the message and opens the chat at it.
+            DropdownMenu(expanded = remindMenu, onDismissRequest = { remindMenu = false }) {
+                val nowMs = com.smizflark.aigile.messenger.data.Now.millis()
+                com.smizflark.aigile.messenger.data.Remind.choices(nowMs).forEach { w ->
+                    val label = when (w) {
+                        com.smizflark.aigile.messenger.data.Remind.When.HOUR -> R.string.remind_hour
+                        com.smizflark.aigile.messenger.data.Remind.When.EVENING -> R.string.remind_evening
+                        com.smizflark.aigile.messenger.data.Remind.When.TOMORROW -> R.string.remind_tomorrow
+                    }
+                    DropdownMenuItem(text = { Text(stringResource(label)) }, modifier = Modifier.testTag("remind-$w"), onClick = {
+                        remindMenu = false
+                        val at = com.smizflark.aigile.messenger.data.Remind.at(com.smizflark.aigile.messenger.data.Now.millis(), w) ?: return@DropdownMenuItem
+                        val r = com.smizflark.aigile.messenger.data.Reminder(com.smizflark.aigile.messenger.data.Remind.idOf(ref.key, b.key), ref.key, ref.name, b.key,
+                            Markdown.plain(shown).trim(), at)
+                        repo.store.setReminders(com.smizflark.aigile.messenger.data.Remind.add(repo.store.reminders(), r))
+                        com.smizflark.aigile.messenger.work.RemindWorker.schedule(ctx, r)
+                        Toast.makeText(ctx, ctx.getString(R.string.remind_set, com.smizflark.aigile.messenger.data.Mute.endTime(at)), Toast.LENGTH_SHORT).show()
+                    })
+                }
+            }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                if (b.state == SendState.SENT && !b.unverified && shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.remind_me)) }, modifier = Modifier.testTag("remind"),
+                    onClick = { menu = false; remindMenu = true })
                 if (b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(R.string.reply)) }, modifier = Modifier.testTag("reply"),
                     onClick = { menu = false; onReply(b) })
                 if (b.state == SendState.SENT && !b.unverified && b.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.forward)) }, modifier = Modifier.testTag("forward"),

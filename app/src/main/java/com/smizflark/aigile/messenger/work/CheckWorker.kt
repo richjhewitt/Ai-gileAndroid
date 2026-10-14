@@ -48,6 +48,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         private const val NAME = "check-messages"
         const val CHANNEL = "messages"
         const val EXTRA_CHAT = "chat"
+        const val EXTRA_MSG = "msg"
         private const val GROUP = "messages"
         private const val SUMMARY = ChatNotifier.SUMMARY
 

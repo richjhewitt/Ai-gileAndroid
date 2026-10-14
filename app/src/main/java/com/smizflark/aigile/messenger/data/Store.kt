@@ -213,6 +213,11 @@ class Store(context: Context) {
     fun stars(): List<Star> = read("stars.json") ?: emptyList()
     fun setStars(all: List<Star>) = write("stars.json", all)
 
+    /* ---------- reminders (AII-201) ---------- */
+
+    fun reminders(): List<Reminder> = read("reminders.json") ?: emptyList()
+    fun setReminders(all: List<Reminder>) = write("reminders.json", all)
+
     /* ---------- seen: the newest message from them you have looked at, per chat ---------- */
 
     fun seen(): Map<String, String> = read("seen.json") ?: emptyMap()
