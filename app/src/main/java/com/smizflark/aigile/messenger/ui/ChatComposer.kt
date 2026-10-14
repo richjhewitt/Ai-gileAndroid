@@ -100,6 +100,11 @@ import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
+import com.smizflark.aigile.messenger.data.Now
+import com.smizflark.aigile.messenger.data.Pause
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import java.time.Instant
 import com.smizflark.aigile.messenger.data.Forward
 import com.smizflark.aigile.messenger.data.Quote
 import com.smizflark.aigile.messenger.data.Pic
@@ -133,6 +138,7 @@ internal fun Composer(
     pics: List<String> = emptyList(), picNote: String? = null, onAttach: () -> Unit = {}, onRemovePic: (String) -> Unit = {},
     onPasteCopied: (() -> Unit)? = null,
     quote: String? = null, onClearQuote: () -> Unit = {},
+    onSendLater: ((Instant) -> Unit)? = null,
     onSend: () -> Unit,
 ) {
     Surface(tonalElevation = 2.dp) {
@@ -185,10 +191,32 @@ internal fun Composer(
                     },
                 )
                 Spacer(Modifier.size(8.dp))
-                FilledIconButton(onClick = onSend, enabled = canSend, modifier = Modifier.size(52.dp).testTag("send")) {
-                    Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.send))
-                }
+                SendButton(canSend, onSend, onSendLater)
             }
+        }
+    }
+}
+
+/** Send: tap sends now; hold it for Send later (AII-146). Drawn like a FilledIconButton, which can't take a long press. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun SendButton(canSend: Boolean, onSend: () -> Unit, onSendLater: ((Instant) -> Unit)?) {
+    val cs = MaterialTheme.colorScheme
+    var menu by remember { mutableStateOf(false) }
+    val view = LocalView.current
+    Box {
+        Box(Modifier.size(52.dp).clip(CircleShape).background(if (canSend) cs.primary else cs.onSurface.copy(alpha = 0.12f))
+            .combinedClickable(enabled = canSend, role = Role.Button, onClick = onSend,
+                onLongClickLabel = stringResource(R.string.send_later),
+                onLongClick = onSendLater?.let { { view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS); menu = true } })
+            .testTag("send"), contentAlignment = Alignment.Center) {
+            Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.send), tint = if (canSend) cs.onPrimary else cs.onSurface.copy(alpha = 0.38f))
+        }
+        if (onSendLater != null) DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            DropdownMenuItem(text = { Text(stringResource(R.string.send_in_hour)) }, modifier = Modifier.testTag("send-hour"),
+                onClick = { menu = false; onSendLater(Instant.ofEpochMilli(Pause.oneHour(Now.millis()))) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.send_morning)) }, modifier = Modifier.testTag("send-morning"),
+                onClick = { menu = false; onSendLater(Instant.ofEpochMilli(Pause.untilTomorrow(Now.millis()))) })
         }
     }
 }

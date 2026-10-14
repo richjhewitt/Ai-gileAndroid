@@ -113,10 +113,23 @@ class Repo(context: Context) {
 
     /* ---------- sending through the outbox: nothing typed is lost ---------- */
 
-    fun queue(ref: ChatRef, text: String, target: String?, files: List<String> = emptyList()): Pending {
-        val p = Pending(UUID.randomUUID().toString(), ref.key, text, target, Instant.now().toString(), files = files)
+    fun queue(ref: ChatRef, text: String, target: String?, files: List<String> = emptyList(), sendAt: Instant? = null): Pending {
+        val p = Pending(UUID.randomUUID().toString(), ref.key, text, target, Instant.now().toString(), files = files, sendAt = sendAt?.toString())
         store.saveOutbox(store.outbox() + p)
         return p
+    }
+
+    /** Send later (AII-146): kept in the outbox until [at], then sent by SendWorker (or by the open chat, in the demo). */
+    fun later(ref: ChatRef, text: String, target: String?, files: List<String>, at: Instant): Pending {
+        val p = queue(ref, text, target, files, at)
+        if (!store.demo) SendWorker.scheduleAt(app, p.id, at)
+        return p
+    }
+
+    /** Send now, on a Send later message (AII-146). */
+    suspend fun sendNow(ref: ChatRef, p: Pending): Result<String?> {
+        store.saveOutbox(store.outbox().map { if (it.id == p.id) it.copy(sendAt = null) else it })
+        return deliver(ref, p.copy(sendAt = null))
     }
 
     /** Sends one queued message. Returns the card it landed on; on failure it stays queued, marked failed. */

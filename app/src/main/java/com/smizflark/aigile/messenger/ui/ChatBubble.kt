@@ -62,6 +62,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -135,7 +136,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -183,6 +184,22 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 DropdownMenu(expanded = ask, onDismissRequest = { ask = false }) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.retry)) }, modifier = Modifier.testTag("retry"), onClick = { ask = false; onRetry(failedP) })
                     DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, modifier = Modifier.testTag("delete"), onClick = { ask = false; onDiscard(failedP) })
+                }
+            }
+        }
+        // Send later (AII-146): a clock mark; tap it to send now or delete.
+        val laterP = r.pending?.takeIf { b.state == SendState.LATER }
+        if (laterP != null) {
+            var ask by remember { mutableStateOf(false) }
+            val laterLabel = stringResource(R.string.later_options)
+            Box {
+                Box(Modifier.padding(end = 6.dp).size(28.dp).background(cs.secondaryContainer, CircleShape).testTag("later-mark")
+                    .clickable(onClickLabel = laterLabel) { ask = true }
+                    .semantics { contentDescription = laterLabel },
+                    contentAlignment = Alignment.Center) { Icon(Icons.Default.Schedule, null, Modifier.size(18.dp), tint = cs.onSecondaryContainer) }
+                DropdownMenu(expanded = ask, onDismissRequest = { ask = false }) {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.send_now)) }, modifier = Modifier.testTag("send-now"), onClick = { ask = false; onSendNow(laterP) })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, modifier = Modifier.testTag("delete"), onClick = { ask = false; onDiscard(laterP) })
                 }
             }
         }
@@ -243,6 +260,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     when (b.state) {
                         SendState.SENDING -> stringResource(R.string.sending)
                         SendState.FAILED -> stringResource(R.string.not_sent)
+                        SendState.LATER -> stringResource(R.string.sends_at, clock(b.at))
                         SendState.SENT -> (if (starred) "★ " else "") + clock(b.at) +if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
                     },
                     style = MaterialTheme.typography.labelSmall,

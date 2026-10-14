@@ -50,6 +50,12 @@
     <string name="not_sent">Niet verstuurd</string>
     <string name="not_sent_desc">Niet verstuurd. Tik om opnieuw te proberen of te verwijderen</string>
     <string name="retry_or_delete">Opnieuw proberen of verwijderen</string>
+    <string name="send_later">Later versturen</string>
+    <string name="send_in_hour">Over 1 uur versturen</string>
+    <string name="send_morning">Om 8:00 \'s ochtends versturen</string>
+    <string name="sends_at">Gaat om %1$s</string>
+    <string name="send_now">Nu versturen</string>
+    <string name="later_options">Nu versturen of verwijderen</string>
     <string name="retry">Opnieuw proberen</string>
     <string name="delete">Verwijderen</string>
     <string name="chat_empty">Nog geen berichten. Zeg hieronder hallo.</string>

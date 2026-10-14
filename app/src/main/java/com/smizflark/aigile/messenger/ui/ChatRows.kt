@@ -6,7 +6,9 @@ import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Pic
+import com.smizflark.aigile.messenger.data.Now
 import com.smizflark.aigile.messenger.data.SendState
+import com.smizflark.aigile.messenger.work.later
 import java.io.File
 
 /** Messages from them after the newest one you saw at the bottom of the chat (AII-46). */
@@ -37,8 +39,9 @@ internal fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus
         out += Row.Msg(b.key, b, showOptions = i in optionsAt)
     }
     pending.filter { focus == null || it.target == focus }.forEach { p ->
-        out += Row.Msg("p:${p.id}", Bubble("p:${p.id}", owner, p.text, p.at, true, p.target,
-            state = if (p.failed && !p.offline) SendState.FAILED else SendState.SENDING,   // offline ones go by themselves (AII-55)
+        val held = later(p, Now.instant())   // Send later (AII-146): its time shows instead of when it was typed
+        out += Row.Msg("p:${p.id}", Bubble("p:${p.id}", owner, p.text, if (held) p.sendAt!! else p.at, true, p.target,
+            state = if (held) SendState.LATER else if (p.failed && !p.offline) SendState.FAILED else SendState.SENDING,   // offline ones go by themselves (AII-55)
             pics = p.files.map { Pic(File(it).toURI().toString(), File(it).name, "image/") }), p)
     }
     return out
