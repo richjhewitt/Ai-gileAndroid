@@ -182,7 +182,6 @@ fun MessengerTheme(store: Store? = null, content: @Composable () -> Unit) {
 @Composable
 fun AppearanceSettings(store: Store) {
     Appearance.load(store)
-    Text(stringResource(R.string.look), style = MaterialTheme.typography.titleMedium)
     Column(Modifier.selectableGroup()) {
         Look.entries.forEach { l ->
             Row(

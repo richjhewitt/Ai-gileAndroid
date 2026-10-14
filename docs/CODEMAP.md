@@ -72,7 +72,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/Files.kt: tap a file to download it to the cache and open it with another app (AII-197); used in bubbles and the chat details Files list.
 - ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
 - ui/SearchScreen.kt: search across all chats, with Pictures and Links chips (AII-192).
-- ui/SettingsScreen.kt: settings.
+- ui/SettingsScreen.kt: settings, in sections Connection, Look, Chats, Alerts, Privacy, Storage, About (AII-232); the small pieces (SectionHeader, Toggle, Stepper, SwipePick, ChangeBoard) are in ui/SettingsSections.kt.
 - ui/RemindersScreen.kt: every reminder, soonest first (AII-209, a Reminders row in Settings when there are any); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
 - ui/AboutScreen.kt: About, from the bottom of Settings (AII-220): app name, version, build number and a hand-written list of open-source licences (LICENCES, keep in step with app/build.gradle.kts); tap one to open its licence page.
 - ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); tap one, its chat opens at it.

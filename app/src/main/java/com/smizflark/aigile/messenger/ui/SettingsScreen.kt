@@ -111,7 +111,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
     }) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.connection), style = MaterialTheme.typography.titleMedium)
+            SectionHeader(stringResource(R.string.connection), first = true)
             key(saved) {
                 Text(if (s.demo) stringResource(R.string.demo_note)
                     else stringResource(R.string.board_info, s.url, s.owner, Mapper.maskKey(s.key)),
@@ -121,9 +121,28 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
                 saved++; note = ctx.getString(R.string.saved_as, owner)
                 if (s.alerts) CheckWorker.schedule(ctx)
             })
-            HorizontalDivider()
+            TextButton(onClick = { confirmSignOut = true }) {
+                Text(stringResource(if (s.demo) R.string.leave_demo else R.string.sign_out), color = MaterialTheme.colorScheme.error)
+            }
 
+            SectionHeader(stringResource(R.string.look))
             AppearanceSettings(s)
+            Toggle(stringResource(R.string.show_times), stringResource(R.string.show_times_sub), Appearance.showTimes, Modifier.testTag("showTimes")) {
+                Appearance.showTimes = it; s.showTimes = it
+            }
+            Toggle(stringResource(R.string.play_gifs), stringResource(R.string.play_gifs_sub), Appearance.gifs, Modifier.testTag("gifs")) {
+                Appearance.gifs = it; s.gifs = it
+            }
+            Toggle(stringResource(R.string.compact_list), stringResource(R.string.compact_list_sub), Appearance.compact, Modifier.testTag("compact")) {
+                Appearance.compact = it; s.compact = it
+            }
+            Toggle(stringResource(R.string.muted_last), stringResource(R.string.muted_last_sub), Appearance.mutedLast, Modifier.testTag("mutedLast")) {
+                Appearance.mutedLast = it; s.mutedLast = it
+            }
+            SwipePick(stringResource(R.string.swipe_right), Appearance.swipeRight, "swipeRight") { Appearance.swipeRight = it; s.swipeRight = it.id }
+            SwipePick(stringResource(R.string.swipe_left), Appearance.swipeLeft, "swipeLeft") { Appearance.swipeLeft = it; s.swipeLeft = it.id }
+
+            SectionHeader(stringResource(R.string.chats))
             Toggle(stringResource(R.string.enter_sends), stringResource(R.string.enter_sends_sub), Appearance.enterSends, Modifier.testTag("enterSends")) {
                 Appearance.enterSends = it; s.enterSends = it
             }
@@ -148,23 +167,6 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
                     }
                 }
             }
-            Toggle(stringResource(R.string.show_times), stringResource(R.string.show_times_sub), Appearance.showTimes, Modifier.testTag("showTimes")) {
-                Appearance.showTimes = it; s.showTimes = it
-            }
-            Toggle(stringResource(R.string.play_gifs), stringResource(R.string.play_gifs_sub), Appearance.gifs, Modifier.testTag("gifs")) {
-                Appearance.gifs = it; s.gifs = it
-            }
-            Toggle(stringResource(R.string.compact_list), stringResource(R.string.compact_list_sub), Appearance.compact, Modifier.testTag("compact")) {
-                Appearance.compact = it; s.compact = it
-            }
-            Toggle(stringResource(R.string.muted_last), stringResource(R.string.muted_last_sub), Appearance.mutedLast, Modifier.testTag("mutedLast")) {
-                Appearance.mutedLast = it; s.mutedLast = it
-            }
-            SwipePick(stringResource(R.string.swipe_right), Appearance.swipeRight, "swipeRight") { Appearance.swipeRight = it; s.swipeRight = it.id }
-            SwipePick(stringResource(R.string.swipe_left), Appearance.swipeLeft, "swipeLeft") { Appearance.swipeLeft = it; s.swipeLeft = it.id }
-            Toggle(stringResource(R.string.buzz), stringResource(R.string.buzz_sub), Appearance.buzz, Modifier.testTag("buzz")) {
-                Appearance.buzz = it; s.buzz = it
-            }
             Toggle(stringResource(R.string.quick_replies), stringResource(R.string.quick_replies_sub), Appearance.quickReplies, Modifier.testTag("quickReplies")) {
                 Appearance.quickReplies = it; s.quickReplies = it
             }
@@ -175,33 +177,8 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
                 OutlinedTextField(mine, { mine = it; s.quickReplyText = it; Appearance.replies = Replies.parse(it) },
                     Modifier.fillMaxWidth().testTag("quickReplyText"), label = { Text(stringResource(R.string.quick_replies_mine)) }, minLines = 2)
             }
-            // AII-215: pictures and opened files saved on the phone; they load again from the board.
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.saved_pictures, savedBytes?.let { SavedPictures.format(it) } ?: "…"),
-                    Modifier.testTag("savedPictures"))
-                OutlinedButton(onClick = { confirmClear = true }, modifier = Modifier.testTag("clearPictures")) { Text(stringResource(R.string.clear)) }
-            }
-            HorizontalDivider()
 
-            Text(stringResource(R.string.privacy), style = MaterialTheme.typography.titleMedium)
-            Toggle(stringResource(R.string.lock), stringResource(R.string.lock_sub), lockOn) {
-                if (it && !Lock.available(ctx)) note = ctx.getString(R.string.lock_unavailable)
-                else { lockOn = it; s.lock = it }
-            }
-            // AII-234: how long away before it asks again.
-            if (lockOn) {
-                Text(stringResource(R.string.lock_after), style = MaterialTheme.typography.bodyLarge)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Lock.AFTER_CHOICES.forEach { n ->
-                        FilterChip(selected = lockAfter == n, onClick = { lockAfter = n; s.lockAfter = n },
-                            label = { Text(stringResource(when (n) { 0 -> R.string.lock_now; 60 -> R.string.lock_1m; else -> R.string.lock_5m })) },
-                            modifier = Modifier.testTag("lockAfter$n"))
-                    }
-                }
-            }
-            HorizontalDivider()
-
-            Text(stringResource(R.string.alerts), style = MaterialTheme.typography.titleMedium)
+            SectionHeader(stringResource(R.string.alerts))
             Toggle(stringResource(R.string.alerts_new), stringResource(R.string.alerts_new_sub), alerts) {
                 alerts = it; s.alerts = it
                 if (it) {
@@ -226,9 +203,37 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
                 }) { Text(stringResource(R.string.sound_vibration)) }
             }
             note?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("note")) }
-            HorizontalDivider()
+            Toggle(stringResource(R.string.buzz), stringResource(R.string.buzz_sub), Appearance.buzz, Modifier.testTag("buzz")) {
+                Appearance.buzz = it; s.buzz = it
+            }
 
-            Text(stringResource(R.string.report_bug), style = MaterialTheme.typography.titleMedium)
+            SectionHeader(stringResource(R.string.privacy))
+            Toggle(stringResource(R.string.lock), stringResource(R.string.lock_sub), lockOn) {
+                if (it && !Lock.available(ctx)) note = ctx.getString(R.string.lock_unavailable)
+                else { lockOn = it; s.lock = it }
+            }
+            // AII-234: how long away before it asks again.
+            if (lockOn) {
+                Text(stringResource(R.string.lock_after), style = MaterialTheme.typography.bodyLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Lock.AFTER_CHOICES.forEach { n ->
+                        FilterChip(selected = lockAfter == n, onClick = { lockAfter = n; s.lockAfter = n },
+                            label = { Text(stringResource(when (n) { 0 -> R.string.lock_now; 60 -> R.string.lock_1m; else -> R.string.lock_5m })) },
+                            modifier = Modifier.testTag("lockAfter$n"))
+                    }
+                }
+            }
+
+            SectionHeader(stringResource(R.string.storage))
+            // AII-215: pictures and opened files saved on the phone; they load again from the board.
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(stringResource(R.string.saved_pictures, savedBytes?.let { SavedPictures.format(it) } ?: "…"),
+                    Modifier.testTag("savedPictures"))
+                OutlinedButton(onClick = { confirmClear = true }, modifier = Modifier.testTag("clearPictures")) { Text(stringResource(R.string.clear)) }
+            }
+
+            SectionHeader(stringResource(R.string.about))
+            Text(stringResource(R.string.report_bug), style = MaterialTheme.typography.titleSmall)
             if (crash != null) Text(stringResource(R.string.crash_note),
                 color = MaterialTheme.colorScheme.error)
             OutlinedTextField(bug, { bug = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.bug_hint)) }, minLines = 2)
@@ -246,11 +251,6 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             }
             if (s.demo) Text(stringResource(R.string.demo_nothing_leaves), color = MaterialTheme.colorScheme.onSurfaceVariant)
             bugNote?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            HorizontalDivider()
-
-            TextButton(onClick = { confirmSignOut = true }) {
-                Text(stringResource(if (s.demo) R.string.leave_demo else R.string.sign_out), color = MaterialTheme.colorScheme.error)
-            }
             TextButton(onClick = { confirmReset = true }, modifier = Modifier.testTag("resetSettings")) { Text(stringResource(R.string.reset_settings)) }
             androidx.compose.material3.ListItem(headlineContent = { Text(stringResource(R.string.about)) }, supportingContent = { Text(stringResource(R.string.about_sub)) },
                 modifier = Modifier.clickable(onClick = onAbout).testTag("about"))
@@ -306,118 +306,4 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
         },
         dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text(stringResource(R.string.cancel)) } },
     )
-}
-
-/* ---------- change the board address or key without signing out ---------- */
-
-@Composable
-private fun ChangeBoard(repo: Repo, onSaved: (String) -> Unit) {
-    val s = repo.store
-    val scope = rememberCoroutineScope()
-    val res = LocalContext.current.resources
-    var open by remember { mutableStateOf(false) }
-    var url by remember { mutableStateOf(s.url) }
-    var key by remember { mutableStateOf("") }
-    var busy by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-
-    if (!open) {
-        OutlinedButton(onClick = { open = true; url = s.url; key = ""; error = null }, modifier = Modifier.testTag("change")) {
-            Text(stringResource(if (s.demo) R.string.connect_to_board else R.string.change_board))
-        }
-        return
-    }
-    OutlinedTextField(
-        value = url, onValueChange = { url = it; error = null },
-        label = { Text(stringResource(R.string.board_address)) }, placeholder = { Text("my-pc.tail1234.ts.net") },
-        singleLine = true, modifier = Modifier.fillMaxWidth().testTag("url"),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-    )
-    OutlinedTextField(
-        value = key, onValueChange = { key = it; error = null },
-        label = { Text(stringResource(R.string.phone_key)) },
-        placeholder = { if (!s.demo && s.key.isNotEmpty()) Text(stringResource(R.string.key_keep, Mapper.maskKey(s.key))) },
-        singleLine = true, modifier = Modifier.fillMaxWidth().testTag("key"),
-        visualTransformation = PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-    )
-    if (Mapper.insecure(Mapper.normaliseUrl(url))) Text(
-        stringResource(R.string.http_warning),
-        color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
-    )
-    if (Mapper.boardChanged(s.demo, s.url, Mapper.normaliseUrl(url))) Text(
-        stringResource(R.string.board_changed),
-        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("error")) }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Button(enabled = !busy, onClick = {
-            if (url.isBlank()) { error = res.getString(R.string.connect_need_address); return@Button }
-            busy = true; error = null
-            scope.launch {
-                try { val owner = repo.change(url, key); open = false; key = ""; onSaved(owner) }
-                catch (e: Exception) { error = e.message ?: res.getString(R.string.connect_failed_unchanged) }
-                busy = false
-            }
-        }) {
-            if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.save))
-        }
-        TextButton(enabled = !busy, onClick = { open = false }) { Text(stringResource(R.string.cancel)) }
-    }
-}
-
-private fun hour(h: Int) = "%02d:00".format(h)
-
-@Composable
-private fun Toggle(title: String, sub: String, on: Boolean, modifier: Modifier = Modifier, onChange: (Boolean) -> Unit) {
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(sub, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Switch(checked = on, onCheckedChange = onChange)
-    }
-}
-
-@Composable
-private fun Stepper(label: String, value: Int, onChange: (Int) -> Unit) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.weight(1f))
-        TextButton(onClick = { onChange((value + 23) % 24) }) { Text("−") }
-        Text(hour(value), style = MaterialTheme.typography.titleMedium)
-        TextButton(onClick = { onChange((value + 1) % 24) }) { Text("+") }
-    }
-}
-
-/** The words for a swipe choice (AII-216). */
-@Composable
-internal fun swipeLabel(c: com.smizflark.aigile.messenger.data.SwipeChoice) = stringResource(when (c) {
-    com.smizflark.aigile.messenger.data.SwipeChoice.READ -> R.string.mark_read
-    com.smizflark.aigile.messenger.data.SwipeChoice.MUTE -> R.string.mute
-    com.smizflark.aigile.messenger.data.SwipeChoice.PIN -> R.string.pin
-    com.smizflark.aigile.messenger.data.SwipeChoice.CLOSE -> R.string.close_chat
-    com.smizflark.aigile.messenger.data.SwipeChoice.NOTHING -> R.string.swipe_nothing
-})
-
-/** A row showing what a swipe does now; tap it for the pick list (AII-216). */
-@Composable
-private fun SwipePick(title: String, value: com.smizflark.aigile.messenger.data.SwipeChoice, tag: String, onPick: (com.smizflark.aigile.messenger.data.SwipeChoice) -> Unit) {
-    var open by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(role = androidx.compose.ui.semantics.Role.Button) { open = true }.testTag(tag),
-        verticalArrangement = Arrangement.Center) {
-        Text(title, style = MaterialTheme.typography.bodyLarge)
-        Text(swipeLabel(value), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-    if (open) AlertDialog(onDismissRequest = { open = false }, title = { Text(title) },
-        text = {
-            Column(Modifier.selectableGroup()) {
-                com.smizflark.aigile.messenger.data.SwipeChoice.entries.forEach { c ->
-                    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected = c == value, role = androidx.compose.ui.semantics.Role.RadioButton) { onPick(c); open = false }
-                        .testTag("$tag:${c.id}"), verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = c == value, onClick = null)
-                        Text(swipeLabel(c), Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-            }
-        }, confirmButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.cancel)) } })
 }

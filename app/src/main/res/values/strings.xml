@@ -189,6 +189,8 @@
     <string name="demo_note">Demo: made-up chats, nothing leaves the phone</string>
     <string name="board_info">Board: %1$s\nSigned in as %2$s\nPhone key: %3$s</string>
     <string name="saved_as">Saved: signed in as %1$s</string>
+    <string name="chats">Chats</string>
+    <string name="storage">Storage</string>
     <string name="privacy">Privacy</string>
     <string name="lock">Lock with fingerprint</string>
     <string name="lock_sub">Asks for your fingerprint, face or phone PIN when you open the app</string>

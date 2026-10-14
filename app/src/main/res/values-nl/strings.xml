@@ -189,6 +189,8 @@
     <string name="demo_note">Demo: verzonnen chats, er gaat niets van je telefoon af</string>
     <string name="board_info">Bord: %1$s\nIngelogd als %2$s\nTelefoonsleutel: %3$s</string>
     <string name="saved_as">Opgeslagen: ingelogd als %1$s</string>
+    <string name="chats">Gesprekken</string>
+    <string name="storage">Opslag</string>
     <string name="privacy">Privacy</string>
     <string name="lock">Vergrendelen met vingerafdruk</string>
     <string name="lock_sub">Vraagt om je vingerafdruk, gezicht of pincode als je de app opent</string>
