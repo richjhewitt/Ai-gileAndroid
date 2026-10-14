@@ -235,7 +235,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     modifier = Modifier.testTag("star"), onClick = { menu = false; onStar() })
                 DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
                     menu = false
-                    clipboard.setText(AnnotatedString(shown.text))
+                    clipboard.setText(AnnotatedString(Markdown.plain(shown)))
                     // Android 13+ shows its own "copied" note; a toast as well would say it twice.
                     if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
                 })
@@ -254,7 +254,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 // AII-121: out to another app (email, notes...) through the phone's share menu.
                 if (shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, modifier = Modifier.testTag("share"), onClick = {
                     menu = false
-                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, shown.text)
+                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, Markdown.plain(shown))
                     runCatching { ctx.startActivity(android.content.Intent.createChooser(send, null)) }
                 })
                 // AII-185: the phone reads the message out; the same item stops it.
@@ -262,7 +262,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     val reading = ReadAloud.speaking == b.key
                     DropdownMenuItem(text = { Text(stringResource(if (reading) R.string.stop_reading else R.string.read_aloud)) }, modifier = Modifier.testTag("read-aloud"), onClick = {
                         menu = false
-                        if (reading) ReadAloud.stop() else ReadAloud.speak(ctx, b.key, shown.text)
+                        if (reading) ReadAloud.stop() else ReadAloud.speak(ctx, b.key, Markdown.plain(shown))
                     })
                 }
             }

@@ -43,7 +43,7 @@ object Markdown {
         url.removePrefix("https://").removePrefix("http://").let { if (it.length > max) it.take(max - 1) + "…" else it }
 
     fun render(text: String, codeBg: Color, link: Color, cards: Set<String> = emptySet(), onCard: (String) -> Unit = {}, onCode: ((String) -> Unit)? = null): AnnotatedString =
-        if (cards.isEmpty() && (onCode == null || "```" !in text)) synchronized(cache) { cache.getOrPut(Triple(text, codeBg, link)) { build(text, codeBg, link, cards, onCard, null) } }
+        if (cards.isEmpty() && (onCode == null || ("```" !in text && !valueRe.containsMatchIn(text)))) synchronized(cache) { cache.getOrPut(Triple(text, codeBg, link)) { build(text, codeBg, link, cards, onCard, null) } }
         else build(text, codeBg, link, cards, onCard, onCode)   // card and code links carry a click: not cached
 
     /** The text of each ``` block, by the line its opening fence is on. */
@@ -75,10 +75,35 @@ object Markdown {
                 }
             } else {
                 val bullet = bulletRe.find(raw)
-                if (bullet != null) { append("•  "); inlines(raw.substring(bullet.range.last + 1), codeBg, link, cards, onCard) }
-                else inlines(raw, codeBg, link, cards, onCard)
+                if (bullet != null) { append("•  "); line(raw.substring(bullet.range.last + 1), codeBg, link, cards, onCard, onCode) }
+                else line(raw, codeBg, link, cards, onCard, onCode)
             }
         }
+    }
+
+    /** A bold label ending in a colon, then one value (code, link or word) to the end of the line (AII-191). */
+    private val valueRe = Regex("""\*\*[^*\n]*:\*\*[ \t]+(`([^`\n]+)`|\[[^\]\n]+]\((https?://[^\s)]+)\)|\S+)[ \t]*$""", RegexOption.MULTILINE)
+
+    /** The marker after a copyable value. */
+    const val COPY_MARK = " ⧉"
+
+    /** The text as shown, without the ⧉ markers, for copying and sharing. */
+    fun plain(shown: AnnotatedString): String {
+        val marks = shown.getLinkAnnotations(0, shown.length).filter { (it.item as? LinkAnnotation.Clickable)?.tag == COPY_TAG }.sortedByDescending { it.start }
+        val sb = StringBuilder(shown.text)
+        for (m in marks) sb.delete(m.start - COPY_MARK.length + 1, m.end)
+        return sb.toString()
+    }
+    private const val COPY_TAG = "copy-value"
+
+    private fun AnnotatedString.Builder.line(raw: String, codeBg: Color, link: Color, cards: Set<String>, onCard: (String) -> Unit, onCopy: ((String) -> Unit)?) {
+        val m = if (onCopy != null) valueRe.find(raw) else null
+        if (m == null) { inlines(raw, codeBg, link, cards, onCard); return }
+        val g = m.groups
+        val value = g[2]?.value ?: g[3]?.value ?: g[1]!!.value
+        inlines(raw.substring(0, g[1]!!.range.last + 1), codeBg, link, cards, onCard)
+        append(' ')
+        withLink(LinkAnnotation.Clickable(COPY_TAG, TextLinkStyles(SpanStyle(color = link))) { onCopy!!(value) }) { append("⧉") }
     }
 
     /** Drops blank lines between bullets and collapses runs of blank lines. */
