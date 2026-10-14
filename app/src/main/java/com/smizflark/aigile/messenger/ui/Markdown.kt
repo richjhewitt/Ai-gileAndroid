@@ -19,7 +19,9 @@ import androidx.compose.ui.text.withStyle
  * With [onCode], tapping a ``` block hands over its whole text, to copy it (AII-115).
  */
 object Markdown {
-    private val inline = Regex("""\*\*(.+?)\*\*|`([^`]+)`|(https?://[^\s)>\]]+)""")
+    /** Like the board's chat (AII-187): [name](link) shows the name; a link or bare web address drops its closing full stop. */
+    private val inline = Regex("""\*\*(.+?)\*\*|`([^`]+)`|\[([^\]\n]+)]\((https?://[^\s)]+)\)|(https?://[^\s<>]*[^\s<>.,;:!?)\]])""" +
+        """|(?<![\w@/.:"=-])((?i:(?:[a-z0-9-]+\.)+(?:com|net|org|io|live|dev|app|co|uk|nl|be|ai|me|tv|gg|xyz|info|site|online))(?::\d+)?(?:/[^\s<>]*[^\s<>.,;:!?)\]])?)(?![\w-])""")
 
     private val cardId = Regex("""\b[A-Z]{2,6}-\d+\b""")
 
@@ -96,18 +98,21 @@ object Markdown {
         return out.joinToString("\n")
     }
 
-    private val bulletRe = Regex("^\\s*[-*]\\s+")
+    private val bulletRe = Regex("^\\s*[-*•]\\s+")
     private fun isBullet(l: String) = bulletRe.containsMatchIn(l)
 
     private fun AnnotatedString.Builder.inlines(s: String, codeBg: Color, link: Color, cards: Set<String>, onCard: (String) -> Unit) {
         var at = 0
         for (m in inline.findAll(s)) {
             plain(s.substring(at, m.range.first), link, cards, onCard)
-            val (bold, code, url) = m.destructured
+            val (bold, code, name, named, url, bare) = m.destructured
+            val style = TextLinkStyles(SpanStyle(color = link, textDecoration = TextDecoration.Underline))
             when {
                 bold.isNotEmpty() -> withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { plain(bold, link, cards, onCard) }
                 code.isNotEmpty() -> withStyle(SpanStyle(fontFamily = FontFamily.Monospace, background = codeBg)) { append(code) }
-                else -> withLink(LinkAnnotation.Url(url, TextLinkStyles(SpanStyle(color = link, textDecoration = TextDecoration.Underline)))) { append(url) }
+                named.isNotEmpty() -> withLink(LinkAnnotation.Url(named, style)) { append(name) }
+                url.isNotEmpty() -> withLink(LinkAnnotation.Url(url, style)) { append(url) }
+                else -> withLink(LinkAnnotation.Url("https://$bare", style)) { append(bare) }
             }
             at = m.range.last + 1
         }

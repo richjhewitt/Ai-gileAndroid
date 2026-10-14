@@ -47,9 +47,10 @@ object Mapper {
         return if (b.mine && same) ref.copy(previewMine = true) else ref
     }
 
-    /** A message as one plain line for the chats list: no bullets, bold or code marks ("- Done: **Export**" -> "Done: Export"). */
+    /** A message as one plain line for the chats list: no bullets, bold or code marks ("- Done: **Export**" -> "Done: Export"); a [name](link) shows its name (AII-187). */
     fun plainLine(text: String): String = text.replace(Regex("\\s+"), " ").trim()
-        .replace(Regex("^(?:[-*•]|\\d+[.)])\\s+"), "").replace(Regex("\\*\\*|__|`+|^#+\\s*"), "")
+        .replace(Regex("^(?:[-*•]|\\d+[.)])\\s+"), "").replace(Regex("\\[([^\\]]+)]\\(https?://[^\\s)]+\\)"), "$1")
+        .replace(Regex("\\*\\*|__|`+|^#+\\s*"), "")
 
     /** AII-64: picture fallback when a chat has no picture or emoji: "Tunio Discord" -> "TD", "rich" -> "R". */
     fun initials(name: String): String {
