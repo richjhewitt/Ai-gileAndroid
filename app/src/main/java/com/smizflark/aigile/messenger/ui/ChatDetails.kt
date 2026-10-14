@@ -36,13 +36,15 @@ import com.smizflark.aigile.messenger.data.CardDetail
 import com.smizflark.aigile.messenger.data.ChatInfo
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Repo
+import com.smizflark.aigile.messenger.data.Star
+import androidx.compose.ui.text.style.TextOverflow
 import com.smizflark.aigile.messenger.data.togglePin
 import kotlinx.coroutines.launch
 
 /** Tap the chat name (AII-80): the team, its open cards, the pictures sent here, and the Mute and Pin switches. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, onClose: () -> Unit) {
+fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onClose: () -> Unit) {
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var pinned by remember { mutableStateOf(ref.key in repo.store.pinned) }
     var shown by remember { mutableStateOf<CardDetail?>(null) }   // AII-85: the open card tapped, shown under its row
@@ -74,6 +76,20 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                     .clickable { if (shown?.id == t.id) shown = null else scope.launch { shown = t.id?.let { repo.card(ref, it) } } }
                     .padding(vertical = 6.dp).testTag("details-card-${t.id}"))
                 shown?.takeIf { it.id == t.id }?.let { CardDetails(it) }
+            }
+            // AII-138: starred messages; tap one and the chat jumps to it.
+            if (onStarred != null) {
+                Text(stringResource(R.string.starred), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+                if (starred.isEmpty()) Text(stringResource(R.string.no_starred), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                starred.forEach { s ->
+                    Column(Modifier.fillMaxWidth().clickable { onStarred(s.key) }.padding(vertical = 6.dp).testTag("details-star")) {
+                        val plain = Markdown.render(s.text, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.primary).text   // without the ** marks
+                        Text("★ " + plain.lines().firstOrNull { it.isNotBlank() }.orEmpty().trim(),style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(listOf(s.author, fullTime(s.at)).filter { it.isNotBlank() }.joinToString(" · "),
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
             Text(stringResource(R.string.chat_pictures), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
             if (info.pictures.isEmpty()) Text(stringResource(R.string.no_chat_pictures), color = MaterialTheme.colorScheme.onSurfaceVariant)

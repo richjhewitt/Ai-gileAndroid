@@ -135,7 +135,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -198,6 +198,9 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     onClick = { menu = false; onReply(b) })
                 if (b.state == SendState.SENT && !b.unverified && b.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.forward)) }, modifier = Modifier.testTag("forward"),
                     onClick = { menu = false; onForward(b) })
+                // AII-138: star it, to find it again in the chat details.
+                if (onStar != null && b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(if (starred) R.string.unstar else R.string.star)) },
+                    modifier = Modifier.testTag("star"), onClick = { menu = false; onStar() })
                 DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
                     menu = false
                     clipboard.setText(AnnotatedString(shown.text))
@@ -240,7 +243,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     when (b.state) {
                         SendState.SENDING -> stringResource(R.string.sending)
                         SendState.FAILED -> stringResource(R.string.not_sent)
-                        SendState.SENT -> clock(b.at) + if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
+                        SendState.SENT -> (if (starred) "★ " else "") + clock(b.at) +if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = if (b.state == SendState.FAILED) cs.error else fg.copy(alpha = 0.6f),
