@@ -38,6 +38,9 @@ object Mapper {
         return leads + friends
     }
 
+    /** New message (AII-248): the chats you used most recently first; chats with no messages yet keep their order at the end. */
+    fun recentFirst(chats: List<ChatRef>): List<ChatRef> = chats.sortedByDescending { it.last.orEmpty() }
+
     /** AII-106: an older board doesn't say who wrote the newest message; the chat as last fetched does, if it ends with the same one. */
     fun mineFromCache(ref: ChatRef, cached: Conversation?): ChatRef {
         if (ref.preview == null || ref.previewMine) return ref
