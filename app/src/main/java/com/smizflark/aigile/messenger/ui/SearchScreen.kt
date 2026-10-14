@@ -72,7 +72,8 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
     var pictures by remember { mutableStateOf(false) }
     var links by remember { mutableStateOf(false) }
     var starred by remember { mutableStateOf(false) }
-    val hits = remember(query, convs, pictures, links, starred) { Search.run(query, chats, convs, pictures, links, if (starred) repo.store.stars() else null) }
+    var last7 by remember { mutableStateOf(false) }   // AII-258
+    val hits = remember(query, convs, pictures, links, starred, last7) { Search.run(query, chats, convs, pictures, links, if (starred) repo.store.stars() else null, last7) }
     val focus = remember { FocusRequester() }
     var recent by remember { mutableStateOf(repo.store.recentSearches()) }
     /** AII-155: a search counts once you press Search or open a result. */
@@ -121,8 +122,10 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
                     modifier = Modifier.testTag("search-links"))
                 FilterChip(selected = starred, onClick = { starred = !starred }, label = { Text(stringResource(R.string.starred)) },
                     modifier = Modifier.testTag("search-starred"))
+                FilterChip(selected = last7, onClick = { last7 = !last7 }, label = { Text(stringResource(R.string.search_last7)) },
+                    modifier = Modifier.testTag("search-last7"))
             }
-            val filtered = pictures || links || starred
+            val filtered = pictures || links || starred || last7
             if (filtered && hits.isEmpty() && fetching) EmptyState(stringResource(R.string.search_searching))
             else if (filtered && hits.isEmpty()) EmptyState(stringResource(R.string.search_none_filtered))
             else if (filtered) { }
