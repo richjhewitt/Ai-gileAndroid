@@ -53,6 +53,9 @@ import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Forward
 import com.smizflark.aigile.messenger.data.Quote
+import com.smizflark.aigile.messenger.data.Closed
+import com.smizflark.aigile.messenger.data.News
+import com.smizflark.aigile.messenger.data.nextUnread
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.Stars
 import com.smizflark.aigile.messenger.data.Transcript
@@ -80,7 +83,7 @@ import androidx.compose.ui.platform.LocalView
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}, openAt: String? = null) {
+fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}, openAt: String? = null, onOpenChat: (ChatRef) -> Unit = {}) {
     var convo by remember { mutableStateOf(repo.store.cachedConversation(ref.key)) }
     val seenAtOpen = rememberSaveable(ref.key) { mutableStateOf(repo.store.seen()[ref.key]) }.value   // AII-100: the "New messages" line stays put while you read
     var pending by remember { mutableStateOf(repo.pendingFor(ref.key)) }
@@ -278,6 +281,14 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         list.scrollBy(-(info.viewportEndOffset - info.viewportStartOffset - line).toFloat())
     }
     val unread = if (atBottom) 0 else unreadBelow(convo?.bubbles.orEmpty(), seenNewest)
+    // AII-204: the next unread chat in chats-list order, worked out as the chats list does it; looked at again whenever you reach the bottom.
+    val nextChat = remember(atBottom, convo) {
+        val all = repo.store.cachedChats().orEmpty()
+        val seenAll = repo.store.seen()
+        val counts = all.associate { it.key to News.unread(it, seenAll[it.key], repo.store.cachedConversation(it.key)) }
+        val shut = repo.store.closed().let { cl -> all.filter { Closed.hidden(it, cl[it.key]) }.map { it.key }.toSet() }
+        nextUnread(all, repo.store.pinned, counts, repo.store.muted(), shut, ref.key)
+    }
     // AII-99: tap a quote, the chat scrolls to the quoted message and outlines it for a moment.
     var flash by remember { mutableStateOf<String?>(null) }
     fun jumpToQuote(quoted: String, from: String) {
@@ -345,7 +356,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 LazyColumn(Modifier.fillMaxSize(), state = list, reverseLayout = true,
                     verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    item { Spacer(Modifier.size(8.dp)) }
+                    item { Spacer(Modifier.size(if (nextChat != null && convo != null && !finding) 64.dp else 8.dp)) }   // room for the Next unread button (AII-204)
                     items(items, key = { it.id }) { r ->
                         when (r) {
                             is Row.Day -> Text(r.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -392,6 +403,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 }
                 DayPill(if (scrolling) topDay else null)
                 JumpToNewest(show = !atBottom && convo != null, unread = unread) { scope.launch { list.animateScrollToItem(0) } }
+                val next = if (atBottom && convo != null && !finding) nextChat else null   // AII-204
+                NextUnreadButton(next?.name) { next?.let(onOpenChat) }
             }
             Composer(ref, text, { text = it }, targets.map { it.id to it.label }, target, { target = it; picked = true },
                 pics = pics, picNote = picNote,

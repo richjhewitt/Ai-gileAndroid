@@ -85,6 +85,7 @@
     <string name="mute_alerts">Meldingen dempen</string>
     <string name="unmute">Dempen opheffen</string>
     <string name="jump_unread">%1$d nieuw</string>
+    <string name="next_unread">Volgende ongelezen: %1$s →</string>
     <string name="jump_newest">Naar het nieuwste bericht</string>
     <string name="open_card">%1$s openen</string>
     <string name="forwarded_label">↪ Doorgestuurd</string>

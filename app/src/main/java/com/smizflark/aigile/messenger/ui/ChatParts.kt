@@ -156,6 +156,16 @@ internal fun BoxScope.JumpToNewest(show: Boolean, unread: Int, onClick: () -> Un
     }
 }
 
+/** At the newest message: a small button to the next unread chat (AII-204). */
+@Composable
+internal fun BoxScope.NextUnreadButton(name: String?, onClick: () -> Unit) {
+    if (name == null) return
+    AssistChip(
+        onClick = onClick, label = { Text(stringResource(R.string.next_unread, name), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
+        modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp).widthIn(max = 320.dp).testTag("next-unread"),
+    )
+}
+
 /**
  * For a newest-first list of rows: the day each row sits under (AII-117), from the nearest Day row above it.
  * Null for a row that is itself a Day row (it already shows its day) or has none above.
