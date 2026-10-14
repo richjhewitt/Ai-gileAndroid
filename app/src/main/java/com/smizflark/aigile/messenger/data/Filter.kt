@@ -22,3 +22,6 @@ enum class ChatFilter(val label: String, @androidx.annotation.StringRes val res:
         fun shown(anyScheduled: Boolean, picked: ChatFilter) = entries.filter { it != SCHEDULED || anyScheduled || picked == SCHEDULED }
     }
 }
+
+/** AII-250: how many chats show an unread badge (same rule as the Unread chip, AII-125); chats, not messages, and muted chats are left out. */
+fun unreadChatCount(chats: List<ChatRef>, badge: (ChatRef) -> Boolean, muted: (ChatRef) -> Boolean): Int = chats.count { badge(it) && !muted(it) }

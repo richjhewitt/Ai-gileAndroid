@@ -133,7 +133,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     }
     /** Mark as unread (AII-119), from a chat's menu. */
     fun markUnread(c: ChatRef) = scope.launch { repo.markUnread(c); seen = repo.store.seen(); unread = counts() }
-    val total = unread.values.sum()
+    val total = com.smizflark.aigile.messenger.data.unreadChatCount(chats, { News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0 }, { it.key in muted })
     muteAsk?.let { c ->
         MuteFor(onPick = { f ->
             repo.store.setMuted(c.key, true, Mute.until(Now.millis(), f)); muted = repo.store.muted(); muteAsk = null
@@ -172,7 +172,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     // AII-84: one line, so the four buttons never push it onto two; the demo note sits small underneath.
                     // AII-122: tap the title to jump back to the first chat.
                     Column(Modifier.clickable(onClickLabel = stringResource(R.string.to_top)) { scope.launch { list.animateScrollToItem(0) } }.testTag("chats-title")) {
-                        Text(stringResource(R.string.chats_title) + if (total > 0) " ($total)" else "", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(if (total > 0) stringResource(R.string.chats_title_unread, total) else stringResource(R.string.chats_title), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (repo.store.demo) Text(stringResource(R.string.chats_title_demo), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
