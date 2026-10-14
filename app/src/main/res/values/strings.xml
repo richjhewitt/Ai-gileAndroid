@@ -67,6 +67,8 @@
     <string name="repeat_day">Repeat every day</string>
     <string name="repeat_week">Repeat every week</string>
     <string name="repeat_off">Don\'t repeat</string>
+    <string name="every_day">Every day</string>
+    <string name="every_week">Every week</string>
     <string name="edit">Edit</string>
     <string name="retry">Retry</string>
     <string name="delete">Delete</string>

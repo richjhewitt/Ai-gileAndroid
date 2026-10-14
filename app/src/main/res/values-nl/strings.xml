@@ -67,6 +67,8 @@
     <string name="repeat_day">Elke dag herhalen</string>
     <string name="repeat_week">Elke week herhalen</string>
     <string name="repeat_off">Niet herhalen</string>
+    <string name="every_day">Elke dag</string>
+    <string name="every_week">Elke week</string>
     <string name="edit">Bewerken</string>
     <string name="retry">Opnieuw proberen</string>
     <string name="delete">Verwijderen</string>

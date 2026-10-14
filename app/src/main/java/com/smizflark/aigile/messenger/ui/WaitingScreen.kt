@@ -95,6 +95,9 @@ private fun WaitingRow(ref: ChatRef, p: Pending, repo: Repo, onClick: () -> Unit
                 val plain = Markdown.render(p.text, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.primary).text
                 Text(plain.replace('\n', ' '), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
+                // AII-178: say how often a repeating one goes, not just 🔁.
+                val every = when (p.repeat) { "day" -> R.string.every_day; "week" -> R.string.every_week; else -> null }
+                if (every != null) Text("🔁 " + stringResource(every), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
             }
         }
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
