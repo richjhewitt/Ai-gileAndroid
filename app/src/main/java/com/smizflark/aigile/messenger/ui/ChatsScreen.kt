@@ -274,7 +274,6 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 val unsent = outbox.groupBy { it.chat }
                 val rows = (if (Appearance.mutedLast) mutedLast(shown, pinned, muted) else pinFirst(shown, pinned)) + if (showClosed) shut else emptyList()
                 val reminded = com.smizflark.aigile.messenger.data.Remind.chatKeys(repo.store.reminders())
-                val rows = pinFirst(shown, pinned) + if (showClosed) shut else emptyList()
                 items(rows, key = { it.key }) { c ->
                     val isShut = c in shut
                     ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, c.key in reminded, unsent[c.key].orEmpty(), drafts[c.key], isShut,
