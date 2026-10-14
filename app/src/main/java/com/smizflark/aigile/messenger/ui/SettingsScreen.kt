@@ -90,6 +90,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
     var note by remember { mutableStateOf<String?>(null) }
     var saved by remember { mutableIntStateOf(0) }   // bumps after a change, so the connection text re-reads the store
     var confirmSignOut by remember { mutableStateOf(false) }
+    var confirmReset by remember { mutableStateOf(false) }          // AII-217
     var confirmClear by remember { mutableStateOf(false) }          // AII-215
     var savedBytes by remember { mutableStateOf<Long?>(null) }
     LaunchedEffect(Unit) { savedBytes = withContext(Dispatchers.IO) { SavedPictures.size(ctx.cacheDir) } }
@@ -226,12 +227,28 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             TextButton(onClick = { confirmSignOut = true }) {
                 Text(stringResource(if (s.demo) R.string.leave_demo else R.string.sign_out), color = MaterialTheme.colorScheme.error)
             }
+            TextButton(onClick = { confirmReset = true }, modifier = Modifier.testTag("resetSettings")) { Text(stringResource(R.string.reset_settings)) }
             androidx.compose.material3.ListItem(headlineContent = { Text(stringResource(R.string.about)) }, supportingContent = { Text(stringResource(R.string.about_sub)) },
                 modifier = Modifier.clickable(onClick = onAbout).testTag("about"))
             Text(stringResource(R.string.version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+
+    if (confirmReset) AlertDialog(
+        onDismissRequest = { confirmReset = false },
+        title = { Text(stringResource(R.string.reset_settings)) },
+        text = { Text(stringResource(R.string.reset_settings_text)) },
+        confirmButton = {
+            TextButton(onClick = {
+                confirmReset = false
+                s.resetSettings(); Appearance.reload(s)
+                alerts = s.alerts; quietOn = s.quietOn; from = s.quietFrom; to = s.quietTo; morning = s.morning
+                saved++
+            }, modifier = Modifier.testTag("resetConfirm")) { Text(stringResource(R.string.reset)) }
+        },
+        dismissButton = { TextButton(onClick = { confirmReset = false }) { Text(stringResource(R.string.cancel)) } },
+    )
 
     if (confirmClear) AlertDialog(
         onDismissRequest = { confirmClear = false },

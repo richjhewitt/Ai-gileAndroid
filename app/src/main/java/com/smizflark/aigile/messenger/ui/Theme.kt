@@ -96,8 +96,11 @@ object Appearance {
     /** Your own quick replies (AII-180); empty means the starting ones. */
     var replies by mutableStateOf(emptyList<String>())
 
-    fun load(store: Store) {
-        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; compact = store.compact; mutedLast = store.mutedLast; morning = store.morning; buzz = store.buzz; undoSend = store.undoSend; quickReplies = store.quickReplies; showTimes = store.showTimes; swipeRight = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeRight, com.smizflark.aigile.messenger.data.SWIPE_RIGHT_DEFAULT); swipeLeft = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeLeft, com.smizflark.aigile.messenger.data.SWIPE_LEFT_DEFAULT); replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
+    fun load(store: Store) { if (look == null) reload(store) }
+
+    /** Reads everything again, so the screen follows a reset at once (AII-217). */
+    fun reload(store: Store) {
+        run { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; compact = store.compact; mutedLast = store.mutedLast; morning = store.morning; buzz = store.buzz; undoSend = store.undoSend; quickReplies = store.quickReplies; showTimes = store.showTimes; swipeRight = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeRight, com.smizflark.aigile.messenger.data.SWIPE_RIGHT_DEFAULT); swipeLeft = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeLeft, com.smizflark.aigile.messenger.data.SWIPE_LEFT_DEFAULT); replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
     }
 }
 

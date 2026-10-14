@@ -294,10 +294,17 @@ class Store(context: Context) {
         tmp.writeText(json.encodeToString(v)); java.nio.file.Files.move(tmp.toPath(), f.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
     }
 
+    /** Back to defaults for every look/behaviour setting; pins, mutes, board connection and the rest stay. */
+    fun resetSettings() { val e = settings.edit(); RESETTABLE.forEach { e.remove(it) }; e.apply() }
+
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
         val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "enterSends", "undoSend", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
+
+        /** What "Reset settings" clears (AII-217): every backed-up setting except the ones that are your data. */
+        val KEPT_ON_RESET = setOf("pinned", "muted", "silent")
+        val RESETTABLE = BACKED_UP.filter { it !in KEPT_ON_RESET }
 
         /** One-time move of the settings out of the pairing file, so the pairing file can stay out of backup. */
         fun moveSettings(from: SharedPreferences, to: SharedPreferences) {

@@ -339,4 +339,7 @@
     <string name="about_sub">Version and open-source licences</string>
     <string name="build_number">Build %1$d</string>
     <string name="licences">Open-source licences</string>
+    <string name="reset_settings">Reset settings</string>
+    <string name="reset_settings_text">Reset all settings? Your board connection, pins and mutes stay.</string>
+    <string name="reset">Reset</string>
 </resources>

@@ -339,4 +339,7 @@
     <string name="about_sub">Versie en open-sourcelicenties</string>
     <string name="build_number">Build %1$d</string>
     <string name="licences">Open-sourcelicenties</string>
+    <string name="reset_settings">Instellingen herstellen</string>
+    <string name="reset_settings_text">Alle instellingen herstellen? Je bordverbinding, vastgezette en gedempte chats blijven staan.</string>
+    <string name="reset">Herstel</string>
 </resources>
