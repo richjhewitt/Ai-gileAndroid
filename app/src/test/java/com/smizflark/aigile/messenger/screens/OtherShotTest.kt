@@ -133,7 +133,19 @@ class OtherShotTest : ShotBase() {
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("../docs/shots/search_links_light.png")
     }
-    @Test fun settingsLight() = shot("settings", false) { SettingsScreen(repo, {}, {}) }
+    /** AII-195: typed word in bold, link shows its name. */
+    @Test fun searchTidyLight() {
+        chats.forEach { prime(it) }
+        val zed = com.smizflark.aigile.messenger.data.ChatRef(com.smizflark.aigile.messenger.data.Kind.FRIEND, "zed", "Zed", "", "🙂")
+        repo.store.cacheChats(repo.store.cachedChats().orEmpty() + zed)
+        repo.store.cacheConversation(com.smizflark.aigile.messenger.data.Conversation(zed, listOf(
+            com.smizflark.aigile.messenger.data.Bubble("t1", "Zed", "Read [the Guide](https://dnbloco.com/guide) first, **Guide** matters", "2026-10-12T09:00:00Z", mine = false))))
+        shot("search_tidy", false) { SearchScreen(repo, { _, _ -> }, {}) }
+        rule.onNodeWithTag("search").performTextInput("guide")
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("../docs/shots/search_tidy_light.png")
+    }
+    @Test fun settingsLight()= shot("settings", false) { SettingsScreen(repo, {}, {}) }
     @Test fun settingsDark() = shot("settings", true) { SettingsScreen(repo, {}, {}) }
     /** AII-175: Settings has the Sent alert switch for Send later, on by default; turning it off is kept. */
     @Test fun settingsSentAlertsLight() {

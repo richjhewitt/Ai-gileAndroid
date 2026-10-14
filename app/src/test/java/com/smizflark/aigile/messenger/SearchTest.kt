@@ -58,6 +58,28 @@ class SearchTest {
         assertEquals("short needle", Search.snippet("short needle", "needle"))
     }
 
+    // AII-195
+    @Test fun snippetShowsMarkdownAsReadAndKeepsTheHit() {
+        assertEquals("Read the guide first", Search.snippet("Read [the guide](https://x.com/a_b) first", "guide"))
+        assertEquals("a bold and code", Search.snippet("a **bold** and `code`", "bold"))
+        val long = "[" + "w ".repeat(60) + "](https://x.com/" + "z".repeat(200) + ") needle"
+        assertTrue("needle" in Search.snippet(long, "needle"))
+    }
+
+    @Test fun foundWordsAreMarkedIgnoringCaseAndAccents() {
+        val s = "Café au LAIT, cafe again"
+        assertEquals(listOf(0..3, 14..17), Search.marks(s, Search.fold("cafe")))
+        assertEquals(listOf(0..3, 8..11, 14..17), Search.marks(s, Search.fold("café lait")))
+        assertTrue(Search.marks(s, "zzz").isEmpty())
+    }
+
+    @Test fun hitCarriesMarksOnItsSnippet() {
+        val c = Conversation(gile, listOf(b("See [Docs](https://x.com) for **Docs** now", "2026-10-01T10:00:00Z", "AIG-1")))
+        val h = Search.run("docs", listOf(gile), listOf(c)).single()
+        assertEquals("See Docs for Docs now", h.snippet)
+        assertEquals(listOf(4..7, 13..16), h.marks)
+    }
+
     @Test fun capsTheNumberOfHits() {
         val many = Conversation(gile, (1..300).map { b("ping $it", "2026-10-01T10:%02d:00Z".format(it % 60), "AIG-$it") })
         assertEquals(Search.MAX_HITS, Search.run("ping", listOf(gile), listOf(many)).size)
