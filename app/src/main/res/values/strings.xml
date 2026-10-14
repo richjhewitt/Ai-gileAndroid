@@ -249,6 +249,7 @@
     <string name="close_chat">Close chat</string>
     <string name="reopen_chat">Reopen chat</string>
     <string name="chat_closed">Chat closed</string>
+    <string name="all_read">All read</string>
     <string name="undo">Undo</string>
     <string name="star_removed">Star removed</string>
     <string name="closed_show">Show %1$d closed</string>

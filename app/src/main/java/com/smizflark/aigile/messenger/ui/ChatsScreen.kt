@@ -141,6 +141,16 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
         seen = repo.store.seen(); unread = counts()
         if (chats.none { News.fresh(it, seen[it.key]) }) CheckWorker.clearAlert(context)
     }
+    /** Mark all as read, then a bar with Undo that brings the badges back (AII-158). */
+    fun markAllRead() = scope.launch {
+        val had = chats.filter { (unread[it.key] ?: 0) > 0 }
+        val before = repo.store.seen()
+        markRead(chats).join()
+        if (had.isEmpty()) return@launch
+        snack.currentSnackbarData?.dismiss()
+        val r = snack.showSnackbar(context.getString(R.string.all_read), context.getString(R.string.undo), duration = androidx.compose.material3.SnackbarDuration.Short)
+        if (r == SnackbarResult.ActionPerformed) { repo.restoreSeen(had, before); seen = repo.store.seen(); unread = counts() }
+    }
     /** Mark as unread (AII-119), from a chat's menu. */
     fun markUnread(c: ChatRef) = scope.launch { repo.markUnread(c); seen = repo.store.seen(); unread = counts() }
     val total = unread.values.sum()
@@ -179,7 +189,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     IconButton(onClick = onSearch, modifier = Modifier.testTag("open-search")) { Icon(Icons.Default.Search, stringResource(R.string.search)) }
                     if (anyStars) IconButton(onClick = onStarred, modifier = Modifier.testTag("open-starred")) { Icon(Icons.Default.Star, stringResource(R.string.starred)) }
                     if (chats.any { News.fresh(it, seen[it.key]) })
-                        IconButton(onClick = { markRead(chats) }, Modifier.testTag("readAll")) { Icon(Icons.Default.DoneAll, stringResource(R.string.mark_all_read)) }
+                        IconButton(onClick = { markAllRead() }, Modifier.testTag("readAll")) { Icon(Icons.Default.DoneAll, stringResource(R.string.mark_all_read)) }
                     Box {
                         IconButton(onClick = { pauseMenu = true }, modifier = Modifier.testTag("pause")) { Icon(Icons.Default.NotificationsOff, stringResource(R.string.pause_alerts)) }
                         DropdownMenu(expanded = pauseMenu, onDismissRequest = { pauseMenu = false }) {
