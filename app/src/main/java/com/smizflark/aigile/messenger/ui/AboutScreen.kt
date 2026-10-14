@@ -43,6 +43,25 @@ val LICENCES = listOf(
     Licence("ZXing Android Embedded", "Apache 2.0", "https://github.com/journeyapps/zxing-android-embedded/blob/master/LICENSE"),
 )
 
+/**
+ * What's new (AII-261), newest first, at most about 15 lines. To add one: put its id at the TOP of this list
+ * and add the English and Dutch string to values/strings.xml and values-nl/strings.xml.
+ */
+val WHATS_NEW = listOf(
+    R.string.new_remind,
+    R.string.new_undo,
+    R.string.new_next_unread,
+    R.string.new_settings,
+    R.string.new_pinch,
+    R.string.new_chat_list,
+    R.string.new_swipe,
+    R.string.new_details,
+    R.string.new_silent,
+    R.string.new_star,
+    R.string.new_starred,
+    R.string.new_widget,
+)
+
 /** About (AII-220): app name, version and the open-source licences; tap one to read it in the browser. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +77,9 @@ fun AboutScreen(onBack: () -> Unit) {
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
             Text(stringResource(R.string.version, BuildConfig.VERSION_NAME), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(stringResource(R.string.build_number, BuildConfig.VERSION_CODE), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            HorizontalDivider(Modifier.padding(vertical = 12.dp))
+            Text(stringResource(R.string.whats_new), style = MaterialTheme.typography.titleMedium)
+            WHATS_NEW.forEach { Text("• " + stringResource(it), Modifier.padding(vertical = 3.dp).testTag("whats_new")) }
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             Text(stringResource(R.string.licences), style = MaterialTheme.typography.titleMedium)
             LICENCES.forEach { l ->

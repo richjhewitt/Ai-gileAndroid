@@ -378,4 +378,18 @@
     <string name="reset_settings_text">Alle instellingen herstellen? Je bordverbinding, vastgezette en gedempte chats blijven staan.</string>
     <string name="reset">Herstel</string>
     <string name="go_to_message">Ga naar bericht</string>
+    <!-- What's new (AII-261), newest first; keep in step with WHATS_NEW in AboutScreen.kt -->
+    <string name="whats_new">Wat is er nieuw</string>
+    <string name="new_remind">Herinner me aan een bericht: meldingen, een lijst en notities</string>
+    <string name="new_undo">Verzenden ongedaan maken (5 of 10 seconden)</string>
+    <string name="new_next_unread">Knop voor de volgende ongelezen chat</string>
+    <string name="new_settings">Instellingen in onderdelen, met terugzetten naar standaard</string>
+    <string name="new_pinch">Knijp om de tekst in een chat te vergroten</string>
+    <string name="new_chat_list">Chatlijst: sorteren, aantal ongelezen, belletjes en Naam kopiëren</string>
+    <string name="new_swipe">Kies wat vegen over een chat doet</string>
+    <string name="new_details">Chatdetails: Over deze chat, opslaan als bestand, aantallen</string>
+    <string name="new_silent">Stille meldingen voor één chat</string>
+    <string name="new_star">Dubbeltik op een bericht om het een ster te geven; Kopieer als citaat</string>
+    <string name="new_starred">Lijst met sterren: filter op chat, alles delen als tekst</string>
+    <string name="new_widget">Widget toont ongelezen aantallen en volgt de stijl van de app</string>
 </resources>
