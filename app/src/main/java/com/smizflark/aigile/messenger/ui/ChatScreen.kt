@@ -75,6 +75,8 @@ import androidx.compose.ui.res.stringResource
 import com.smizflark.aigile.messenger.R
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import android.view.HapticFeedbackConstants
 import androidx.compose.runtime.snapshotFlow
@@ -411,7 +413,31 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 onUp = { if (hits.isNotEmpty()) at = (current + 1) % hits.size },   // older
                 onDown = { if (hits.isNotEmpty()) at = (current - 1 + hits.size) % hits.size },   // newer
                 onClose = { finding = false; query = "" })
-            Box(Modifier.weight(1f).fillMaxWidth()) {
+            val pinchCtx = LocalContext.current
+            Box(Modifier.weight(1f).fillMaxWidth().pointerInput(Unit) {
+                // AII-259: only reacts while 2+ fingers are down; never consumes, so scroll, swipe, long-press and double-tap are untouched
+                awaitEachGesture {
+                    var start = 0f
+                    var done = false
+                    do {
+                        val ev = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                        val down = ev.changes.filter { it.pressed }
+                        if (down.size >= 2 && !done) {
+                            val d = (down[0].position - down[1].position).getDistance()
+                            if (start == 0f) start = d
+                            else if (start > 0f) {
+                                val cur = Appearance.textSize
+                                val next = nextTextSize(cur, d / start)
+                                if (next != cur) {
+                                    done = true
+                                    Appearance.textSize = next; repo.store.textSize = next.id
+                                    Toast.makeText(pinchCtx, pinchCtx.getString(next.res), Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    } while (ev.changes.any { it.pressed })
+                }
+            }) {
                 LazyColumn(Modifier.fillMaxSize(), state = list, reverseLayout = true,
                     verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     item { Spacer(Modifier.size(if (nextChat != null && convo != null && !finding) 64.dp else 8.dp)) }   // room for the Next unread button (AII-204)
