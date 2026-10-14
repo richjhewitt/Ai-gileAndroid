@@ -13,6 +13,9 @@ object Outbox {
     /** Sent, or Delete: gone from the outbox. */
     fun remove(l: List<Pending>, id: String) = l.filter { it.id != id }
 
+    /** Edit a Send later message (AII-150): its words go back in the box, above anything already typed. */
+    fun editBack(p: Pending, typed: String) = if (typed.isBlank()) p.text else p.text + "\n" + typed
+
     /** Failed for good: the server refused, or the tries ran out. These get the red mark. */
     fun failedForGood(l: List<Pending>) = l.filter { it.failed && !it.offline }
 }

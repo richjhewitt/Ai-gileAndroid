@@ -3,6 +3,8 @@ package com.smizflark.aigile.messenger.ui
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isShiftPressed
@@ -176,8 +178,11 @@ internal fun Composer(
                 IconButton(onClick = onAttach, enabled = pics.size < MAX_PICS, modifier = Modifier.size(52.dp).testTag("attach")) {
                     Icon(Icons.Default.AddPhotoAlternate, stringResource(R.string.add_picture))
                 }
+                // Text put in from outside (a draft, dictation, Edit on Send later: AII-150) gets the cursor at its end, not the start.
+                var field by remember { mutableStateOf(TextFieldValue(text, TextRange(text.length))) }
+                if (field.text != text) field = TextFieldValue(text, TextRange(text.length))
                 OutlinedTextField(
-                    value = text, onValueChange = onText, maxLines = 6,
+                    value = field, onValueChange = { field = it; onText(it.text) }, maxLines = 6,
                     placeholder = { Text(stringResource(if (ref.kind == Kind.WATCHMAN) R.string.message_watchman else R.string.message)) },
                     trailingIcon = { MicButton { onText(Dictate.join(text, it)) } },
                     shape = RoundedCornerShape(24.dp),

@@ -1,6 +1,7 @@
 package com.smizflark.aigile.messenger
 
 import com.smizflark.aigile.messenger.data.Now
+import com.smizflark.aigile.messenger.data.Outbox
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.SendState
 import com.smizflark.aigile.messenger.ui.Row
@@ -35,6 +36,13 @@ class SendLaterTest {
         val out = listOf(p("now"), p("later", "2026-10-14T08:00:00Z"), p("due", "2026-10-14T02:30:00Z"),
             p("due-offline", "2026-10-14T02:30:00Z", failed = true, offline = true))
         assertEquals(listOf("now", "due", "due-offline"), waitingToSend(out, now).map { it.id })
+    }
+
+    /** AII-150: Edit puts its words back in the box, above anything already typed. */
+    @Test fun editPutsItBackInTheBox() {
+        assertEquals("hi", Outbox.editBack(p("a", "2026-10-14T08:00:00Z"), ""))
+        assertEquals("hi", Outbox.editBack(p("a", "2026-10-14T08:00:00Z"), "  "))
+        assertEquals("hi\nand more", Outbox.editBack(p("a", "2026-10-14T08:00:00Z"), "and more"))
     }
 
     @Test fun theChatShowsItsSendTime() {

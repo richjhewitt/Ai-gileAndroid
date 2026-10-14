@@ -304,6 +304,19 @@ class ScreenshotTest {
         rule.onNodeWithTag("later-mark").assertIsDisplayed()
         org.junit.Assert.assertEquals("2026-10-13T14:00:00Z", repo.pendingFor(c.key).single().sendAt)
         rule.onRoot().captureRoboImage("../docs/shots/send_later_light.png")
+        // AII-150: Edit puts it back in the box and it stops waiting; hold Send again for a new time.
+        rule.onNodeWithTag("later-mark").performClick()
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/send_later_edit_light.png")
+        rule.onNodeWithTag("edit-later").performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertTrue(repo.pendingFor(c.key).isEmpty())
+        rule.onNodeWithTag("input").assertTextEquals("Morning! Coffee later?")
+        rule.onNodeWithTag("input").performTextInput(" ☕")
+        rule.onNodeWithTag("send").performTouchInput { longClick() }
+        rule.onNodeWithTag("send-hour").performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertEquals("Morning! Coffee later? ☕", repo.pendingFor(c.key).single().text)
         rule.onNodeWithTag("later-mark").performClick()
         rule.onNodeWithTag("send-now").performClick()
         rule.waitUntil(5_000) { repo.pendingFor(c.key).isEmpty() }

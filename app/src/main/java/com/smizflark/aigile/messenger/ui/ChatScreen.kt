@@ -46,6 +46,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.smizflark.aigile.messenger.data.chatInfo
 import com.smizflark.aigile.messenger.data.CardDetail
 import com.smizflark.aigile.messenger.data.ChatRef
+import com.smizflark.aigile.messenger.data.Outbox
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
@@ -345,6 +346,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 onRetry = { p -> deliver(p) },
                                 onSendNow = { p -> pending = repo.pendingFor(ref.key); scope.launch { repo.sendNow(ref, p).onSuccess { load() }.onFailure { error = it.message }; pending = repo.pendingFor(ref.key) } },
                                 onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) },
+                                onEdit = { p ->   // AII-150: back in the box, with its card and pictures
+                                    repo.takeBack(p.id); pending = repo.pendingFor(ref.key)
+                                    text = Outbox.editBack(p, text); pics = p.files + pics
+                                    if (p.target != null && targets.any { it.id == p.target }) { target = p.target; picked = true }
+                                },
                                 onQuote = { q -> jumpToQuote(q, r.id) },
                                 starred = Stars.has(stars, ref.key, r.b.key),
                                 onStar = if (r.pending == null) { { stars = Stars.toggle(stars, Stars.of(ref.key, r.b)); repo.store.setStars(stars) } } else null)

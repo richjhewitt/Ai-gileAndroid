@@ -166,6 +166,9 @@ class Repo(context: Context) {
         store.saveOutbox(Outbox.remove(store.outbox(), id))
     }
 
+    /** Edit a Send later message (AII-150): off the outbox, but its pictures are kept for the box. */
+    fun takeBack(id: String) = store.saveOutbox(Outbox.remove(store.outbox(), id))
+
     /** Tap Retry on a failed message (AII-62): marks it fresh, then sends it again. */
     suspend fun retry(ref: ChatRef, p: Pending): Result<String?> {
         store.saveOutbox(Outbox.retry(store.outbox(), p.id))
