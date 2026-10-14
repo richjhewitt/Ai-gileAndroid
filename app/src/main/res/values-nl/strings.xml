@@ -151,6 +151,7 @@
     <string name="you_label">Jij: %1$s</string>
     <string name="working">bezig…</string>
     <string name="working_on">bezig met %1$s</string>
+    <string name="open_working_card">%1$s openen</string>
     <string name="connect_need_address">Typ eerst het adres van je bord.</string>
     <string name="connect_failed">Kon geen verbinding maken.</string>
     <string name="connect_failed_unchanged">Kon geen verbinding maken. Er is niets gewijzigd.</string>

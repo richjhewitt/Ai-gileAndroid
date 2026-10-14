@@ -355,6 +355,17 @@ class ChatShotTest : ShotBase() {
         rule.waitForIdle()
         rule.onNodeWithTag("details-pin").fetchSemanticsNode()
     }
+    /** AII-219: tapping "working on AIG-2" opens that card, like a card link. */
+    @Test fun workingOnTapOpensTheCard() {
+        prime(lead())
+        var opened: String? = null
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}, onOpenCard = { opened = it }) } }
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("working-on", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        rule.onAllNodesWithTag("working-on", useUnmergedTree = true).onFirst().performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertNotNull(opened)
+        org.junit.Assert.assertTrue(opened!!.isNotBlank())
+    }
     /** AII-128: chat details, Find in this chat: the sheet closes and the find bar opens. */
     @Test fun detailsFindOpensTheFindBar() {
         prime(lead())
