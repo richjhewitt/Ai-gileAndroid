@@ -320,6 +320,7 @@
     <string name="remind_in_hour">Herinner mij over 1 uur</string>
     <string name="remind_again">Opnieuw over 1 uur</string>
     <string name="remind_pick">Kies een tijd…</string>
+    <string name="has_reminder">Heeft een herinnering</string>
     <string name="unstar">Ster weghalen</string>
     <string name="starred">Met ster</string>
     <string name="no_starred">Houd een bericht ingedrukt en tik op Ster geven om het hier te bewaren.</string>
