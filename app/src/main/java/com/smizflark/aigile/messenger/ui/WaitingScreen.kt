@@ -90,7 +90,7 @@ private fun WaitingRow(ref: ChatRef, p: Pending, repo: Repo, onClick: () -> Unit
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(ref.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    Text("⏰ " + sendTime(p.sendAt), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                    Text("⏰ " + sendTime(p.sendAt) + if (p.repeat != null) " 🔁" else "", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 }
                 val plain = Markdown.render(p.text, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.primary).text
                 Text(plain.replace('\n', ' '), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,

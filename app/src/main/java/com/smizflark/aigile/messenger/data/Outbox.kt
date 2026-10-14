@@ -20,6 +20,18 @@ object Outbox {
     fun moveTo(l: List<Pending>, id: String, at: java.time.Instant) =
         l.map { if (it.id == id) it.copy(sendAt = at.toString()) else it }
 
+    /** Repeat a Send later message every day or week (AII-174); null stops it repeating. */
+    fun setRepeat(l: List<Pending>, id: String, repeat: String?) =
+        l.map { if (it.id == id) it.copy(repeat = repeat) else it }
+
+    /** The next one of a repeating message (AII-174): same words, a day or a week on from its time, the first such time after [now]. Pictures don't repeat. */
+    fun nextRepeat(p: Pending, now: java.time.Instant, zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): Pending? {
+        val days = when (p.repeat) { "day" -> 1L; "week" -> 7L; else -> return null }
+        var t = (p.sendAt?.let { runCatching { java.time.Instant.parse(it) }.getOrNull() } ?: now).atZone(zone)
+        do t = t.plusDays(days) while (!t.toInstant().isAfter(now))
+        return p.copy(id = java.util.UUID.randomUUID().toString(), at = now.toString(), failed = false, offline = false, files = emptyList(), sendAt = t.toInstant().toString())
+    }
+
     /** Every Send later message still waiting, in every chat, soonest first (AII-166); messages of chats no longer listed are left out. */
     fun waiting(l: List<Pending>, chats: List<ChatRef>, now: java.time.Instant): List<Pair<ChatRef, Pending>> {
         val byKey = chats.associateBy { it.key }
