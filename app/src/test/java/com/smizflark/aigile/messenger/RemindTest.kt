@@ -21,6 +21,19 @@ class RemindTest {
         assertEquals(emptySet<String>(), Remind.chatKeys(emptyList()))
     }
 
+    @Test fun forMessageMatchesChatAndKey() {
+        val all = listOf(Reminder("a|1", "a", "A", "1", "t", 5L), Reminder("b|1", "b", "B", "1", "t", 7L))
+        assertEquals(7L, Remind.forMessage(all, "b", "1"))
+        assertNull(Remind.forMessage(all, "a", "2"))
+        assertNull(Remind.forMessage(emptyList(), "a", "1"))
+    }
+
+    @Test fun labelShowsTimeTodayAndDayOtherwise() {
+        val en = java.util.Locale.UK
+        assertEquals("🔔 18:00", Remind.label(ms(18), ms(9), zone, en))
+        assertEquals("🔔 Thu 15 Oct, 09:00", Remind.label(ms(9, 0, 15), ms(9), zone, en))
+    }
+
     @Test fun inAnHourIsSixtyMinutesOn() = assertEquals(ms(11, 30), Remind.at(ms(10, 30), Remind.When.HOUR, zone))
 
     @Test fun eveningIsSixPmToday() = assertEquals(ms(18), Remind.at(ms(10), Remind.When.EVENING, zone))

@@ -56,6 +56,17 @@ object Remind {
     /** The alert's / list's text (AII-244): the note, if any, as "📝 note" on the first line above the message. */
     fun withNote(r: Reminder) = if (r.note.isNullOrBlank()) r.text else "📝 ${r.note.trim()}\n${r.text}"
 
+    /** When this chat's message has a reminder (AII-251), or null. */
+    fun forMessage(all: List<Reminder>, chat: String, msg: String): Long? = all.firstOrNull { it.chat == chat && it.msg == msg }?.at
+
+    /** "🔔 18:00" under a bubble (AII-251): the toast's time format; "🔔 Thu 15 Oct, 18:00" when not today. */
+    fun label(at: Long, now: Long, zone: ZoneId = ZoneId.systemDefault(), locale: java.util.Locale = java.util.Locale.getDefault()): String {
+        val time = Mute.endTime(at, zone, locale)
+        val t = Instant.ofEpochMilli(at).atZone(zone)
+        if (t.toLocalDate() == Instant.ofEpochMilli(now).atZone(zone).toLocalDate()) return "🔔 $time"
+        return "🔔 " + java.time.format.DateTimeFormatter.ofPattern("EEE d MMM", locale).format(t) + ", " + time
+    }
+
     /** A typed note (AII-244): trimmed, and null when empty. */
     fun cleanNote(s: String) = s.trim().ifEmpty { null }
 

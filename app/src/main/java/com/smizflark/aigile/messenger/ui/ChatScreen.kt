@@ -107,6 +107,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var silent by remember { mutableStateOf(ref.key in repo.store.silent) }
     var muteAsk by remember { mutableStateOf(false) }   // AII-157: Mute asks how long
+    var reminders by remember { mutableStateOf(repo.store.reminders()) }   // AII-251: read once here, not per bubble
     var details by remember { mutableStateOf(false) }   // AII-80: the chat details sheet
     var stars by remember { mutableStateOf(repo.store.stars()) }   // AII-138: starred messages
     val scope = rememberCoroutineScope()
@@ -358,6 +359,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         if (m == null) Toast.makeText(view.context, R.string.no_my_message, Toast.LENGTH_SHORT).show() else jumpToStar(m.id)
     }
 
+    androidx.compose.runtime.LaunchedEffect(details) { reminders = repo.store.reminders() }   // a reminder cancelled in the details
     if (details) ChatDetails(ref, repo, chatInfo(convo), onFind = { details = false; finding = true },
         starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
         onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> {
@@ -443,6 +445,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                     if (p.target != null && targets.any { it.id == p.target }) { target = p.target; picked = true }
                                 },
                                 onQuote = { q -> jumpToQuote(q, r.id) },
+                                remindAt = com.smizflark.aigile.messenger.data.Remind.forMessage(reminders, ref.key, r.b.key), onReminded = { reminders = repo.store.reminders() },
                                 starred = Stars.has(stars, ref.key, r.b.key),
                                 onStar = if (r.pending == null) { {
                                     val s = Stars.of(ref.key, r.b); val on = !Stars.has(stars, s.chat, s.key)
