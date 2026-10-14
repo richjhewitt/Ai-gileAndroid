@@ -256,6 +256,14 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, shown.text)
                     runCatching { ctx.startActivity(android.content.Intent.createChooser(send, null)) }
                 })
+                // AII-185: the phone reads the message out; the same item stops it.
+                if (shown.text.isNotBlank()) {
+                    val reading = ReadAloud.speaking == b.key
+                    DropdownMenuItem(text = { Text(stringResource(if (reading) R.string.stop_reading else R.string.read_aloud)) }, modifier = Modifier.testTag("read-aloud"), onClick = {
+                        menu = false
+                        if (reading) ReadAloud.stop() else ReadAloud.speak(ctx, b.key, shown.text)
+                    })
+                }
             }
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
                 if (!b.mine && ref.kind != Kind.FRIEND && b.author.isNotBlank()) {
