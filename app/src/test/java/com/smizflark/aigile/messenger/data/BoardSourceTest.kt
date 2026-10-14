@@ -77,6 +77,15 @@ class BoardSourceTest {
         assertTrue(back!!.mine)
     }
 
+    @Test fun aReplyToTheLeadChatLandsThere() = runBlocking {
+        val s = source()
+        val text = "To the Lead chat ${System.nanoTime()}"
+        assertEquals(LEAD_CHAT, s.send(team(s), text, LEAD_CHAT))
+        val back = s.conversation(team(s)).bubbles.firstOrNull { it.text == text }
+        assertNotNull(back)
+        assertEquals(LEAD_CHAT, back!!.card)
+    }
+
     @Test fun aNewMessageMakesACard() = runBlocking {
         val s = source()
         val text = "Brand new ${System.nanoTime()}"

@@ -88,6 +88,7 @@ import com.smizflark.aigile.messenger.data.CardDetail
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Conversation
 import com.smizflark.aigile.messenger.data.Kind
+import com.smizflark.aigile.messenger.data.LEAD_CHAT
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
@@ -191,7 +192,7 @@ internal fun CardHeader(r: Row.Card, chosen: Boolean, onOpen: (() -> Unit)?, onC
             color = if (r.waiting) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceVariant,
         ) {
             Text(
-                (if (r.waiting) "⏳ " else "") + "${r.card}  ${r.title}" + if (chosen) "  ✓" else "",
+                (if (r.waiting) "⏳ " else "") + (if (r.card == LEAD_CHAT) r.title else "${r.card}  ${r.title}") + if (chosen) "  ✓" else "",
                 style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp).widthIn(max = 260.dp),
             )

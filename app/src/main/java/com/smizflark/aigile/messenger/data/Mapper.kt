@@ -1,5 +1,8 @@
 package com.smizflark.aigile.messenger.data
 
+/** The board's card-free Lead chat (AIG-872) shows in a team's chat under this card id; replies go to its own endpoint (AII-134). */
+const val LEAD_CHAT = "_lead"
+
 /** Turns the board's answers into what the screens show. Pure, so it is unit tested. */
 object Mapper {
 
@@ -80,7 +83,7 @@ object Mapper {
         bubbles.asReversed().mapNotNull { it.card }.distinct()
             .filter { id -> id !in waitingIds && t.cards[id]?.done != true && t.cards[id]?.kind != "test" }
             .take(4)
-            .forEach { id -> targets += Target(id, "$id ${clean(t.cards[id]?.title ?: "")}") }
+            .forEach { id -> targets += Target(id, if (id == LEAD_CHAT) "💬 Lead chat" else "$id ${clean(t.cards[id]?.title ?: "")}") }
         targets += Target(null, "New message")
 
         val lastCard = bubbles.lastOrNull()?.card
