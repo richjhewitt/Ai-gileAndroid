@@ -3,6 +3,7 @@ package com.smizflark.aigile.messenger
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.pinFirst
+import com.smizflark.aigile.messenger.data.mutedLast
 import com.smizflark.aigile.messenger.data.togglePin
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -30,5 +31,10 @@ class PinsTest {
         val once = togglePin(emptySet(), a.key)
         assertEquals(setOf(a.key), once)
         assertEquals(emptySet<String>(), togglePin(once, a.key))
+    }
+
+    @Test fun mutedSinkButPinnedStayFirst() {
+        assertEquals(listOf(d, c, a, b), mutedLast(listOf(a, b, c, d), setOf(d.key), setOf(a.key, b.key, d.key)))
+        assertEquals(listOf(c, a), mutedLast(listOf(a, c), emptySet(), setOf(a.key)))
     }
 }
