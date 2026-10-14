@@ -136,6 +136,10 @@ class ScreenshotTest {
         rule.waitForIdle()
         com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_menu_light.png")   // the menu is its own window: shoot the whole screen
         rule.onNodeWithTag("menu-mute").performClick()
+        // AII-157: Mute asks how long.
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_mute_for_light.png")
+        rule.onNodeWithTag("mute-for:HOUR").performClick()
         org.junit.Assert.assertTrue(c.key in repo.store.muted())
         rule.onNodeWithTag("chat:${c.key}").performTouchInput { longClick() }
         rule.onNodeWithTag("menu-mute").performClick()

@@ -162,9 +162,16 @@ class Store(context: Context) {
 
     /* ---------- muted chats: no alerts from them (AII-48) ---------- */
 
-    fun muted(): Set<String> = settings.getStringSet("muted", null)?.toSet() ?: emptySet()
-    fun setMuted(chat: String, on: Boolean) =
-        settings.edit().putStringSet("muted", if (on) muted() + chat else muted() - chat).apply()
+    /** Muted now: a mute for a while (AII-157) ends by itself. */
+    fun muted(): Set<String> = Mute.active(settings.getStringSet("muted", null)?.toSet() ?: emptySet(), mutedUntil(), Now.millis())
+    /** When each timed mute ends, as "chat<TAB>epoch millis"; a chat not here is muted until unmuted. */
+    private fun mutedUntil(): Map<String, Long> = (settings.getStringSet("mutedUntil", null) ?: emptySet())
+        .mapNotNull { e -> e.split('	').takeIf { it.size == 2 }?.let { (c, t) -> t.toLongOrNull()?.let { c to it } } }.toMap()
+    fun setMuted(chat: String, on: Boolean, until: Long? = null) {
+        val ends = mutedUntil() - chat + (if (on && until != null) mapOf(chat to until) else emptyMap())
+        settings.edit().putStringSet("muted", if (on) muted() + chat else muted() - chat)
+            .putStringSet("mutedUntil", ends.filterKeys { it in muted() || it == chat }.map { (c, t) -> "$c	$t" }.toSet()).apply()
+    }
 
     /* ---------- closed chats: off the list until a newer message (AII-131), per board ---------- */
 

@@ -110,6 +110,9 @@
     <string name="pin">Bovenaan vastzetten</string>
     <string name="unpin">Losmaken</string>
     <string name="pinned">Vastgezet</string>
+    <string name="mute_for">Meldingen dempen voor</string>
+    <string name="mute_8h">8 uur</string>
+    <string name="mute_always">Tot ik het weer aanzet</string>
     <string name="muted">Gedempt</string>
     <string name="waiting">%1$d wachtend</string>
     <string name="new_messages">Nieuwe berichten</string>

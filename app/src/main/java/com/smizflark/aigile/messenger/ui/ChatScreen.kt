@@ -94,6 +94,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var forwarding by remember { mutableStateOf<String?>(null) }   // AII-71: the text of the message being forwarded
     var error by remember { mutableStateOf<String?>(null) }
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
+    var muteAsk by remember { mutableStateOf(false) }   // AII-157: Mute asks how long
     var details by remember { mutableStateOf(false) }   // AII-80: the chat details sheet
     var stars by remember { mutableStateOf(repo.store.stars()) }   // AII-138: starred messages
     val scope = rememberCoroutineScope()
@@ -304,10 +305,12 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 .putExtra(android.content.Intent.EXTRA_SUBJECT, ref.name).putExtra(android.content.Intent.EXTRA_TEXT, Transcript.of(c, owner) { fullTime(it) })
             runCatching { view.context.startActivity(android.content.Intent.createChooser(send, null)) }
         } }) { details = false; muted = ref.key in repo.store.muted() }
+    if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false },
+        onDismiss = { muteAsk = false })
     Scaffold(
         topBar = {
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
-                onFind = { finding = true }, onMute = { muted = !muted; repo.store.setMuted(ref.key, muted) })
+                onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true })
         },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {

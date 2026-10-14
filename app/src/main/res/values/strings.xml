@@ -110,6 +110,9 @@
     <string name="pin">Pin to top</string>
     <string name="unpin">Unpin</string>
     <string name="pinned">Pinned</string>
+    <string name="mute_for">Mute alerts for</string>
+    <string name="mute_8h">8 hours</string>
+    <string name="mute_always">Until I unmute</string>
     <string name="muted">Muted</string>
     <string name="waiting">%1$d waiting</string>
     <string name="new_messages">New messages</string>
