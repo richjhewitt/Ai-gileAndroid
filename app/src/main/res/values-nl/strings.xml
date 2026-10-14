@@ -11,6 +11,8 @@
     <string name="done">Klaar</string>
     <string name="reply">Antwoorden</string>
     <string name="show_quoted">Toon het geciteerde bericht</string>
+    <string name="read_more">Lees meer</string>
+    <string name="show_less">Minder tonen</string>
     <string name="forward">Doorsturen</string>
     <string name="to_top">Terug naar boven</string>
     <string name="share">Delen</string>
