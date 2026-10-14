@@ -14,7 +14,7 @@ object Search {
     private val link = Regex("""https?://\S+|(?<![\w@/.:"=-])((?i:(?:[a-z0-9-]+\.)+(?:com|net|org|io|live|dev|app|co|uk|nl|be|ai|me|tv|gg|xyz|info|site|online))(?::\d+)?)(?![\w-])""")
 
     fun hasLink(text: String) = link.containsMatchIn(text)
-    fun hasPicture(b: Bubble) = b.pics.any { it.image }
+    fun hasPicture(b: Bubble) = b.pics.any { it.image } || Gif.inText(b.text).isNotEmpty()   // a GIF link shows as a picture too (AII-188)
 
     /**
      * [pictures] / [links] (AII-192): only messages with a picture / a web link; chats are left out, and an empty query
