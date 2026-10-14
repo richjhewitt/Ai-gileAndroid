@@ -32,6 +32,14 @@ object Stars {
         return all.filter { it.chat != chat } + board.distinct().mapNotNull { k -> mine[k] ?: loaded[k]?.let { of(chat, it) } }
     }
 
+    /** The first sync of a chat (AII-162): the phone's stars and the board's together, so neither side's stars are lost. */
+    fun firstSync(all: List<Star>, chat: String, board: List<String>) =
+        (all.filter { it.chat == chat }.map { boardKey(it) } + board).distinct()
+
+    /** True when the board's stars for this chat aren't the ones the phone has (AII-162); null (an older board) never is. */
+    fun outOfStep(all: List<Star>, chat: String, board: List<String>?) =
+        board != null && board.toSet() != all.filter { it.chat == chat }.map { boardKey(it) }.toSet()
+
     /** Every chat's stars, newest message first (AII-140); stars of chats this phone no longer has are left out, as they can't open. */
     fun everywhere(all: List<Star>, chats: List<ChatRef>): List<Pair<ChatRef, Star>> {
         val byKey = chats.associateBy { it.key }

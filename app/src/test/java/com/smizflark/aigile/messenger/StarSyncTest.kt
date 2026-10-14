@@ -25,6 +25,19 @@ class StarSyncTest {
     @Test fun aBoardStarNotLoadedHereIsLeftOut() =
         assertEquals(emptyList<Star>(), Stars.fromBoard(emptyList(), "lead:a", listOf("AII-9|$t1"), bubbles))
 
+    @Test fun firstSyncKeepsBothSidesStars() {
+        val mine = Stars.of("lead:a", bubbles[0])
+        assertEquals(listOf("_lead|$t1", "AII-5|$t2"), Stars.firstSync(listOf(mine), "lead:a", listOf("AII-5|$t2", "_lead|$t1")))
+    }
+
+    @Test fun outOfStepWhenTheBoardHasADifferentStar() {
+        val mine = listOf(Stars.of("lead:a", bubbles[0]))
+        assertEquals(true, Stars.outOfStep(mine, "lead:a", listOf("AII-5|$t2")))
+        assertEquals(false, Stars.outOfStep(mine, "lead:a", listOf("_lead|$t1")))
+        assertEquals(false, Stars.outOfStep(mine, "lead:a", null))
+        assertEquals(true, Stars.outOfStep(emptyList(), "lead:a", listOf("_lead|$t1")))
+    }
+
     @Test fun aStarAlreadyHereKeepsItsText() {
         val kept = Star("lead:a", "_lead:$t1:7", "Lead", "saved text", t1)
         assertEquals(listOf(kept), Stars.fromBoard(listOf(kept), "lead:a", listOf("_lead|$t1"), emptyList()))
