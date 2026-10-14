@@ -169,7 +169,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
         .draggable(rememberDraggableState { d -> scope.launch { drag.snapTo((drag.value + d).coerceIn(0f, reach * 1.3f)) } },
             Orientation.Horizontal, enabled = canReply,
             onDragStopped = {
-                if (replyProgress(drag.value, reach) >= 1f) { view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY); onReply(b) }
+                if (replyProgress(drag.value, reach) >= 1f) { if (Appearance.buzz) view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY); onReply(b) }   // AII-227: Buzz off keeps it still
                 drag.animateTo(0f)
             })
         .padding(horizontal = 12.dp).testTag("swipe-msg"), horizontalAlignment = if (b.mine) Alignment.End else Alignment.Start) {
