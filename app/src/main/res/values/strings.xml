@@ -274,6 +274,7 @@
     <string name="no_open_cards">Nothing is waiting on you.</string>
     <string name="chat_pictures">Pictures in this chat</string>
     <string name="no_chat_pictures">No pictures yet.</string>
+    <string name="chat_links">Links in this chat</string>
     <string name="star">Star</string>
     <string name="unstar">Remove star</string>
     <string name="starred">Starred</string>

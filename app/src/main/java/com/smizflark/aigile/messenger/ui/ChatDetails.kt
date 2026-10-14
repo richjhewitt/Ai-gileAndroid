@@ -56,6 +56,7 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
         onDismiss = { muteAsk = false })
     var shown by remember { mutableStateOf<CardDetail?>(null) }   // AII-85: the open card tapped, shown under its row
     val scope = rememberCoroutineScope()
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     ModalBottomSheet(onDismissRequest = onClose) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding().testTag("chat-details")) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -112,6 +113,17 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
             if (info.pictures.isEmpty()) Text(stringResource(R.string.no_chat_pictures), color = MaterialTheme.colorScheme.onSurfaceVariant)
             // The sheet is its own window and would cover the full screen picture, so it closes first (AII-93).
             else MessagePictures(info.pictures, repo, onOpened = onClose)
+            // AII-194: web links from the messages, newest first.
+            if (info.links.isNotEmpty()) {
+                Text(stringResource(R.string.chat_links), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+                info.links.forEach { l ->
+                    Column(Modifier.fillMaxWidth().clickable { runCatching { uriHandler.openUri(l.url) } }.padding(vertical = 6.dp).testTag("details-link")) {
+                        Text(l.title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(com.smizflark.aigile.messenger.data.ChatLink.shown(l.url), style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
             Spacer(Modifier.size(24.dp))
         }
     }
