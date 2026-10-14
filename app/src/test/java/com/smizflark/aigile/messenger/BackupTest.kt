@@ -96,4 +96,10 @@ class BackupTest {
         val st = Store(ctx); st.look = "dark"; st.signOut()
         assertEquals("system", st.look)
     }
+
+    @Test fun resetKeepsPinsMutesAndSilent() {
+        assertEquals(Store.BACKED_UP - setOf("pinned", "muted", "silent"), Store.RESETTABLE)
+        assertTrue("look" in Store.RESETTABLE && "quickReplyText" in Store.RESETTABLE)
+        listOf("pinned", "muted", "silent", "url", "key", "device", "lock").forEach { assertFalse(it, it in Store.RESETTABLE) }
+    }
 }
