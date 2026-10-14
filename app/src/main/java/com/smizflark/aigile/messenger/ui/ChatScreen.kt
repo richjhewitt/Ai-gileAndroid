@@ -23,6 +23,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import com.smizflark.aigile.messenger.data.Held
+import com.smizflark.aigile.messenger.data.UndoSend
+import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -155,11 +162,45 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         deliver(repo.queue(ref, t, to, files))
     }
 
+    // Undo send (AII-202): the message waits here for 5 seconds; leaving the chat sends it at once.
+    val snack = remember { SnackbarHostState() }
+    var held by remember { mutableStateOf<Held?>(null) }
+    fun sendHeld(h: Held) { held = null; send(h.body, h.to, h.files) }
+    val heldNow by rememberUpdatedState(held)
+    DisposableEffect(ref.key) {
+        onDispose {
+            heldNow?.let { h ->
+                val t = h.body.trim()
+                if (t.isNotEmpty() || h.files.isNotEmpty()) {
+                    val p = repo.queue(ref, t, h.to, h.files)
+                    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+                    kotlinx.coroutines.GlobalScope.launch { repo.deliver(ref, p) }
+                }
+            }
+        }
+    }
+
     /** What is typed in the box, now or (Send later, AII-146) at [at]. */
     fun sendTyped(at: Instant? = null) {
         val body = Quote.with(quoting, text.trim()).takeIf { text.isNotBlank() } ?: text
         val to = if (ref.kind == Kind.LEAD) focus ?: target else null
-        if (at == null) send(body, to, pics)
+        if (at == null && Appearance.undoSend && (body.isNotBlank() || pics.isNotEmpty())) {
+            held?.let { sendHeld(it) }   // a second Send sends the first at once
+            val h = Held(text, quoting, to, pics); held = h
+            scope.launch {
+                snack.currentSnackbarData?.dismiss()
+                val r = withTimeoutOrNull(UndoSend.WAIT_MS) {
+                    snack.showSnackbar(res.getString(R.string.message_sent_undo), res.getString(R.string.undo), duration = SnackbarDuration.Indefinite)
+                }
+                if (held !== h) return@launch
+                if (r == SnackbarResult.ActionPerformed) {
+                    held = null
+                    if (text.isBlank() && pics.isEmpty() && quoting == null) { text = h.text; pics = h.files; quoting = h.quote }
+                    else { send(h.body, h.to, h.files) }   // the box was used meanwhile: never lose either
+                } else sendHeld(h)
+            }
+        }
+        else if (at == null) send(body, to, pics)
         else if (body.isNotBlank() || pics.isNotEmpty()) {
             repo.later(ref, body.trim(), to, pics, at); pending = repo.pendingFor(ref.key)
             scope.launch { list.animateScrollToItem(0) }
@@ -338,6 +379,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         })
     }
     Scaffold(
+        snackbarHost = { SnackbarHost(snack, Modifier.testTag("snack")) },
         topBar = {
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
                 onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true },

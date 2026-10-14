@@ -194,6 +194,9 @@
     <string name="unlock">Unlock</string>
     <string name="alerts">Alerts</string>
     <string name="enter_sends">Enter key sends</string>
+    <string name="undo_send">Undo send</string>
+    <string name="undo_send_sub">After Send, the message waits 5 seconds so you can take it back</string>
+    <string name="message_sent_undo">Sending in 5 seconds</string>
     <string name="play_gifs">Play GIF links</string>
     <string name="play_gifs_sub">GIF links (giphy, tenor) play in the chat; off keeps them as links</string>
     <string name="enter_sends_sub">Enter sends the message; Shift+Enter makes a new line</string>

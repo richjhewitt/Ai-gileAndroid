@@ -130,6 +130,10 @@ class Store(context: Context) {
         get() = settings.getBoolean("gifs", true)
         set(v) = settings.edit().putBoolean("gifs", v).apply()
 
+    var undoSend: Boolean
+        get() = settings.getBoolean("undoSend", false)
+        set(v) = settings.edit().putBoolean("undoSend", v).apply()
+
     var enterSends: Boolean
         get() = settings.getBoolean("enterSends", false)
         set(v) = settings.edit().putBoolean("enterSends", v).apply()
@@ -261,7 +265,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "quietOn", "look", "phoneColours", "textSize", "enterSends", "gifs", "quickReplies", "quickReplyText", "pinned", "muted")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "quietOn", "look", "phoneColours", "textSize", "enterSends", "undoSend", "gifs", "quickReplies", "quickReplyText", "pinned", "muted")
 
         /** One-time move of the settings out of the pairing file, so the pairing file can stay out of backup. */
         fun moveSettings(from: SharedPreferences, to: SharedPreferences) {
