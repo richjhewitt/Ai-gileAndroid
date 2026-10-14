@@ -171,6 +171,26 @@ class ScreenshotTest {
         rule.waitForIdle()
         org.junit.Assert.assertFalse(c.key in repo.store.closed())
     }
+    /** AII-154: Close chat shows a bar with Undo, which puts the chat straight back. */
+    @Test fun closeChatUndo() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithTag("chat:${c.key}").performTouchInput { longClick() }
+        rule.mainClock.advanceTimeBy(1_000)
+        rule.onNodeWithTag("menu-close").performClick()
+        rule.mainClock.advanceTimeBy(500)
+        org.junit.Assert.assertTrue(c.key in repo.store.closed())
+        rule.onNodeWithText("Chat closed").assertExists()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_closed_undo_light.png")
+        rule.onNodeWithText("Undo").performClick()
+        rule.mainClock.advanceTimeBy(500)
+        rule.mainClock.autoAdvance = true
+        rule.waitForIdle()
+        org.junit.Assert.assertFalse(c.key in repo.store.closed())
+        rule.onNodeWithTag("chat:${c.key}").assertExists()
+    }
     /** AII-125: the Unread chip keeps only chats with a badge. */
     @Test fun unreadChipLight() {
         val c = lead(); prime(c); runBlocking { repo.markRead(c) }
