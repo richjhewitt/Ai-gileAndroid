@@ -21,4 +21,8 @@ class GoToDateTest {
         val d = LocalDate.of(2026, 3, 29)
         assertEquals(d, GoToDate.pickedDay(GoToDate.utcMillis(d)))
     }
+    @Test fun firstMessageIsTheRangeStartAndLandsOnTheFirstDay_AII231() {
+        val first = GoToDate.range(days, LocalDate.of(2026, 10, 14))!!.start
+        assertEquals(days.first(), GoToDate.target(days, first))
+    }
 }
