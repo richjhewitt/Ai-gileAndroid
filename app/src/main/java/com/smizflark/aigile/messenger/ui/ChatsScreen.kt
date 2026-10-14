@@ -157,7 +157,15 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     fun markUnread(c: ChatRef) = scope.launch { repo.markUnread(c); seen = repo.store.seen(); unread = counts() }
     val total = unread.values.sum()
     muteAsk?.let { c ->
-        MuteFor(onPick = { f -> repo.store.setMuted(c.key, true, Mute.until(Now.millis(), f)); muted = repo.store.muted(); muteAsk = null }, onDismiss = { muteAsk = null })
+        MuteFor(onPick = { f ->
+            repo.store.setMuted(c.key, true, Mute.until(Now.millis(), f)); muted = repo.store.muted(); muteAsk = null
+            // AII-161: a bar with Undo unmutes it straight away.
+            scope.launch {
+                snack.currentSnackbarData?.dismiss()
+                val r = snack.showSnackbar(context.getString(R.string.muted), context.getString(R.string.undo), duration = androidx.compose.material3.SnackbarDuration.Short)
+                if (r == SnackbarResult.ActionPerformed) { repo.store.setMuted(c.key, false); muted = repo.store.muted() }
+            }
+        }, onDismiss = { muteAsk = null })
     }
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle

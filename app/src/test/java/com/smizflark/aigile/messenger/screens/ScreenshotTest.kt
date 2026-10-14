@@ -235,6 +235,27 @@ class ScreenshotTest {
         rule.waitForIdle()
         org.junit.Assert.assertEquals(before, repo.store.seen()[c.key])
     }
+    /** AII-161: after Mute, a bar with Undo unmutes the chat. */
+    @Test fun muteUndo() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithTag("chat:${c.key}").performTouchInput { longClick() }
+        rule.mainClock.advanceTimeBy(1_000)
+        rule.onNodeWithTag("menu-mute").performClick()
+        rule.mainClock.advanceTimeBy(500)
+        rule.onNodeWithTag("mute-for:HOUR").performClick()
+        rule.mainClock.advanceTimeBy(500)
+        org.junit.Assert.assertTrue(c.key in repo.store.muted())
+        rule.onNodeWithText("Undo").assertExists()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_mute_undo_light.png")
+        rule.onNodeWithText("Undo").performClick()
+        rule.mainClock.advanceTimeBy(500)
+        rule.mainClock.autoAdvance = true
+        rule.waitForIdle()
+        org.junit.Assert.assertFalse(c.key in repo.store.muted())
+    }
     /** AII-125: the Unread chip keeps only chats with a badge. */
     @Test fun unreadChipLight() {
         val c = lead(); prime(c); runBlocking { repo.markRead(c) }
