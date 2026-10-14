@@ -125,6 +125,11 @@ class Store(context: Context) {
         set(v) = settings.edit().putBoolean("sentAlerts", v).apply()
 
     /** The keyboard's Enter key sends the message instead of starting a new line (AII-126). */
+    /** AII-198: GIF links play in the chat (AII-188); off keeps them plain links. */
+    var gifs: Boolean
+        get() = settings.getBoolean("gifs", true)
+        set(v) = settings.edit().putBoolean("gifs", v).apply()
+
     var enterSends: Boolean
         get() = settings.getBoolean("enterSends", false)
         set(v) = settings.edit().putBoolean("enterSends", v).apply()
@@ -251,7 +256,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "quietOn", "look", "phoneColours", "textSize", "enterSends", "quickReplies", "quickReplyText", "pinned", "muted")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "quietOn", "look", "phoneColours", "textSize", "enterSends", "gifs", "quickReplies", "quickReplyText", "pinned", "muted")
 
         /** One-time move of the settings out of the pairing file, so the pairing file can stay out of backup. */
         fun moveSettings(from: SharedPreferences, to: SharedPreferences) {

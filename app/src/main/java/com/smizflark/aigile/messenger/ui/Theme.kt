@@ -76,13 +76,14 @@ object Appearance {
     var textSize by mutableStateOf(TextSize.Normal)
     /** Enter sends (AII-126): read by the message box. */
     var enterSends by mutableStateOf(false)
+    var gifs by mutableStateOf(true)
     /** Quick replies above an empty message box (AII-179); off until loaded, so screenshots stay as they were. */
     var quickReplies by mutableStateOf(false)
     /** Your own quick replies (AII-180); empty means the starting ones. */
     var replies by mutableStateOf(emptyList<String>())
 
     fun load(store: Store) {
-        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; quickReplies = store.quickReplies; replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
+        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; quickReplies = store.quickReplies; replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
     }
 }
 
