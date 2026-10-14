@@ -235,96 +235,10 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                         onStar()
                     } } else null),
         ) {
-            // AII-201: Remind me picks a time; at that time an alert shows the message and opens the chat at it.
-            DropdownMenu(expanded = remindMenu, onDismissRequest = { remindMenu = false }) {
-                val nowMs = com.smizflark.aigile.messenger.data.Now.millis()
-                val setRemind = { at: Long -> noteAt = at; noteText = "" }   // AII-244: ask for an optional note before saving
-                com.smizflark.aigile.messenger.data.Remind.choices(nowMs).forEach { w ->
-                    val label = when (w) {
-                        com.smizflark.aigile.messenger.data.Remind.When.HOUR -> R.string.remind_hour
-                        com.smizflark.aigile.messenger.data.Remind.When.EVENING -> R.string.remind_evening
-                        com.smizflark.aigile.messenger.data.Remind.When.TOMORROW -> R.string.remind_tomorrow
-                    }
-                    DropdownMenuItem(text = { Text(stringResource(label)) }, modifier = Modifier.testTag("remind-$w"), onClick = {
-                        remindMenu = false
-                        setRemind(com.smizflark.aigile.messenger.data.Remind.at(com.smizflark.aigile.messenger.data.Now.millis(), w) ?: return@DropdownMenuItem)
-                    })
-                }
-                // AII-225: any day and time, like Send later's pick a day; a time already gone rolls to the next one (Pause.onDay).
-                DropdownMenuItem(text = { Text(stringResource(R.string.remind_pick)) }, modifier = Modifier.testTag("remind-pick"), onClick = {
-                    remindMenu = false
-                    val today = com.smizflark.aigile.messenger.data.Now.today()
-                    android.app.DatePickerDialog(ctx, { _, y, mo, d ->
-                        val day = java.time.LocalDate.of(y, mo + 1, d)
-                        android.app.TimePickerDialog(ctx, { _, h, m -> setRemind(com.smizflark.aigile.messenger.data.Pause.onDay(com.smizflark.aigile.messenger.data.Now.millis(), day, h, m)) },
-                            9, 0, android.text.format.DateFormat.is24HourFormat(ctx)).show()
-                    }, today.year, today.monthValue - 1, today.dayOfMonth).apply { datePicker.minDate = com.smizflark.aigile.messenger.data.Now.millis() - 1000 }.show()
-                })
-            }
-            noteAt?.let { at ->
-                val save = { note: String? ->
-                    noteAt = null
-                    val r = com.smizflark.aigile.messenger.data.Reminder(com.smizflark.aigile.messenger.data.Remind.idOf(ref.key, b.key), ref.key, ref.name, b.key,
-                        Markdown.plain(shown).trim(), at, note)
-                    repo.store.setReminders(com.smizflark.aigile.messenger.data.Remind.add(repo.store.reminders(), r))
-                    com.smizflark.aigile.messenger.work.RemindWorker.schedule(ctx, r)
-                    Toast.makeText(ctx, ctx.getString(R.string.remind_set, com.smizflark.aigile.messenger.data.Mute.endTime(at)), Toast.LENGTH_SHORT).show()
-                }
-                androidx.compose.material3.AlertDialog(onDismissRequest = { noteAt = null },
-                    title = { Text(stringResource(R.string.remind_note_title)) },
-                    text = { androidx.compose.material3.OutlinedTextField(noteText, { noteText = it }, singleLine = true,
-                        label = { Text(stringResource(R.string.remind_note)) }, modifier = Modifier.testTag("remind-note")) },
-                    confirmButton = { androidx.compose.material3.TextButton(onClick = { save(com.smizflark.aigile.messenger.data.Remind.cleanNote(noteText)) }, modifier = Modifier.testTag("remind-note-save")) { Text(stringResource(R.string.save)) } },
-                    dismissButton = { androidx.compose.material3.TextButton(onClick = { save(null) }, modifier = Modifier.testTag("remind-note-skip")) { Text(stringResource(R.string.skip)) } })
-            }
-            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                if (b.state == SendState.SENT && !b.unverified && shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.remind_me)) }, modifier = Modifier.testTag("remind"),
-                    onClick = { menu = false; remindMenu = true })
-                if (b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(R.string.reply)) }, modifier = Modifier.testTag("reply"),
-                    onClick = { menu = false; onReply(b) })
-                if (b.state == SendState.SENT && !b.unverified && b.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.forward)) }, modifier = Modifier.testTag("forward"),
-                    onClick = { menu = false; onForward(b) })
-                // AII-138: star it, to find it again in the chat details.
-                if (onStar != null && b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(if (starred) R.string.unstar else R.string.star)) },
-                    modifier = Modifier.testTag("star"), onClick = { menu = false; onStar() })
-                DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
-                    menu = false
-                    clipboard.setText(AnnotatedString(Markdown.plain(shown)))
-                    // Android 13+ shows its own "copied" note; a toast as well would say it twice.
-                    if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
-                })
-                DropdownMenuItem(text = { Text(stringResource(R.string.copy_quote)) }, modifier = Modifier.testTag("copy-quote"), onClick = {
-                    menu = false
-                    clipboard.setText(AnnotatedString(com.smizflark.aigile.messenger.data.Quote.copy(Markdown.plain(shown))))
-                    if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
-                })
-                if (shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.select_text)) }, modifier = Modifier.testTag("select"),
-                    onClick = { menu = false; selecting = true })
-                // AII-129: copy a link in the message on its own; several links get one line each.
-                val links = Markdown.links(shown)
-                links.forEach { url ->
-                    DropdownMenuItem(text = { Text(if (links.size == 1) stringResource(R.string.copy_link) else stringResource(R.string.copy_link_named, Markdown.shortLink(url)), maxLines = 1) },
-                        modifier = Modifier.testTag("copy-link"), onClick = {
-                            menu = false
-                            clipboard.setText(AnnotatedString(url))
-                            if (Build.VERSION.SDK_INT < 33) Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
-                        })
-                }
-                // AII-121: out to another app (email, notes...) through the phone's share menu.
-                if (shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, modifier = Modifier.testTag("share"), onClick = {
-                    menu = false
-                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, Markdown.plain(shown))
-                    runCatching { ctx.startActivity(android.content.Intent.createChooser(send, null)) }
-                })
-                // AII-185: the phone reads the message out; the same item stops it.
-                if (shown.text.isNotBlank()) {
-                    val reading = ReadAloud.speaking == b.key
-                    DropdownMenuItem(text = { Text(stringResource(if (reading) R.string.stop_reading else R.string.read_aloud)) }, modifier = Modifier.testTag("read-aloud"), onClick = {
-                        menu = false
-                        if (reading) ReadAloud.stop() else ReadAloud.speak(ctx, b.key, Markdown.plain(shown))
-                    })
-                }
-            }
+            /* ---------- menus (BubbleMenu.kt) ---------- */
+            RemindMenu(remindMenu, { remindMenu = false }) { at -> noteAt = at; noteText = "" }   // AII-244: ask for an optional note before saving
+            noteAt?.let { at -> RemindNoteDialog(at, ref, b, shown, repo, noteText, { noteText = it }) { noteAt = null } }
+            HoldMenu(menu, { menu = false }, b, shown, starred, onStar, onReply, onForward, onRemind = { remindMenu = true }, onSelect = { selecting = true })
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
                 if (!b.mine && ref.kind != Kind.FRIEND && b.author.isNotBlank()) {
                     Text(b.author, style = MaterialTheme.typography.labelMedium, color = cs.primary)

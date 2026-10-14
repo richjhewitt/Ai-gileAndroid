@@ -1,12 +1,10 @@
 package com.smizflark.aigile.messenger.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
 import com.smizflark.aigile.messenger.work.waitingToSend
 import java.time.Instant
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,13 +21,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import com.smizflark.aigile.messenger.data.Held
-import com.smizflark.aigile.messenger.data.UndoSend
-import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -42,7 +37,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,30 +54,20 @@ import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Forward
 import com.smizflark.aigile.messenger.data.Quote
-import com.smizflark.aigile.messenger.data.Closed
-import com.smizflark.aigile.messenger.data.News
-import com.smizflark.aigile.messenger.data.nextUnread
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.Stars
-import com.smizflark.aigile.messenger.data.Transcript
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import androidx.compose.ui.res.stringResource
 import com.smizflark.aigile.messenger.R
 import android.os.Build
 import android.widget.Toast
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import android.view.HapticFeedbackConstants
 import androidx.compose.runtime.snapshotFlow
-import com.smizflark.aigile.messenger.data.ScrollPlace
 import com.smizflark.aigile.messenger.data.ScrollPlaces
 import kotlinx.coroutines.flow.first
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.ui.platform.LocalView
 
 /**
@@ -166,22 +150,14 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         deliver(repo.queue(ref, t, to, files))
     }
 
+    /* ---------- undo send ---------- */
     // Undo send (AII-202): the message waits here for 5 or 10 seconds; leaving the chat sends it at once.
     val snack = remember { SnackbarHostState() }
     var held by remember { mutableStateOf<Held?>(null) }
     fun sendHeld(h: Held) { held = null; send(h.body, h.to, h.files) }
     val heldNow by rememberUpdatedState(held)
     DisposableEffect(ref.key) {
-        onDispose {
-            heldNow?.let { h ->
-                val t = h.body.trim()
-                if (t.isNotEmpty() || h.files.isNotEmpty()) {
-                    val p = repo.queue(ref, t, h.to, h.files)
-                    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
-                    kotlinx.coroutines.GlobalScope.launch { repo.deliver(ref, p) }
-                }
-            }
-        }
+        onDispose { heldNow?.let { h -> flushHeld(repo, ref, h) } }   // ChatUndoSend.kt
     }
 
     /** What is typed in the box, now or (Send later, AII-146) at [at]. */
@@ -192,10 +168,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             held?.let { sendHeld(it) }   // a second Send sends the first at once
             val h = Held(text, quoting, to, pics); held = h
             scope.launch {
-                snack.currentSnackbarData?.dismiss()
-                val r = withTimeoutOrNull(UndoSend.waitMs(Appearance.undoSeconds)) {
-                    snack.showSnackbar(res.getString(R.string.message_sent_undo, UndoSend.seconds(Appearance.undoSeconds)), res.getString(R.string.undo), duration = SnackbarDuration.Indefinite)
-                }
+                val r = showUndoBar(snack, res)   // ChatUndoSend.kt
                 if (held !== h) return@launch
                 if (r == SnackbarResult.ActionPerformed) {
                     held = null
@@ -212,26 +185,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         text = ""; pics = emptyList(); picNote = null; quoting = null
     }
 
-    // Pictures (AII-27): the system photo picker needs no permission; each pick is copied into the app at once.
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(MAX_PICS)) { uris ->
-        if (uris.isEmpty()) return@rememberLauncherForActivityResult
-        scope.launch {
-            picNote = res.getQuantityString(R.plurals.adding_pictures, uris.size, uris.size)
-            val kept = withContext(Dispatchers.IO) { uris.map { repo.keepPicture(it) } }
-            pics = (pics + kept.filterNotNull()).take(MAX_PICS)
-            picNote = if (kept.any { it == null }) res.getString(R.string.pic_read_one) else null
-        }
-    }
-
-    // A copied picture (AII-56): offered as a chip above the message box.
+    /* ---------- pictures ---------- */
+    // Pictures (AII-27) and a copied picture (AII-56): ChatPictures.kt
+    val picker = rememberPicPicker(repo, { pics }, { pics = it }, { picNote = it })
     val copied = rememberCopiedPicture()
-    fun pasteCopied() {
-        val uri = copied.take() ?: run { picNote = res.getString(R.string.pic_read_copied); return }
-        scope.launch {
-            val kept = withContext(Dispatchers.IO) { repo.keepPicture(uri) }
-            if (kept == null) picNote = res.getString(R.string.pic_read_copied) else { pics = (pics + kept).take(MAX_PICS); picNote = null }
-        }
-    }
+    fun pasteCopied() = pasteCopiedPicture(copied, repo, scope, res, { pics }, { pics = it }, { picNote = it })
 
     forwarding?.let { body ->
         val ctx = LocalContext.current
@@ -300,40 +258,12 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val newest = convo?.bubbles?.lastOrNull()?.key
     LaunchedEffect(atBottom, newest, restoring) { if (atBottom && !restoring) seenNewest = newest }
     val latestItems by rememberUpdatedState(items)
-    val latestSeen by rememberUpdatedState(seenNewest)
-    LaunchedEffect(placeKey) {
-        if (place != null) {
-            snapshotFlow { latestItems.size }.first { it > 0 }
-            val at = ScrollPlaces.indexOf(place, latestItems.map { it.id })
-            if (at != null) list.scrollToItem(at + 1, place.offset)   // +1: the spacer at the bottom
-            restoring = false
-        }
-        snapshotFlow { Triple(list.firstVisibleItemIndex, list.firstVisibleItemScrollOffset, latestItems.size) }.collect { (i, off, n) ->
-            if (n == 0) return@collect
-            if (i <= 1) ScrollPlaces.clear(placeKey)
-            else (list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == i }?.key as? String)
-                ?.let { ScrollPlaces.save(placeKey, ScrollPlace(it, off, latestSeen)) }
-        }
-    }
-    // AII-102: more new messages than fit on screen? Open at the "New messages" line, not the bottom.
-    LaunchedEffect(placeKey) {
-        if (place != null || openAt != null) return@LaunchedEffect
-        val i = snapshotFlow { latestItems.indexOfFirst { it is Row.New } }.first { it >= 0 } + 1   // +1: the spacer at the bottom
-        val info = snapshotFlow { list.layoutInfo }.first { it.totalItemsCount > i && it.visibleItemsInfo.isNotEmpty() }
-        if (list.firstVisibleItemIndex > 1 || info.visibleItemsInfo.any { it.index == i }) return@LaunchedEffect
-        list.scrollToItem(i)
-        val line = list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == i }?.size ?: 0
-        list.scrollBy(-(info.viewportEndOffset - info.viewportStartOffset - line).toFloat())
-    }
+    RestoreScroll(list, items, placeKey, place, openAt, seenNewest) { restoring = false }   // AII-72, AII-102 (ChatScroll.kt)
     val unread = if (atBottom) 0 else unreadBelow(convo?.bubbles.orEmpty(), seenNewest)
     // AII-204: the next unread chat in chats-list order, worked out as the chats list does it; looked at again whenever you reach the bottom.
     val nextChat = remember(atBottom, convo, Appearance.nextUnread) {
         if (!Appearance.nextUnread) return@remember null   // AII-254
-        val all = repo.store.cachedChats().orEmpty()
-        val seenAll = repo.store.seen()
-        val counts = all.associate { it.key to News.unread(it, seenAll[it.key], repo.store.cachedConversation(it.key)) }
-        val shut = repo.store.closed().let { cl -> all.filter { Closed.hidden(it, cl[it.key]) }.map { it.key }.toSet() }
-        nextUnread(all, repo.store.pinned, counts, repo.store.muted(), shut, ref.key)
+        nextUnreadChat(repo, ref.key)
     }
     // AII-99: tap a quote, the chat scrolls to the quoted message and outlines it for a moment.
     var flash by remember { mutableStateOf<String?>(null) }
@@ -349,6 +279,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         list.scrollToItem(i + 1); flash = openAt; delay(1500); if (flash == openAt) flash = null   // +1: the spacer at the bottom
     }
 
+    /* ---------- jumps ---------- */
     // AII-138: tap a starred message in the details, the chat scrolls to it and outlines it.
     fun jumpToStar(key: String) {
         val i = items.indexOfFirst { it.id == key }
@@ -365,17 +296,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     androidx.compose.runtime.LaunchedEffect(details) { reminders = repo.store.reminders() }   // a reminder cancelled in the details
     if (details) ChatDetails(ref, repo, chatInfo(convo), onFind = { details = false; finding = true },
         starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
-        onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> {
-            // AII-139: the whole chat as text through the phone's share menu.
-            val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
-                .putExtra(android.content.Intent.EXTRA_SUBJECT, ref.name).putExtra(android.content.Intent.EXTRA_TEXT, Transcript.of(c, owner) { fullTime(it) })
-            runCatching { view.context.startActivity(android.content.Intent.createChooser(send, null)) }
-        } },
-        onSave = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> {
-            // AII-229: the same text, saved as a .txt in Downloads.
-            val ok = saveTextFile(view.context, Transcript.fileName(ref.name, com.smizflark.aigile.messenger.data.Now.today()), Transcript.of(c, owner) { fullTime(it) })
-            Toast.makeText(view.context, if (ok) R.string.saved_to_downloads else R.string.save_failed, Toast.LENGTH_SHORT).show()
-        } }) { details = false; muted = ref.key in repo.store.muted() }
+        onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { shareTranscript(view.context, ref.name, c, owner) } },   // AII-139
+        onSave = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { saveTranscript(view.context, ref.name, c, owner) } }) { details = false; muted = ref.key in repo.store.muted() }   // AII-229
     if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false },
         onDismiss = { muteAsk = false })
     // AII-193: Go to date lands on that day's day row, else the next later day with messages, else the newest.
@@ -386,13 +308,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             goToDate = false
             val to = com.smizflark.aigile.messenger.data.GoToDate.target(days, picked)
             val i = if (to == null) -1 else items.indexOfFirst { it.id == "day:$to" }
-            scope.launch {
-                if (i < 0) { list.animateScrollToItem(0); return@launch }
-                // The list runs upside down, so the day row lands at the bottom: push it up to the top so its messages show below it.
-                list.scrollToItem(i + 1)   // +1: the spacer at the bottom
-                val day = list.layoutInfo.visibleItemsInfo.firstOrNull { it.index == i + 1 } ?: return@launch
-                list.animateScrollBy(-(list.layoutInfo.viewportSize.height - day.size).toFloat().coerceAtLeast(0f))
-            }
+            scope.launch { scrollToDayRow(list, i) }   // ChatScroll.kt
         })
     }
     Scaffold(
@@ -413,44 +329,14 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 onUp = { if (hits.isNotEmpty()) at = (current + 1) % hits.size },   // older
                 onDown = { if (hits.isNotEmpty()) at = (current - 1 + hits.size) % hits.size },   // newer
                 onClose = { finding = false; query = "" })
-            val pinchCtx = LocalContext.current
-            Box(Modifier.weight(1f).fillMaxWidth().pointerInput(Unit) {
-                // AII-259: only reacts while 2+ fingers are down; never consumes, so scroll, swipe, long-press and double-tap are untouched
-                awaitEachGesture {
-                    var start = 0f
-                    var done = false
-                    do {
-                        val ev = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
-                        val down = ev.changes.filter { it.pressed }
-                        if (down.size >= 2 && !done) {
-                            val d = (down[0].position - down[1].position).getDistance()
-                            if (start == 0f) start = d
-                            else if (start > 0f) {
-                                val cur = Appearance.textSize
-                                val next = nextTextSize(cur, d / start)
-                                if (next != cur) {
-                                    done = true
-                                    Appearance.textSize = next; repo.store.textSize = next.id
-                                    Toast.makeText(pinchCtx, pinchCtx.getString(next.res), Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                    } while (ev.changes.any { it.pressed })
-                }
-            }) {
+            Box(Modifier.weight(1f).fillMaxWidth().pinchTextSize(repo)) {   // AII-259 (ChatGestures.kt)
                 LazyColumn(Modifier.fillMaxSize(), state = list, reverseLayout = true,
                     verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     item { Spacer(Modifier.size(if (nextChat != null && convo != null && !finding) 64.dp else 8.dp)) }   // room for the Next unread button (AII-204)
                     items(items, key = { it.id }) { r ->
                         when (r) {
-                            is Row.Day -> Text(r.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                            is Row.New -> Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).testTag("new-line"), verticalAlignment = Alignment.CenterVertically) {
-                                HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.primary)
-                                Text(stringResource(R.string.new_messages), Modifier.padding(horizontal = 10.dp), style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary)
-                                HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.primary)
-                            }
+                            is Row.Day -> DayRow(r.label)
+                            is Row.New -> NewMessagesLine()
                             is Row.Card -> CardHeader(r, chosen = target == r.card && focus == null,
                                 onOpen = if (focus == null && ref.kind == Kind.LEAD) { { onOpenCard(r.card) } } else null) {
                                 if (targets.any { it.id == r.card }) { target = r.card; picked = true }

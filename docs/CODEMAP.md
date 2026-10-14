@@ -22,7 +22,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Models.kt: data classes for the board's chats and messages.
 - data/News.kt: what is new since you last looked, and quiet hours.
 - data/Remind.kt: chatKeys = chats with a reminder (AII-226). Remind me about a message (AII-201): in 1 hour, this evening 18:00 (hidden after), tomorrow 9:00, or Pick a time… (day then time, Pause.onDay, AII-225); after the time a Note dialog (Save / Skip) sets Reminder.note, shown as "📝 note" first in the alert and the Reminders list (Remind.withNote, AII-244); reminders kept in Store, fired by work/RemindWorker.kt as an alert that opens the chat at the message.
-- data/Remind.kt also: forMessage / label give the "🔔 18:00" line under a bubble that has a reminder (AII-251; read once per chat in ui/ChatScreen.kt).
+- data/Remind.kt also: forMessage / label give the "🔔 18:00" line under a bubble that has a reminder (AII-251; read once per chat in ui/ChatScreen.kt; the Remind me menu and note dialog are in ui/BubbleMenu.kt).
 - data/Silent.kt: Silent alerts for one chat (AII-207): its alerts show with no sound or buzz (setSilent in work/ChatNotifier.kt); Mute still wins; switch in chat details and the chat menu.
 - data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
 - data/Mute.kt: mute a chat for 1 hour, 8 hours or until unmuted (AII-157); timed mutes end by themselves.
@@ -46,7 +46,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/SavedPictures.kt: size of the saved pictures and which files Clear may delete, never ones waiting in the outbox (AII-215).
 - data/Store.kt: on-disk storage: pairing in the "messenger" prefs (not backed up), settings in the "settings" prefs (backed up, AII-81), drafts and cache.
 - data/Transcript.kt: a whole chat as plain text, for Share this chat (AII-139) and Save as file (AII-229, safe file name here; saveTextFile in ui/ChatDetails.kt writes to Downloads).
-- data/UndoSend.kt: a sent message held 5 or 10 seconds (Settings, AII-233) with an Undo bar (AII-202); used by ui/ChatScreen.kt.
+- data/UndoSend.kt: a sent message held 5 or 10 seconds (Settings, AII-233) with an Undo bar (AII-202); used by ui/ChatScreen.kt (helpers in ui/ChatUndoSend.kt).
 - data/Swipe.kt: what a swipe on a chat row does; choices include Remind me in 1 hour (AII-257).
 - data/Update.kt: 'New version' bar: latest GitHub release (tag build-N = versionCode), checked once a day.
 
@@ -55,9 +55,14 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, this chat's reminders (AII-223, tap jumps to the message, X cancels via cancelReminder in ui/RemindersScreen.kt), pictures, links (AII-194), Mute and Silent alerts side by side (AII-245), and Pin.
 - ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, this chat's reminders (AII-223, tap jumps to the message, X cancels via cancelReminder in ui/RemindersScreen.kt), pictures, links (AII-194), Mute and Pin; section headings show their counts (AII-252).
 - ui/ChatScreen.kt: the chat screen itself (list, find, scrolling).
+- ui/ChatGestures.kt: the pinch-to-zoom text size (AII-259) and the next unread chat lookup (AII-204) for ui/ChatScreen.kt.
+- ui/ChatScroll.kt: remembered scroll place and New messages opening (AII-72, AII-102), Go to date scroll (AII-193), day and new-line rows, share/save the chat as text (AII-139, AII-229).
+- ui/ChatPictures.kt: the photo picker and pasting a copied picture into the message box (AII-27, AII-56).
+- ui/ChatUndoSend.kt: Undo send hold helpers (AII-202): the Undo bar and sending a held message on leaving the chat.
 - ui/ChatTopBar.kt: the chat's top bar (name, 'working on', find, Mute; menu: Go to date, My last message AII-242).
 - ui/ChatRows.kt: builds the chat's rows (days, card headers, messages, waiting sends) and counts unread below.
 - ui/ChatBubble.kt: one message bubble (copy, reply, forward, options, retry; long ones fold with Read more, AII-184).
+- ui/BubbleMenu.kt: the bubble hold menu (Remind me, Reply, Forward, Star, Copy, Copy as quote, Select, links, Share, Read aloud) and the Remind me time menu and note dialog (AII-201, AII-244).
 - ui/ChatComposer.kt: the message input with pictures, reply, dictation and quick replies (AII-179); hold a quick reply to edit them in Settings (AII-255).
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
 - ui/ChatsScreen.kt: every chat in one list.
