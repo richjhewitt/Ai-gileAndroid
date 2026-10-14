@@ -112,6 +112,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
             Toggle(stringResource(R.string.undo_send), stringResource(R.string.undo_send_sub), Appearance.undoSend, Modifier.testTag("undoSend")) {
                 Appearance.undoSend = it; s.undoSend = it
             }
+            Toggle(stringResource(R.string.show_times), stringResource(R.string.show_times_sub), Appearance.showTimes, Modifier.testTag("showTimes")) {
+                Appearance.showTimes = it; s.showTimes = it
+            }
             Toggle(stringResource(R.string.play_gifs), stringResource(R.string.play_gifs_sub), Appearance.gifs, Modifier.testTag("gifs")) {
                 Appearance.gifs = it; s.gifs = it
             }

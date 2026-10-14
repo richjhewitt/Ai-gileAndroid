@@ -197,6 +197,8 @@
     <string name="unlock">Ontgrendelen</string>
     <string name="alerts">Meldingen</string>
     <string name="enter_sends">Enter-toets verstuurt</string>
+    <string name="show_times">Tijden tonen</string>
+    <string name="show_times_sub">Toon de tijd onder elk bericht, zonder erop te tikken</string>
     <string name="undo_send">Verzenden ongedaan maken</string>
     <string name="undo_send_sub">Na Verzenden wacht het bericht 5 seconden, zodat je het kunt terugnemen</string>
     <string name="message_sent_undo">Verzenden over 5 seconden</string>

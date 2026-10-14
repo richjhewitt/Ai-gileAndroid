@@ -62,6 +62,10 @@ class ChatShotTest : ShotBase() {
     @Test fun chatLight() { prime(lead()); shot("chat", false) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun codeBoxDark() { val t = chats.first { it.id == "tunio" }; prime(t); shot("chat_code", true) { ChatScreen(repo, t, onBack = {}) } }   // AII-115
+    @Test fun chatShowTimes() {   // AII-211
+        prime(lead()); Appearance.showTimes = true
+        try { shot("chat_times", false) { ChatScreen(repo, lead(), onBack = {}) } } finally { Appearance.showTimes = false }
+    }
     @Test fun chatHuge() {
         prime(lead()); Appearance.textSize = TextSize.Huge
         try { shot("chat_huge", false) { ChatScreen(repo, lead(), onBack = {}) } } finally { Appearance.textSize = TextSize.Normal }
