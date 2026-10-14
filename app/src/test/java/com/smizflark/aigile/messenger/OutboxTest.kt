@@ -25,6 +25,14 @@ class OutboxTest {
     @Test fun deleteRemovesOnlyThatMessage() =
         assertEquals(listOf("b"), Outbox.remove(listOf(p("a", failed = true), p("b")), "a").map { it.id })
 
+    /** AII-151: gave up since the last look (refused, or offline tries ran out): one alert each, never twice. */
+    @Test fun newlyFailedOnesGetOneAlert() {
+        val before = listOf(p("old", failed = true), p("refused"), p("ran-out", failed = true, offline = true), p("still-offline", failed = true, offline = true))
+        val after = listOf(p("old", failed = true), p("refused", failed = true), p("ran-out", failed = true), p("still-offline", failed = true, offline = true))
+        assertEquals(listOf("refused", "ran-out"), Outbox.newlyFailed(before, after).map { it.id })
+        assertEquals(emptyList<String>(), Outbox.newlyFailed(after, after).map { it.id })
+    }
+
     @Test fun onlyRefusedOnesGetTheRedMark() {
         val l = listOf(p("new"), p("offline", failed = true, offline = true), p("refused", failed = true))
         assertEquals(listOf("refused"), Outbox.failedForGood(l).map { it.id })

@@ -222,6 +222,7 @@
     <string name="notify_me">Me</string>
     <string name="notify_sent">Sent ✓</string>
     <string name="notify_not_sent">Not sent: %1$s. Open the chat to try again.</string>
+    <string name="notify_gave_up">Not sent: “%1$s”. Tap to retry or delete.</string>
     <string name="notify_no_connection">no connection</string>
     <string name="notify_chat_missing">chat not found</string>
     <string name="time_now">now</string>

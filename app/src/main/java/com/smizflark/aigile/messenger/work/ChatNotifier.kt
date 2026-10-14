@@ -110,6 +110,13 @@ object ChatNotifier {
         refreshSummary(context)
     }
 
+    /** A waiting message gave up in the background (AII-151): say so; tapping opens its chat, where Retry and Delete are. */
+    fun notSent(context: Context, chat: String, name: String, id: String, text: String) {
+        val n = QuickReply.notificationId("notsent:$id")
+        NotificationManagerCompat.from(context).notify(n, base(context).setContentTitle(name)
+            .setContentText(context.getString(R.string.notify_gave_up, text)).setContentIntent(openChat(context, chat, n)).build())
+    }
+
     /** The summary shows only while two or more chats have a notification. */
     fun refreshSummary(context: Context) {
         val nm = NotificationManagerCompat.from(context)
