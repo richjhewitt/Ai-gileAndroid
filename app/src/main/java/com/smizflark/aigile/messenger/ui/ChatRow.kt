@@ -72,6 +72,15 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
     val closedNow by rememberUpdatedState(closed)
     val right = Appearance.swipeRight
     val left = Appearance.swipeLeft
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    // AII-240, AII-257: Remind me in 1 hour about the chat's newest cached message, from the hold menu or a swipe.
+    val remindHour = {
+        val newest = repo.store.cachedConversation(c.key)?.bubbles?.lastOrNull()
+        if (newest != null) {
+            val at = com.smizflark.aigile.messenger.work.RemindWorker.inAnHour(ctx, repo.store, c.key, c.name, newest.key, Markdown.plain(Markdown.render(newest.text, Color.Transparent, Color.Transparent)).trim())
+            if (at != null) android.widget.Toast.makeText(ctx, ctx.getString(R.string.remind_set, Mute.endTime(at)), android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
     val box = rememberSwipeToDismissBoxState(confirmValueChange = { v ->
         when (swipeAction(when (v) { SwipeToDismissBoxValue.StartToEnd -> true; SwipeToDismissBoxValue.EndToStart -> false; else -> null }, mutedNow, right, left)) {
             SwipeAction.READ -> onRead()
@@ -79,6 +88,7 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
             SwipeAction.UNMUTE -> onMute(false)
             SwipeAction.PIN -> onPin()
             SwipeAction.CLOSE -> onClose(!closedNow)
+            SwipeAction.REMIND -> remindHour()
             null -> {}
         }
         false
@@ -98,6 +108,7 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
                 SwipeChoice.MUTE -> Icon(if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff, stringResource(if (muted) R.string.unmute else R.string.mute))
                 SwipeChoice.PIN -> Icon(Icons.Default.PushPin, stringResource(if (pinned) R.string.unpin else R.string.pin))
                 SwipeChoice.CLOSE -> Icon(Icons.Default.Close, stringResource(if (closed) R.string.reopen_chat else R.string.close_chat))
+                SwipeChoice.REMIND -> Icon(Icons.Default.NotificationsActive, stringResource(R.string.remind_in_hour))
                 SwipeChoice.NOTHING -> {}
             }
         }
@@ -111,12 +122,10 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             // AII-240: Remind me in 1 hour about the chat's newest message (from the cache; hidden when there is none).
             val newest = remember(menu) { if (menu) repo.store.cachedConversation(c.key)?.bubbles?.lastOrNull() else null }
-            val ctx = androidx.compose.ui.platform.LocalContext.current
             if (newest != null) DropdownMenuItem(text = { Text(stringResource(R.string.remind_in_hour)) }, leadingIcon = { Icon(Icons.Default.NotificationsActive, null) },
                 onClick = {
                     menu = false
-                    val at = com.smizflark.aigile.messenger.work.RemindWorker.inAnHour(ctx, repo.store, c.key, c.name, newest.key, Markdown.plain(Markdown.render(newest.text, Color.Transparent, Color.Transparent)).trim())
-                    if (at != null) android.widget.Toast.makeText(ctx, ctx.getString(R.string.remind_set, Mute.endTime(at)), android.widget.Toast.LENGTH_SHORT).show()
+                    remindHour()
                 }, modifier = Modifier.testTag("menu-remind"))
             // AII-249: Copy name.
             val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current

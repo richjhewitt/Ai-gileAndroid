@@ -138,6 +138,7 @@ internal fun swipeLabel(c: com.smizflark.aigile.messenger.data.SwipeChoice) = st
     com.smizflark.aigile.messenger.data.SwipeChoice.MUTE -> R.string.mute
     com.smizflark.aigile.messenger.data.SwipeChoice.PIN -> R.string.pin
     com.smizflark.aigile.messenger.data.SwipeChoice.CLOSE -> R.string.close_chat
+    com.smizflark.aigile.messenger.data.SwipeChoice.REMIND -> R.string.remind_in_hour
     com.smizflark.aigile.messenger.data.SwipeChoice.NOTHING -> R.string.swipe_nothing
 })
 
