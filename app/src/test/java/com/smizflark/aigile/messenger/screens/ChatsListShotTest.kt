@@ -98,6 +98,27 @@ class ChatsListShotTest : ShotBase() {
         org.junit.Assert.assertTrue(chats.filter { it.key != l.key }.all { c -> rule.onAllNodesWithTag("chat:${c.key}").fetchSemanticsNodes().isEmpty() })
         rule.onRoot().captureRoboImage("../docs/shots/chats_scheduled_light.png")
     }
+    /** AII-166: Scheduled chip, See every waiting message: both chats' waiting messages, soonest first; a tap opens that chat at it. */
+    @Test fun waitingListLight() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        val l = lead(); val f = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
+        repo.queue(l, "Morning team", null, sendAt = java.time.Instant.parse("2026-10-15T07:00:00Z"))
+        val soon = repo.queue(f, "Happy birthday!", null, sendAt = java.time.Instant.parse("2026-10-14T18:30:00Z"))
+        var opened: Pair<ChatRef, String>? = null
+        var waiting by androidx.compose.runtime.mutableStateOf(false)
+        rule.setContent { MessengerTheme {
+            if (waiting) com.smizflark.aigile.messenger.ui.WaitingScreen(repo, onOpen = { r, k -> opened = r to k }, onBack = {})
+            else ChatsScreen(repo, onOpen = {}, onNew = {}, onSettings = {}, onWaiting = { waiting = true })
+        } }
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("filter:scheduled").fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithTag("filter:scheduled").performScrollTo().performClick()
+        rule.onNodeWithTag("open-waiting").performClick()
+        rule.onAllNodesWithTag("waiting-row").assertCountEquals(2)
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("../docs/shots/waiting_light.png")
+        rule.onAllNodesWithTag("waiting-row").onFirst().performClick()
+        org.junit.Assert.assertEquals(f.key to "p:${soon.id}", opened?.let { it.first.key to it.second })
+    }
     /** AII-103: hold a chat: Mute sits in the menu, and tapping it again unmutes. */
     @Test fun muteFromMenuLight() {
         val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }

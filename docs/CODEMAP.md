@@ -18,7 +18,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/News.kt: what is new since you last looked, and quiet hours.
 - data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
 - data/Mute.kt: mute a chat for 1 hour, 8 hours or until unmuted (AII-157); timed mutes end by themselves.
-- data/Outbox.kt: outbox state changes (retry / delete failed messages).
+- data/Outbox.kt: outbox state changes (retry / delete failed messages, change time) and the list of every waiting Send later message (AII-166).
 - data/Pace.kt: pacing of sends / checks.
 - data/Closed.kt: Close chat, hidden until a newer message (board's dmclosed list).
 - data/Pause.kt: pause alerts for a while.
@@ -61,6 +61,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/SearchScreen.kt: search across all chats.
 - ui/SettingsScreen.kt: settings.
 - ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); tap one, its chat opens at it.
+- ui/WaitingScreen.kt: every Send later message from all chats, soonest first (AII-166, See every waiting message under the Scheduled chip); tap one, its chat opens at it.
 - ui/Shortcuts.kt: app icon shortcuts (New message, recent chats).
 - ui/Theme.kt: colours and Material theme.
 

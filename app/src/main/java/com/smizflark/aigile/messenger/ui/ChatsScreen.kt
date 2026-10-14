@@ -79,7 +79,7 @@ import kotlinx.coroutines.launch
 /** Journey 2: every chat in one list. Shows the last list at once, then fetches. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit, onSearch: () -> Unit = {}, onStarred: () -> Unit = {}) {
+fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit, onSearch: () -> Unit = {}, onStarred: () -> Unit = {}, onWaiting: () -> Unit = {}) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var seen by remember { mutableStateOf(repo.store.seen()) }
     fun counts() = chats.associate { it.key to News.unread(it, seen[it.key], repo.store.cachedConversation(it.key)) }
@@ -243,6 +243,12 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                             FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(stringResource(f.res)) },
                                 modifier = Modifier.testTag("filter:${f.name.lowercase()}"))
                         }
+                    }
+                }
+                // AII-166: under the Scheduled chip, a link to every waiting message in one list.
+                if (filter == ChatFilter.SCHEDULED && scheduled.isNotEmpty()) item {
+                    androidx.compose.material3.TextButton(onClick = onWaiting, modifier = Modifier.padding(horizontal = 8.dp).testTag("open-waiting")) {
+                        Text(stringResource(R.string.waiting_all))
                     }
                 }
                 val all = chats.filter { filter.keep(it, News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0, it.key in scheduled) }
