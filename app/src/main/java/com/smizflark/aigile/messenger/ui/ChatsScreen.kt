@@ -93,6 +93,9 @@ import com.smizflark.aigile.messenger.data.Update
 import com.smizflark.aigile.messenger.BuildConfig
 import androidx.compose.material.icons.filled.Close
 import kotlinx.coroutines.delay
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import kotlinx.coroutines.launch
 
 /** Journey 2: every chat in one list. Shows the last list at once, then fetches. */
@@ -115,6 +118,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     var showClosed by rememberSaveable { mutableStateOf(false) }
     var filter by rememberSaveable { mutableStateOf(ChatFilter.ALL) }
     val scope = rememberCoroutineScope()
+    val snack = remember { SnackbarHostState() }
 
     var pausedUntil by remember { mutableStateOf(repo.store.pausedUntil) }
     var pauseMenu by remember { mutableStateOf(false) }
@@ -189,6 +193,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snack, Modifier.testTag("snack")) },
         floatingActionButton = {
             ExtendedFloatingActionButton(onClick = onNew, icon = { Icon(Icons.AutoMirrored.Filled.Chat, null) },
                 text = { Text(stringResource(R.string.new_message)) }, modifier = Modifier.testTag("new"))
@@ -267,7 +272,15 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         onRead = { markRead(listOf(c)) }, onUnread = { markUnread(c) },
                         onMute = { on -> repo.store.setMuted(c.key, on); muted = repo.store.muted() },
                         onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned },
-                        onClose = { shutIt -> scope.launch { repo.setClosed(c, shutIt); closed = repo.store.closed() } }) { onOpen(c) }
+                        onClose = { shutIt -> scope.launch {
+                            repo.setClosed(c, shutIt); closed = repo.store.closed()
+                            // AII-154: a bar with Undo after Close chat puts it straight back.
+                            if (shutIt) {
+                                snack.currentSnackbarData?.dismiss()
+                                val r = snack.showSnackbar(context.getString(R.string.chat_closed), context.getString(R.string.undo), duration = androidx.compose.material3.SnackbarDuration.Short)
+                                if (r == SnackbarResult.ActionPerformed) { repo.setClosed(c, false); closed = repo.store.closed() }
+                            }
+                        } }) { onOpen(c) }
                     HorizontalDivider(Modifier.padding(start = 76.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
                 if (shut.isNotEmpty()) item(key = "closed-link") {
