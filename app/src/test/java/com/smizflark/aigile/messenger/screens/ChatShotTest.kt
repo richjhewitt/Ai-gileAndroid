@@ -221,6 +221,25 @@ class ChatShotTest : ShotBase() {
         rule.onNodeWithTag("send-now").performClick()
         rule.waitUntil(5_000) { repo.pendingFor(c.key).isEmpty() }
     }
+    /** AII-170: hold Send, Pick a day…: calendar, then clock; the bubble says the day. */
+    @Test fun sendLaterOnADay() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }; prime(c); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, c, onBack = {}) } }
+        rule.onNodeWithTag("input").performTextInput("Friday, then?")
+        rule.onNodeWithTag("send").performTouchInput { longClick() }
+        rule.onNodeWithTag("send-day").performClick()
+        rule.waitForIdle()
+        val cal = org.robolectric.shadows.ShadowDialog.getLatestDialog() as android.app.DatePickerDialog
+        cal.updateDate(2026, 9, 16)
+        cal.getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick()
+        rule.waitForIdle()
+        val clock = org.robolectric.shadows.ShadowDialog.getLatestDialog() as android.app.TimePickerDialog
+        clock.getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertEquals("2026-10-16T08:00:00Z", repo.pendingFor(c.key).single().sendAt)
+        rule.onNodeWithText("Sends at Fri 09:00", substring = true).assertExists()
+        rule.onRoot().captureRoboImage("../docs/shots/send_later_day_light.png")
+    }
     @Test fun enterSendsSetting() {
         rule.setContent { MessengerTheme { SettingsScreen(repo, {}, {}) } }
         rule.onNodeWithTag("enterSends").performScrollTo()

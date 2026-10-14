@@ -57,6 +57,7 @@
     <string name="send_in_hour">Over 1 uur versturen</string>
     <string name="send_morning">Om 8:00 \'s ochtends versturen</string>
     <string name="send_pick_time">Kies een tijd…</string>
+    <string name="send_pick_day">Kies een dag…</string>
     <string name="sends_at">Gaat om %1$s</string>
     <string name="change_time">Tijd wijzigen…</string>
     <string name="send_now">Nu versturen</string>

@@ -39,6 +39,13 @@ class PauseTest {
         assertEquals(at("2026-03-11T15:30:00+01:00[Europe/Amsterdam]"), Pause.nextAt(now, 15, 30, zone))
     }
 
+    /** AII-170: a picked day and time; a time already gone falls back to the next one. */
+    @Test fun pickedDayAndTime() {
+        val now = at("2026-03-10T15:30:00+01:00[Europe/Amsterdam]")
+        assertEquals(at("2026-03-13T09:00:00+01:00[Europe/Amsterdam]"), Pause.onDay(now, java.time.LocalDate.of(2026, 3, 13), 9, 0, zone))
+        assertEquals(at("2026-03-11T09:00:00+01:00[Europe/Amsterdam]"), Pause.onDay(now, java.time.LocalDate.of(2026, 3, 10), 9, 0, zone))
+    }
+
     @Test fun tomorrowAcrossSummerTime() {
         assertEquals(at("2026-03-29T08:00:00+02:00[Europe/Amsterdam]"), Pause.untilTomorrow(at("2026-03-28T23:00:00+01:00[Europe/Amsterdam]"), zone))
     }

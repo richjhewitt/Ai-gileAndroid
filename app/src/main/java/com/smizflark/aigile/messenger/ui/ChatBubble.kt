@@ -268,7 +268,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     when (b.state) {
                         SendState.SENDING -> stringResource(R.string.sending)
                         SendState.FAILED -> stringResource(R.string.not_sent)
-                        SendState.LATER -> stringResource(R.string.sends_at, clock(b.at))
+                        SendState.LATER -> stringResource(R.string.sends_at, sendTime(b.at))
                         SendState.SENT -> (if (starred) "★ " else "") + clock(b.at) +if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
                     },
                     style = MaterialTheme.typography.labelSmall,

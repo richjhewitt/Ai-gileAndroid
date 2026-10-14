@@ -229,6 +229,16 @@ private fun SendButton(canSend: Boolean, onSend: () -> Unit, onSendLater: ((Inst
                 android.app.TimePickerDialog(view.context, { _, h, m -> onSendLater(Instant.ofEpochMilli(Pause.nextAt(Now.millis(), h, m))) },
                     soon.hour, soon.minute, android.text.format.DateFormat.is24HourFormat(view.context)).show()
             })
+            // AII-170: a later day too: the phone's calendar, then its clock (09:00 to start).
+            DropdownMenuItem(text = { Text(stringResource(R.string.send_pick_day)) }, modifier = Modifier.testTag("send-day"), onClick = {
+                menu = false
+                val today = Now.today()
+                android.app.DatePickerDialog(view.context, { _, y, mo, d ->
+                    val day = java.time.LocalDate.of(y, mo + 1, d)
+                    android.app.TimePickerDialog(view.context, { _, h, m -> onSendLater(Instant.ofEpochMilli(Pause.onDay(Now.millis(), day, h, m))) },
+                        9, 0, android.text.format.DateFormat.is24HourFormat(view.context)).show()
+                }, today.year, today.monthValue - 1, today.dayOfMonth).apply { datePicker.minDate = Now.millis() - 1000 }.show()
+            })
         }
     }
 }
