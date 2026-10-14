@@ -70,6 +70,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
     var alerts by remember { mutableStateOf(s.alerts) }
     var lockOn by remember { mutableStateOf(s.lock) }
     var quietOn by remember { mutableStateOf(s.quietOn) }
+    var sentAlerts by remember { mutableStateOf(s.sentAlerts) }   // AII-175
     var from by remember { mutableStateOf(s.quietFrom) }
     var to by remember { mutableStateOf(s.quietTo) }
     var note by remember { mutableStateOf<String?>(null) }
@@ -122,6 +123,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
                     if (!s.demo) CheckWorker.schedule(ctx)
                 } else CheckWorker.cancel(ctx)
             }
+            Toggle(stringResource(R.string.alerts_sent_later), stringResource(R.string.alerts_sent_later_sub), sentAlerts, Modifier.testTag("sentAlerts")) { sentAlerts = it; s.sentAlerts = it }
             Toggle(stringResource(R.string.quiet_hours), stringResource(R.string.quiet_sub, hour(from), hour(to)), quietOn) { quietOn = it; s.quietOn = it }
             if (quietOn) {
                 Stepper(stringResource(R.string.quiet_from), from) { from = it; s.quietFrom = it }

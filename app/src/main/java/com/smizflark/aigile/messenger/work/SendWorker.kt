@@ -34,6 +34,10 @@ class SendWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         Outbox.newlyFailed(before, repo.store.outbox()).forEach { p ->
             ChatNotifier.notSent(applicationContext, p.chat, names[p.chat] ?: p.chat, p.id, p.text)
         }
+        // AII-175: a Send later message that went by itself gets a Sent alert, unless switched off in Settings.
+        if (repo.store.sentAlerts) Outbox.sentLater(before, repo.store.outbox()).forEach { p ->
+            ChatNotifier.sentLater(applicationContext, p.chat, names[p.chat] ?: p.chat, p.id, p.text)
+        }
         return if (left > 0 && !giveUp) Result.retry() else Result.success()
     }
 

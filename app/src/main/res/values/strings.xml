@@ -182,6 +182,8 @@
     <string name="enter_sends">Enter key sends</string>
     <string name="enter_sends_sub">Enter sends the message; Shift+Enter makes a new line</string>
     <string name="alerts_new">New message alerts</string>
+    <string name="alerts_sent_later">Say when a Send later message goes</string>
+    <string name="alerts_sent_later_sub">One short alert as it is sent</string>
     <string name="alerts_new_sub">Checks about every 15 minutes, one alert per batch</string>
     <string name="quiet_hours">Quiet hours</string>
     <string name="quiet_sub">No alerts from %1$s to %2$s</string>
@@ -232,6 +234,7 @@
     <string name="notify_me">Me</string>
     <string name="notify_sent">Sent ✓</string>
     <string name="notify_not_sent">Not sent: %1$s. Open the chat to try again.</string>
+    <string name="notify_sent_later">Sent: “%1$s”</string>
     <string name="notify_gave_up">Not sent: “%1$s”. Tap to retry or delete.</string>
     <string name="notify_no_connection">no connection</string>
     <string name="notify_chat_missing">chat not found</string>

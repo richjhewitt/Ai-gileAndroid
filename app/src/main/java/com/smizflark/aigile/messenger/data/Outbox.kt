@@ -27,6 +27,12 @@ object Outbox {
             .mapNotNull { p -> byKey[p.chat]?.let { it to p } }.sortedBy { java.time.Instant.parse(it.second.sendAt) }
     }
 
+    /** Send later messages that went between [before] and [after] (AII-175): these get a Sent alert. Send now clears the time first, so those don't. */
+    fun sentLater(before: List<Pending>, after: List<Pending>): List<Pending> {
+        val left = after.map { it.id }.toSet()
+        return before.filter { it.sendAt != null && it.id !in left }
+    }
+
     /** Failed for good: the server refused, or the tries ran out. These get the red mark. */
     fun failedForGood(l: List<Pending>) = l.filter { it.failed && !it.offline }
 

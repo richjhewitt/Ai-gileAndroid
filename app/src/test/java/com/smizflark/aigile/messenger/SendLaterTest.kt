@@ -53,6 +53,13 @@ class SendLaterTest {
         assertEquals(SendState.SENDING, r[1].b.state)
     }
 
+    /** AII-175: only Send later messages that left the outbox get a Sent alert; ones still waiting, failed or sent at once don't. */
+    @Test fun sentAlertOnlyForSendLaterThatWent() {
+        val before = listOf(p("went", "2026-10-14T02:30:00Z"), p("waits", "2026-10-14T08:00:00Z"), p("plain"), p("stuck", "2026-10-14T02:00:00Z"))
+        val after = listOf(before[1], before[3].copy(failed = true))
+        assertEquals(listOf("went"), Outbox.sentLater(before, after).map { it.id })
+    }
+
     /** AII-166: every waiting Send later message, in every chat, soonest first; sent-at-once and gone chats left out. */
     @Test fun waitingListSoonestFirst() {
         val a = com.smizflark.aigile.messenger.data.ChatRef(com.smizflark.aigile.messenger.data.Kind.LEAD, "a", "AI-gile", "", "")

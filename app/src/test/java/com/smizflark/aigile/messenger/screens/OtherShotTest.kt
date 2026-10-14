@@ -120,6 +120,16 @@ class OtherShotTest : ShotBase() {
     @Test fun emptySearchDark() = shot("empty_search", true) { EmptyState("No results for “zebra”", button = "Clear search") }
     @Test fun settingsLight() = shot("settings", false) { SettingsScreen(repo, {}, {}) }
     @Test fun settingsDark() = shot("settings", true) { SettingsScreen(repo, {}, {}) }
+    /** AII-175: Settings has the Sent alert switch for Send later, on by default; turning it off is kept. */
+    @Test fun settingsSentAlertsLight() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { SettingsScreen(repo, {}, {}) } }
+        rule.onNodeWithTag("sentAlerts").performScrollTo().assertIsDisplayed()
+        rule.onRoot().captureRoboImage("../docs/shots/settings_sent_alerts_light.png")
+        org.junit.Assert.assertTrue(repo.store.sentAlerts)
+        rule.onNodeWithTag("sentAlerts").onChildren().filterToOne(androidx.compose.ui.test.isToggleable()).performClick()
+        org.junit.Assert.assertFalse(repo.store.sentAlerts)
+    }
 
     /** AII-63: the lock switch in Settings, and the screen that covers the app until unlocked. */
     @Test fun lockedDark() = shot("locked", true) { LockedScreen {} }
