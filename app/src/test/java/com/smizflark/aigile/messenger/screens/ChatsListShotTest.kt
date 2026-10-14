@@ -118,6 +118,17 @@ class ChatsListShotTest : ShotBase() {
         rule.onRoot().captureRoboImage("../docs/shots/waiting_light.png")
         rule.onAllNodesWithTag("waiting-row").onFirst().performClick()
         org.junit.Assert.assertEquals(f.key to "p:${soon.id}", opened?.let { it.first.key to it.second })
+
+        // AII-173: hold one, Delete: it leaves the list and the outbox.
+        rule.onAllNodesWithTag("waiting-row").onFirst().performTouchInput { longClick() }
+        rule.onNodeWithTag("waiting-delete").performClick()
+        rule.onAllNodesWithTag("waiting-row").assertCountEquals(1)
+        org.junit.Assert.assertTrue(repo.store.outbox().none { it.id == soon.id })
+        // Hold the other, Send now: it goes at once (demo board), and the list is empty.
+        rule.onAllNodesWithTag("waiting-row").onFirst().performTouchInput { longClick() }
+        rule.onNodeWithTag("waiting-send-now").performClick()
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("waiting-row").fetchSemanticsNodes().isEmpty() }
+        rule.waitUntil(5_000) { repo.store.outbox().isEmpty() }
     }
     /** AII-103: hold a chat: Mute sits in the menu, and tapping it again unmutes. */
     @Test fun muteFromMenuLight() {
