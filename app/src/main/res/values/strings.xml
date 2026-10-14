@@ -350,4 +350,5 @@
     <string name="reset_settings">Reset settings</string>
     <string name="reset_settings_text">Reset all settings? Your board connection, pins and mutes stay.</string>
     <string name="reset">Reset</string>
+    <string name="go_to_message">Go to message</string>
 </resources>
