@@ -76,6 +76,13 @@ data class WireThread(
     val stars: List<String>? = null,
 )
 
+/** GET /api/projects/:p/stars (AII-162): chat is the fold, key the message time. */
+@Serializable
+data class BoardStars(val stars: List<BoardStar> = emptyList())
+
+@Serializable
+data class BoardStar(val chat: String = "", val key: String = "")
+
 /** A friend from GET /api/dms/contacts (private DMs, sealed by the board). */
 @Serializable
 data class Contact(

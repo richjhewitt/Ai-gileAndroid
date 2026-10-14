@@ -47,6 +47,8 @@ interface ChatSource {
     suspend fun setStar(slug: String, chat: String, key: String, on: Boolean) {}
     /** The phone's stars replace the board's (first sync, AII-141). */
     suspend fun replaceStars(slug: String, stars: List<Pair<String, String>>) {}
+    /** The board's stars for a project as "fold|at" (AII-162); null when the board doesn't keep them. */
+    suspend fun stars(slug: String): List<String>? = null
 }
 
 /** A picture or file to send with a message. */
@@ -234,6 +236,9 @@ class BoardSource(
             put("stars", kotlinx.serialization.json.JsonArray(stars.map { (c, k) -> buildJsonObject { put("chat", c); put("key", k) } }))
         })
     }
+
+    override suspend fun stars(slug: String): List<String>? =
+        json.decodeFromString<BoardStars>(call("GET", "/api/projects/$slug/stars")).stars.map { it.chat + "|" + it.key }
 
     override suspend fun closed(): Map<String, String> = json.decodeFromString(call("GET", "/api/dmclosed"))
 

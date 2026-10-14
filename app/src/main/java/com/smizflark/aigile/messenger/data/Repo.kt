@@ -117,15 +117,27 @@ class Repo(context: Context) {
 
     /* ---------- stars kept in step with the board (AII-141): lead chats only ---------- */
 
-    /** First time: the phone's stars go to the board. After that the board's list is the one. */
+    /** First time: the phone's and the board's stars together (AII-162) go to the board. After that the board's list is the one. */
     private suspend fun syncStars(c: Conversation) {
         val board = c.boardStars ?: return
         val ref = c.ref
         if (ref.kind != Kind.LEAD || store.demo) return
         if (ref.id !in store.starsSynced) {
-            val mine = Stars.inChat(store.stars(), ref.key).map { Stars.boardKey(it).split('|', limit = 2).let { (f, at) -> f to at } }
-            if (runCatching { source.replaceStars(ref.id, mine) }.isSuccess) store.starsSynced = store.starsSynced + ref.id
+            val both = Stars.firstSync(store.stars(), ref.key, board)
+            if (runCatching { source.replaceStars(ref.id, both.map { it.split('|', limit = 2).let { (f, at) -> f to at } }) }.isSuccess) {
+                store.starsSynced = store.starsSynced + ref.id
+                store.setStars(Stars.fromBoard(store.stars(), ref.key, both, c.bubbles))
+            }
         } else store.setStars(Stars.fromBoard(store.stars(), ref.key, board, c.bubbles))
+    }
+
+    /** Stars made on the board show in Starred before their chat is opened here (AII-162): each lead chat out of step is fetched once, one at a time. */
+    suspend fun refreshStars(chats: List<ChatRef>) {
+        if (store.demo) return
+        for (ref in chats.filter { it.kind == Kind.LEAD }) {
+            val board = runCatching { source.stars(ref.id) }.getOrNull()
+            if (Stars.outOfStep(store.stars(), ref.key, board)) runCatching { conversation(ref) }
+        }
     }
 
     /** Star or unstar a message: here at once, and on the board for a lead chat. Offline, the phone's list wins at the next sync. */

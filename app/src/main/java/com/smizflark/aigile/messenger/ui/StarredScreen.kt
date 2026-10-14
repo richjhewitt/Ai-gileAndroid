@@ -53,6 +53,8 @@ fun StarredScreen(repo: Repo, onOpen: (ChatRef, String) -> Unit, onBack: () -> U
     val snack = remember { androidx.compose.material3.SnackbarHostState() }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
+    // AII-162: stars made on the board show here before their chat is opened on the phone.
+    androidx.compose.runtime.LaunchedEffect(Unit) { repo.refreshStars(chats); all = repo.store.stars() }
     Scaffold(
         snackbarHost = { androidx.compose.material3.SnackbarHost(snack) },
         topBar = {
