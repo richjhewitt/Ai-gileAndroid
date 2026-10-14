@@ -322,4 +322,8 @@
     <string name="closed_hide">Hide closed</string>
     <string name="copy_card_id">Copy card id</string>
     <string name="open_card_menu">Open card</string>
+    <string name="about">About</string>
+    <string name="about_sub">Version and open-source licences</string>
+    <string name="build_number">Build %1$d</string>
+    <string name="licences">Open-source licences</string>
 </resources>

@@ -145,7 +145,8 @@ class OtherShotTest : ShotBase() {
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("../docs/shots/search_tidy_light.png")
     }
-    @Test fun settingsLight()= shot("settings", false) { SettingsScreen(repo, {}, {}) }
+    @Test fun aboutLight() = shot("about", false) { com.smizflark.aigile.messenger.ui.AboutScreen {} }
+    @Test fun settingsLight()=shot("settings", false) { SettingsScreen(repo, {}, {}) }
     @Test fun settingsDark() = shot("settings", true) { SettingsScreen(repo, {}, {}) }
     /** AII-175: Settings has the Sent alert switch for Send later, on by default; turning it off is kept. */
     @Test fun settingsSentAlertsLight() {

@@ -30,6 +30,7 @@ import com.smizflark.aigile.messenger.ui.MessengerTheme
 import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.PictureHost
 import com.smizflark.aigile.messenger.ui.SearchScreen
+import com.smizflark.aigile.messenger.ui.AboutScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
 import com.smizflark.aigile.messenger.ui.StarredScreen
 import com.smizflark.aigile.messenger.ui.WaitingScreen
@@ -107,8 +108,9 @@ class MainActivity : FragmentActivity() {
                             nav.popBackStack(); nav.openChat(to.key)
                         })
                     }
+                    composable("about") { AboutScreen(onBack = { nav.popBackStack() }) }   // AII-220
                     composable("settings") {
-                        SettingsScreen(repo, onBack = { nav.popBackStack() }, onSignedOut = {
+                        SettingsScreen(repo, onBack = { nav.popBackStack() }, onAbout = { nav.navigate("about") }, onSignedOut = {
                             nav.navigate("connect") { popUpTo(0) { inclusive = true } }
                         })
                     }
