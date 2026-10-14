@@ -104,6 +104,7 @@ class ChatsListShotTest : ShotBase() {
         val l = lead(); val f = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
         repo.queue(l, "Morning team", null, sendAt = java.time.Instant.parse("2026-10-15T07:00:00Z"))
         val soon = repo.queue(f, "Happy birthday!", null, sendAt = java.time.Instant.parse("2026-10-14T18:30:00Z"))
+        repo.setRepeat(soon.id, "week") // deleted below, so Send now on the other still empties the outbox
         var opened: Pair<ChatRef, String>? = null
         var waiting by androidx.compose.runtime.mutableStateOf(false)
         rule.setContent { MessengerTheme {
@@ -114,6 +115,7 @@ class ChatsListShotTest : ShotBase() {
         rule.onNodeWithTag("filter:scheduled").performScrollTo().performClick()
         rule.onNodeWithTag("open-waiting").performClick()
         rule.onAllNodesWithTag("waiting-row").assertCountEquals(2)
+        rule.onNodeWithText("🔁 Every week").assertIsDisplayed() // AII-178
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("../docs/shots/waiting_light.png")
         rule.onAllNodesWithTag("waiting-row").onFirst().performClick()
