@@ -159,7 +159,7 @@ fun unsentLabel(unsent: List<Pending>, now: java.time.Instant = Now.instant()): 
     val failed = unsent.count { it.failed && !it.offline }   // offline ones still go by themselves (AII-55)
     // AII-148: only Send later ones left: say when the first goes.
     val held = unsent.filter { com.smizflark.aigile.messenger.work.later(it, now) }
-    if (failed == 0 && held.size == unsent.size) return Words.sendsAt.format(clock(held.minBy { java.time.Instant.parse(it.sendAt) }.sendAt))
+    if (failed == 0 && held.size == unsent.size) return Words.sendsAt.format(sendTime(held.minBy { java.time.Instant.parse(it.sendAt) }.sendAt))
     return if (failed > 0) Words.unsentFailed.format(failed) else Words.unsentWaiting.format(unsent.size - held.size)
 }
 

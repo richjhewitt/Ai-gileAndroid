@@ -79,11 +79,11 @@ class ChatsListShotTest : ShotBase() {
         shot("chats_draft", false) { ChatsScreen(repo, {}, {}, {}) }
         repo.store.saveDraft(lead().key, "")
     }
-    /** AII-148: a chat with a Send later message says when it goes. */
+    /** AII-148: a chat with a Send later message says when it goes (AII-170: and the day, when not today). */
     @Test fun sendsAtLight() {
         repo.queue(lead(), "Morning team", null, sendAt = java.time.Instant.parse("2026-10-14T07:00:00Z"))
         shot("chats_sends_at", false) { ChatsScreen(repo, {}, {}, {}) }
-        rule.onNodeWithText("⏰ Sends at 08:00").assertIsDisplayed()
+        rule.onNodeWithText("⏰ Sends at Wed 08:00").assertIsDisplayed()
     }
     /** AII-152: with a Send later message waiting, the Scheduled chip keeps just that chat. */
     @Test fun scheduledChip() {

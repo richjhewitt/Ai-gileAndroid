@@ -109,6 +109,17 @@ fun shortTime(iso: String?, now: Instant = com.smizflark.aigile.messenger.data.N
 fun fullTime(iso: String?, zone: ZoneId = ZoneId.systemDefault()): String =
     instant(iso)?.let { DateTimeFormatter.ofPattern("EEE d MMM, HH:mm").format(it.atZone(zone)) } ?: ""
 
+/** AII-170: when a Send later message goes: "15:00" today, "Fri 09:00" this week, else "16 Oct, 09:00". */
+fun sendTime(iso: String?, now: java.time.Instant = com.smizflark.aigile.messenger.data.Now.instant(), zone: ZoneId = ZoneId.systemDefault()): String {
+    val t = instant(iso)?.atZone(zone) ?: return ""
+    val days = ChronoUnit.DAYS.between(now.atZone(zone).toLocalDate(), t.toLocalDate())
+    return when {
+        days <= 0 -> hm.format(t)
+        days < 7 -> DateTimeFormatter.ofPattern("EEE HH:mm").format(t)
+        else -> DateTimeFormatter.ofPattern("d MMM, HH:mm").format(t)
+    }
+}
+
 fun clock(iso: String?): String = instant(iso)?.let { hm.format(it.atZone(ZoneId.systemDefault())) } ?: ""
 
 /** Day separator in a chat: "Today", "Yesterday", "Mon 3 Oct". */
