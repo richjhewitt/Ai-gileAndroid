@@ -17,7 +17,9 @@ class RemindReceiver : BroadcastReceiver() {
         val text = intent.getStringExtra(EXTRA_TEXT) ?: return
         val name = intent.getStringExtra(EXTRA_NAME) ?: chat
         val app = context.applicationContext as App
-        ChatNotifier.clear(app, chat)
+        // AII-224: from a reminder alert only that alert goes; from a message alert the chat's alert goes.
+        val own = intent.getIntExtra(EXTRA_NOTIFY, 0)
+        if (own != 0) androidx.core.app.NotificationManagerCompat.from(app).cancel(own) else ChatNotifier.clear(app, chat)
         val at = Remind.at(Now.millis(), Remind.When.HOUR) ?: return
         val r = Reminder(Remind.idOf(chat, msg), chat, name, msg, text, at)
         app.repo.store.setReminders(Remind.add(app.repo.store.reminders(), r))
@@ -26,6 +28,7 @@ class RemindReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION = "com.smizflark.aigile.messenger.REMIND"
+        const val EXTRA_NOTIFY = "remind_notify"
         const val EXTRA_NAME = "remind_name"
         const val EXTRA_TEXT = "remind_text"
         /** Kept on the alert itself, so a later line (or your own reply) in it keeps the button. */

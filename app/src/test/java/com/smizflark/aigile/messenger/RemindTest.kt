@@ -13,6 +13,12 @@ class RemindTest {
     private val zone = ZoneId.of("Europe/Amsterdam")
     private fun ms(h: Int, m: Int = 0, day: Int = 14) = ZonedDateTime.of(2026, 10, day, h, m, 0, 0, zone).toInstant().toEpochMilli()
 
+    @Test fun chatKeysAreTheChatsWithAReminder() {
+        val r = { id: String, chat: String -> Reminder(id, chat, chat, id, "t", 1L) }
+        assertEquals(setOf("a", "b"), Remind.chatKeys(listOf(r("1", "a"), r("2", "b"), r("3", "a"))))
+        assertEquals(emptySet<String>(), Remind.chatKeys(emptyList()))
+    }
+
     @Test fun inAnHourIsSixtyMinutesOn() = assertEquals(ms(11, 30), Remind.at(ms(10, 30), Remind.When.HOUR, zone))
 
     @Test fun eveningIsSixPmToday() = assertEquals(ms(18), Remind.at(ms(10), Remind.When.EVENING, zone))

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.Badge
@@ -60,7 +61,7 @@ import com.smizflark.aigile.messenger.data.swipeAction
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, unsent: List<Pending>, draft: String?, closed: Boolean,
+internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, reminded: Boolean, unsent: List<Pending>, draft: String?, closed: Boolean,
                     onRead: () -> Unit, onUnread: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClose: (Boolean) -> Unit, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     // Swipes do what Settings says (AII-216; starting: right = mark read, left = mute/unmute, AII-61). The row always springs back.
@@ -129,6 +130,9 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
                     if (pinned) Icon(Icons.Default.PushPin, stringResource(R.string.pinned), Modifier.padding(start = 4.dp).size(14.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (muted) Icon(Icons.Default.NotificationsOff, stringResource(R.string.muted), Modifier.padding(start = 4.dp).size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // AII-226: a bell when a message in this chat has a reminder.
+                    if (reminded) Icon(Icons.Default.NotificationsActive, stringResource(R.string.has_reminder), Modifier.padding(start = 4.dp).size(14.dp).testTag("row-reminder"),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     // AII-165: a timed mute shows when it ends.
                     repo.store.mutedUntil()[c.key]?.takeIf { muted }?.let { end ->
