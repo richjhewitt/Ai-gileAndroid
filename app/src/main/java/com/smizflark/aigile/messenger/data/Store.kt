@@ -87,6 +87,11 @@ class Store(context: Context) {
         get() = prefs.getBoolean("lock", false)
         set(v) = prefs.edit().putBoolean("lock", v).apply()
 
+    /** AII-208: the hour "Send in the morning" uses (Send later, AII-146). */
+    var morning: Int
+        get() = settings.getInt("morning", 8)
+        set(v) = settings.edit().putInt("morning", v).apply()
+
     var quietFrom: Int
         get() = settings.getInt("quietFrom", 22)
         set(v) = settings.edit().putInt("quietFrom", v).apply()
@@ -256,7 +261,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "quietOn", "look", "phoneColours", "textSize", "enterSends", "gifs", "quickReplies", "quickReplyText", "pinned", "muted")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "enterSends", "gifs", "quickReplies", "quickReplyText", "pinned", "muted")
 
         /** One-time move of the settings out of the pairing file, so the pairing file can stay out of backup. */
         fun moveSettings(from: SharedPreferences, to: SharedPreferences) {

@@ -226,8 +226,8 @@ private fun SendButton(canSend: Boolean, onSend: () -> Unit, onSendLater: ((Inst
         if (onSendLater != null) DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             DropdownMenuItem(text = { Text(stringResource(R.string.send_in_hour)) }, modifier = Modifier.testTag("send-hour"),
                 onClick = { menu = false; onSendLater(Instant.ofEpochMilli(Pause.oneHour(Now.millis()))) })
-            DropdownMenuItem(text = { Text(stringResource(R.string.send_morning)) }, modifier = Modifier.testTag("send-morning"),
-                onClick = { menu = false; onSendLater(Instant.ofEpochMilli(Pause.untilTomorrow(Now.millis()))) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.send_morning, "${Appearance.morning}:00")) }, modifier = Modifier.testTag("send-morning"),
+                onClick = { menu = false; onSendLater(Instant.ofEpochMilli(Pause.nextAt(Now.millis(), Appearance.morning, 0))) })
             // AII-147: any time, with the phone's own clock picker; a time already gone today means tomorrow.
             DropdownMenuItem(text = { Text(stringResource(R.string.send_pick_time)) }, modifier = Modifier.testTag("send-pick"), onClick = {
                 menu = false
