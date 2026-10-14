@@ -219,7 +219,7 @@ private fun SendButton(canSend: Boolean, onSend: () -> Unit, onSendLater: ((Inst
         Box(Modifier.size(52.dp).clip(CircleShape).background(if (canSend) cs.primary else cs.onSurface.copy(alpha = 0.12f))
             .combinedClickable(enabled = canSend, role = Role.Button, onClick = onSend,
                 onLongClickLabel = stringResource(R.string.send_later),
-                onLongClick = onSendLater?.let { { if (Appearance.buzz) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS); menu = true } }   // AII-227)
+                onLongClick = onSendLater?.let { { if (Appearance.buzz) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS); menu = true } })   // AII-227: Buzz off keeps it still
             .testTag("send"), contentAlignment = Alignment.Center) {
             Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.send), tint = if (canSend) cs.onPrimary else cs.onSurface.copy(alpha = 0.38f))
         }
