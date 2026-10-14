@@ -117,6 +117,17 @@ enum class TextSize(val id: String, val label: String, val scale: Float, @androi
     companion object { fun of(id: String) = entries.firstOrNull { it.id == id } ?: Normal }
 }
 
+/** Pinch to zoom (AII-259): the size after a pinch of [zoom] (>1 = fingers apart). At most one step; small pinches change nothing. */
+fun nextTextSize(current: TextSize, zoom: Float): TextSize {
+    val all = TextSize.entries
+    val i = all.indexOf(current)
+    return when {
+        zoom >= 1.15f -> all[minOf(i + 1, all.lastIndex)]
+        zoom <= 0.87f -> all[maxOf(i - 1, 0)]
+        else -> current
+    }
+}
+
 private fun TextStyle.times(k: Float) = copy(
     fontSize = if (fontSize.isSpecified) fontSize * k else fontSize,
     lineHeight = if (lineHeight.isSpecified) lineHeight * k else lineHeight,
