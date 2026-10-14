@@ -39,6 +39,8 @@ import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.EmptyState
 import com.smizflark.aigile.messenger.ui.LockedScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -359,6 +361,25 @@ class ScreenshotTest {
         rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_starred_light.png")   // the sheet is its own window
         rule.onNodeWithTag("details-star").performClick()
         rule.waitUntil(5_000) { rule.onAllNodesWithTag("chat-details").fetchSemanticsNodes().isEmpty() }
+    }
+    /** AII-140: stars in two chats; the Starred button on the chats list opens them all, newest first, and a tap opens that chat at it. */
+    @Test fun starredEverywhereLight() {
+        val two = chats.filter { it.kind == com.smizflark.aigile.messenger.data.Kind.LEAD }.take(2)
+        two.forEach { prime(it) }
+        repo.store.setStars(two.map { c -> com.smizflark.aigile.messenger.data.Stars.of(c.key, repo.store.cachedConversation(c.key)!!.bubbles.last { !it.mine }) })
+        var opened: Pair<ChatRef, String>? = null
+        var starred by androidx.compose.runtime.mutableStateOf(false)
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme {
+            if (starred) com.smizflark.aigile.messenger.ui.StarredScreen(repo, onOpen = { r, k -> opened = r to k }, onBack = {})
+            else ChatsScreen(repo, onOpen = {}, onNew = {}, onSettings = {}, onStarred = { starred = true })
+        } }
+        rule.onNodeWithTag("open-starred").performClick()
+        rule.onAllNodesWithTag("starred-row").assertCountEquals(2)
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("../docs/shots/starred_light.png")
+        rule.onAllNodesWithTag("starred-row").onFirst().performClick()
+        org.junit.Assert.assertEquals(repo.store.stars().maxBy { it.at }.key, opened?.second)
     }
     @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }

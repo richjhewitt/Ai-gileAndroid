@@ -56,6 +56,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
 - ui/SearchScreen.kt: search across all chats.
 - ui/SettingsScreen.kt: settings.
+- ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); tap one, its chat opens at it.
 - ui/Shortcuts.kt: app icon shortcuts (New message, recent chats).
 - ui/Theme.kt: colours and Material theme.
 
