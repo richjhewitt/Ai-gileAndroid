@@ -53,6 +53,7 @@
     <string name="send_later">Send later</string>
     <string name="send_in_hour">Send in 1 hour</string>
     <string name="send_morning">Send at 8:00 in the morning</string>
+    <string name="send_pick_time">Pick a time…</string>
     <string name="sends_at">Sends at %1$s</string>
     <string name="send_now">Send now</string>
     <string name="later_options">Send now or delete</string>

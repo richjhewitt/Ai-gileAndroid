@@ -15,9 +15,12 @@ object Pause {
     fun fourHours(now: Long): Long = now + 4 * HOUR
 
     /** The next 08:00 in the given zone: this morning when pressed in the small hours, else tomorrow. */
-    fun untilTomorrow(now: Long, zone: ZoneId = ZoneId.systemDefault()): Long {
-        val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate().atTime(LocalTime.of(8, 0)).atZone(zone).toInstant().toEpochMilli()
+    fun untilTomorrow(now: Long, zone: ZoneId = ZoneId.systemDefault()): Long = nextAt(now, 8, 0, zone)
+
+    /** The next time the clock shows hour:minute: later today, else tomorrow (Send later, pick a time, AII-147). */
+    fun nextAt(now: Long, hour: Int, minute: Int, zone: ZoneId = ZoneId.systemDefault()): Long {
+        val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate().atTime(LocalTime.of(hour, minute)).atZone(zone).toInstant().toEpochMilli()
         return if (today > now) today
-            else Instant.ofEpochMilli(now).atZone(zone).toLocalDate().plusDays(1).atTime(LocalTime.of(8, 0)).atZone(zone).toInstant().toEpochMilli()
+            else Instant.ofEpochMilli(now).atZone(zone).toLocalDate().plusDays(1).atTime(LocalTime.of(hour, minute)).atZone(zone).toInstant().toEpochMilli()
     }
 }

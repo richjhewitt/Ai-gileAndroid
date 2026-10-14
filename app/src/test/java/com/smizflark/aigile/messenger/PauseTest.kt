@@ -31,6 +31,14 @@ class PauseTest {
         assertEquals(want, Pause.untilTomorrow(at("2026-03-10T08:00:00+01:00[Europe/Amsterdam]"), zone))
     }
 
+    /** AII-147: a picked time later today stays today; one already gone means tomorrow. */
+    @Test fun pickedTimeIsTheNextOne() {
+        val now = at("2026-03-10T15:30:00+01:00[Europe/Amsterdam]")
+        assertEquals(at("2026-03-10T21:15:00+01:00[Europe/Amsterdam]"), Pause.nextAt(now, 21, 15, zone))
+        assertEquals(at("2026-03-11T09:00:00+01:00[Europe/Amsterdam]"), Pause.nextAt(now, 9, 0, zone))
+        assertEquals(at("2026-03-11T15:30:00+01:00[Europe/Amsterdam]"), Pause.nextAt(now, 15, 30, zone))
+    }
+
     @Test fun tomorrowAcrossSummerTime() {
         assertEquals(at("2026-03-29T08:00:00+02:00[Europe/Amsterdam]"), Pause.untilTomorrow(at("2026-03-28T23:00:00+01:00[Europe/Amsterdam]"), zone))
     }

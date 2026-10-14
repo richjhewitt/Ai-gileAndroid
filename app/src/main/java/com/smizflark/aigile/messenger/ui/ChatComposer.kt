@@ -217,6 +217,13 @@ private fun SendButton(canSend: Boolean, onSend: () -> Unit, onSendLater: ((Inst
                 onClick = { menu = false; onSendLater(Instant.ofEpochMilli(Pause.oneHour(Now.millis()))) })
             DropdownMenuItem(text = { Text(stringResource(R.string.send_morning)) }, modifier = Modifier.testTag("send-morning"),
                 onClick = { menu = false; onSendLater(Instant.ofEpochMilli(Pause.untilTomorrow(Now.millis()))) })
+            // AII-147: any time, with the phone's own clock picker; a time already gone today means tomorrow.
+            DropdownMenuItem(text = { Text(stringResource(R.string.send_pick_time)) }, modifier = Modifier.testTag("send-pick"), onClick = {
+                menu = false
+                val soon = Instant.ofEpochMilli(Pause.oneHour(Now.millis())).atZone(java.time.ZoneId.systemDefault())
+                android.app.TimePickerDialog(view.context, { _, h, m -> onSendLater(Instant.ofEpochMilli(Pause.nextAt(Now.millis(), h, m))) },
+                    soon.hour, soon.minute, android.text.format.DateFormat.is24HourFormat(view.context)).show()
+            })
         }
     }
 }
