@@ -10,6 +10,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -65,7 +66,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
+fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onReminders: () -> Unit = {}) {
     val s = repo.store
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -108,6 +109,14 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
             AppearanceSettings(s)
             Toggle(stringResource(R.string.enter_sends), stringResource(R.string.enter_sends_sub), Appearance.enterSends, Modifier.testTag("enterSends")) {
                 Appearance.enterSends = it; s.enterSends = it
+            }
+            // AII-209: only when there are any.
+            val reminderCount = remember { s.reminders().size }
+            if (reminderCount > 0) {
+                Row(Modifier.fillMaxWidth().clickable(onClick = onReminders).padding(vertical = 8.dp).testTag("remindersRow"), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.reminders), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                    Text(reminderCount.toString(), color = MaterialTheme.colorScheme.primary)
+                }
             }
             Toggle(stringResource(R.string.undo_send), stringResource(R.string.undo_send_sub), Appearance.undoSend, Modifier.testTag("undoSend")) {
                 Appearance.undoSend = it; s.undoSend = it

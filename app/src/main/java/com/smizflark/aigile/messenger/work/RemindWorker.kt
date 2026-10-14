@@ -25,12 +25,12 @@ class RemindWorker(context: Context, params: WorkerParameters) : CoroutineWorker
     }
 
     companion object {
-        private const val NAME = "remind"
-
         fun schedule(context: Context, r: Reminder) {
             val req = OneTimeWorkRequestBuilder<RemindWorker>()
                 .setInitialDelay((r.at - Now.millis()).coerceAtLeast(0), TimeUnit.MILLISECONDS).build()
-            WorkManager.getInstance(context).enqueueUniqueWork("$NAME-${r.id}", ExistingWorkPolicy.REPLACE, req)
+            WorkManager.getInstance(context).enqueueUniqueWork(Remind.workName(r.id), ExistingWorkPolicy.REPLACE, req)
         }
+
+        fun cancel(context: Context, id: String) { WorkManager.getInstance(context).cancelUniqueWork(Remind.workName(id)) }
     }
 }

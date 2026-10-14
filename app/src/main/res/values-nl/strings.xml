@@ -307,6 +307,10 @@
     <string name="remind_tomorrow">Morgen 9:00</string>
     <string name="remind_set">Herinnering ingesteld voor %1$s</string>
     <string name="notify_remind">Herinnering: %1$s</string>
+    <string name="reminders">Herinneringen</string>
+    <string name="empty_reminders">Geen herinneringen</string>
+    <string name="cancel_reminder">Annuleren</string>
+    <string name="remind_in_hour">Herinner mij over 1 uur</string>
     <string name="unstar">Ster weghalen</string>
     <string name="starred">Met ster</string>
     <string name="no_starred">Houd een bericht ingedrukt en tik op Ster geven om het hier te bewaren.</string>

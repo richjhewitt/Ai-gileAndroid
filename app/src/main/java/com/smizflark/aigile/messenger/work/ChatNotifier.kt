@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import com.smizflark.aigile.messenger.data.Reminder
 import androidx.core.app.NotificationManagerCompat
@@ -59,7 +60,7 @@ object ChatNotifier {
     }
 
     /** A chat's notification with the lines of [style], and its Reply button. */
-    private fun build(context: Context, chat: String, name: String, style: NotificationCompat.MessagingStyle): NotificationCompat.Builder {
+    private fun build(context: Context, chat: String, name: String, style: NotificationCompat.MessagingStyle, msg: String? = null, text: String? = null): NotificationCompat.Builder {
         val id = QuickReply.notificationId(chat)
         val reply = Intent(context, ReplyReceiver::class.java).setAction(ReplyReceiver.ACTION).putExtra(CheckWorker.EXTRA_CHAT, chat)
         val replyPi = PendingIntent.getBroadcast(context, id, reply,
@@ -79,8 +80,17 @@ object ChatNotifier {
             .build()
         // AII-207: Silent alerts for this chat: shown, but no sound and no buzz (Mute never gets here).
         val quiet = Store(context).let { com.smizflark.aigile.messenger.data.Silent.quiet(it.silent, it.muted(), chat) }
-        return base(context).setContentTitle(name).setStyle(style).setSilent(quiet)
+        val b = base(context).setContentTitle(name).setStyle(style).setSilent(quiet)
             .setContentIntent(openChat(context, chat, id)).addAction(action).addAction(readAction).setGroup(GROUP)
+        // AII-210: Remind me in 1 hour, for the newest message in this alert (kept in the alert's extras so later lines keep it).
+        if (msg != null && text != null) {
+            val remind = Intent(context, RemindReceiver::class.java).setAction(RemindReceiver.ACTION).putExtra(CheckWorker.EXTRA_CHAT, chat)
+                .putExtra(RemindReceiver.EXTRA_NAME, name).putExtra(CheckWorker.EXTRA_MSG, msg).putExtra(RemindReceiver.EXTRA_TEXT, text)
+            val remindPi = PendingIntent.getBroadcast(context, id, remind, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            b.addAction(NotificationCompat.Action.Builder(R.drawable.ic_notify, context.getString(R.string.remind_in_hour), remindPi).setShowsUserInterface(false).build())
+            b.addExtras(Bundle().apply { putString(RemindReceiver.EXTRA_MSG_KEY, msg); putString(RemindReceiver.EXTRA_TEXT, text) })
+        }
+        return b
     }
 
     private fun newStyle(context: Context, name: String) = NotificationCompat.MessagingStyle(Person.Builder().setName(context.getString(R.string.notify_me)).build())
@@ -102,19 +112,24 @@ object ChatNotifier {
         val nm = NotificationManagerCompat.from(context)
         val id = QuickReply.notificationId(item.chat)
         val sender = Person.Builder().setName(item.name).build()
-        val style = styleOf(active(context, id)) ?: newStyle(context, item.name)
+        val prev = active(context, id)
+        val style = styleOf(prev) ?: newStyle(context, item.name)
         val at = item.latestFromThem?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() } ?: System.currentTimeMillis()
         addLine(style, item.preview ?: context.getString(R.string.new_message), at, sender)
-        nm.notify(id, build(context, item.chat, item.name, trimmed(context, style, item.name)).build())
+        val msg = item.latestKey ?: prev?.extras?.getString(RemindReceiver.EXTRA_MSG_KEY)
+        val text = item.preview ?: prev?.extras?.getString(RemindReceiver.EXTRA_TEXT) ?: context.getString(R.string.new_message)
+        nm.notify(id, build(context, item.chat, item.name, trimmed(context, style, item.name), msg, text).build())
         refreshSummary(context)
     }
 
     /** After a sent quick reply: the line you sent joins the stack, and the spinner goes. */
     fun sent(context: Context, chat: String, name: String, text: String) {
         val id = QuickReply.notificationId(chat)
-        val style = styleOf(active(context, id)) ?: newStyle(context, name)
+        val prev = active(context, id)
+        val style = styleOf(prev) ?: newStyle(context, name)
         addLine(style, text, System.currentTimeMillis(), null)
-        NotificationManagerCompat.from(context).notify(id, build(context, chat, name, trimmed(context, style, name)).build())
+        NotificationManagerCompat.from(context).notify(id, build(context, chat, name, trimmed(context, style, name),
+            prev?.extras?.getString(RemindReceiver.EXTRA_MSG_KEY), prev?.extras?.getString(RemindReceiver.EXTRA_TEXT)).build())
         refreshSummary(context)
     }
 

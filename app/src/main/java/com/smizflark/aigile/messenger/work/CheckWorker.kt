@@ -81,7 +81,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                 // Fetching the Lead Scrum Master's chat would mark it read on the board: go by its count instead.
                 if (ref.kind == Kind.WATCHMAN) return@map News.Item(ref.key, ref.name, ref.last.takeIf { ref.unread > 0 })
                 val convo = runCatching { repo.conversation(ref) }.getOrNull()
-                News.Item(ref.key, ref.name, convo?.lastFromThem, QuickReply.preview(convo))
+                News.Item(ref.key, ref.name, convo?.lastFromThem, QuickReply.preview(convo), convo?.bubbles?.lastOrNull { !it.mine }?.key)
             }
             val (all, nextTold) = News.diff(items, seen, told)
             val news = News.audible(all, store.muted())

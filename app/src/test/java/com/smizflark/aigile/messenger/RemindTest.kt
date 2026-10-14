@@ -43,4 +43,12 @@ class RemindTest {
         val a2 = a.copy(at = 500)
         assertEquals(listOf(a2), Remind.add(listOf(a), a2))
     }
+
+    @Test fun cancelRemovesOnlyThatReminderAndListIsSoonestFirst() {
+        val a = Reminder("a", "c", "C", "m1", "one", 300)
+        val b = Reminder("b", "c", "C", "m2", "two", 100)
+        assertEquals(listOf(b, a), Remind.sorted(listOf(a, b)))
+        assertEquals(listOf(a), Remind.cancel(listOf(a, b), "b"))
+        assertEquals("remind-c|m1", Remind.workName(Remind.idOf("c", "m1")))
+    }
 }

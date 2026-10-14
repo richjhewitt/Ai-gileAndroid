@@ -72,12 +72,14 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
 - ui/SearchScreen.kt: search across all chats, with Pictures and Links chips (AII-192).
 - ui/SettingsScreen.kt: settings.
+- ui/RemindersScreen.kt: every reminder, soonest first (AII-209, a Reminders row in Settings when there are any); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
 - ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); tap one, its chat opens at it.
 - ui/WaitingScreen.kt: every Send later message from all chats, soonest first (AII-166, See every waiting message under the Scheduled chip); tap one, its chat opens at it.
 - ui/Shortcuts.kt: app icon shortcuts (New message, recent chats).
 - ui/Theme.kt: colours and Material theme.
 
 ## widget/
+- work/RemindReceiver.kt: the Remind me in 1 hour button on message alerts (AII-210); the alert keeps its newest message's key and text in its extras (work/ChatNotifier.kt).
 - widget/LatestWidget.kt: home screen widget with the newest chats.
 
 ## work/ (background)
