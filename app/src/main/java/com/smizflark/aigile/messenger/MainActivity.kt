@@ -85,7 +85,7 @@ class MainActivity : FragmentActivity() {
                         WaitingScreen(repo, onOpen = { ref, msg -> nav.openChat(ref.key, msg) }, onBack = { nav.popBackStack() })
                     }
                     composable("reminders") {   // AII-209: see and cancel reminders
-                        RemindersScreen(repo, onBack = { nav.popBackStack() })
+                        RemindersScreen(repo, onOpen = { chat, msg -> nav.openChat(chat, msg) }, onBack = { nav.popBackStack() })
                     }
                     composable("starred") {   // AII-140: every starred message; tap one, its chat opens at it
                         StarredScreen(repo, onOpen = { ref, msg -> nav.openChat(ref.key, msg) }, onBack = { nav.popBackStack() })

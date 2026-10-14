@@ -43,10 +43,10 @@ import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.work.RemindWorker
 import java.time.Instant
 
-/** Every reminder (AII-209, from Settings), soonest first; hold one or tap the X to Cancel it (also stops its WorkManager job). */
+/** Every reminder (AII-209, from Settings), soonest first; tap one to open its chat at the message (AII-247); hold one or tap the X to Cancel it (also stops its WorkManager job). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RemindersScreen(repo: Repo, onBack: () -> Unit) {
+fun RemindersScreen(repo: Repo, onOpen: (String, String) -> Unit, onBack: () -> Unit) {
     val ctx = LocalContext.current
     var all by remember { mutableStateOf(Remind.sorted(repo.store.reminders())) }
     fun cancel(r: Reminder) {
@@ -65,7 +65,7 @@ fun RemindersScreen(repo: Repo, onBack: () -> Unit) {
             if (all.isEmpty()) EmptyState(stringResource(R.string.empty_reminders))
             LazyColumn(Modifier.fillMaxSize()) {
                 items(all, key = { it.id }) { r ->
-                    ReminderRow(r, onCancel = { cancel(r) })
+                    ReminderRow(r, onOpen = { onOpen(r.chat, r.msg) }, onCancel = { cancel(r) })
                     HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 }
             }
@@ -81,11 +81,11 @@ fun cancelReminder(ctx: android.content.Context, repo: Repo, id: String) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ReminderRow(r: Reminder, onCancel: () -> Unit) {
+private fun ReminderRow(r: Reminder, onOpen: () -> Unit, onCancel: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     Box {
         Row(
-            Modifier.fillMaxWidth().combinedClickable(onClick = {}, onLongClick = { menu = true }, onLongClickLabel = stringResource(R.string.options))
+            Modifier.fillMaxWidth().combinedClickable(onClick = onOpen, onLongClick = { menu = true }, onLongClickLabel = stringResource(R.string.options))
                 .padding(start = 16.dp, top = 6.dp, bottom = 6.dp).testTag("reminder-row"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
