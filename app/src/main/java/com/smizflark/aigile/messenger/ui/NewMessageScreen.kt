@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Repo
@@ -68,7 +69,7 @@ fun NewMessageScreen(repo: Repo, draft: String = "", onBack: () -> Unit, onSent:
             Text(stringResource(R.string.new_to), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             LazyColumn(Modifier.weight(1f).selectableGroup()) {
                 if (chats.isEmpty()) item { EmptyState(androidx.compose.ui.res.stringResource(R.string.empty_pick_team)) }
-                items(chats, key = { it.key }) { c ->
+                items(Mapper.recentFirst(chats), key = { it.key }) { c ->
                     Row(
                         Modifier.fillMaxWidth().selectable(pick == c.key, role = Role.RadioButton) { pick = c.key }.padding(vertical = 6.dp).testTag("to:${c.key}"),
                         verticalAlignment = Alignment.CenterVertically,
