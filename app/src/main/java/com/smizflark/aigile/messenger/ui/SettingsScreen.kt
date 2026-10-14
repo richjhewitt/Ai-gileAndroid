@@ -76,8 +76,7 @@ import com.smizflark.aigile.messenger.data.SavedPictures
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onReminders: () -> Unit = {}) {
-fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onAbout: () -> Unit = {}) {
+fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onReminders: () -> Unit = {}, onAbout: () -> Unit = {}) {
     val s = repo.store
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()

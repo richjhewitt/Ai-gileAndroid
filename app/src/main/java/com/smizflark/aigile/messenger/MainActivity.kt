@@ -114,8 +114,7 @@ class MainActivity : FragmentActivity() {
                     }
                     composable("about") { AboutScreen(onBack = { nav.popBackStack() }) }   // AII-220
                     composable("settings") {
-                        SettingsScreen(repo, onBack = { nav.popBackStack() }, onReminders = { nav.navigate("reminders") }, onSignedOut = {
-                        SettingsScreen(repo, onBack = { nav.popBackStack() }, onAbout = { nav.navigate("about") }, onSignedOut = {
+                        SettingsScreen(repo, onBack = { nav.popBackStack() }, onReminders = { nav.navigate("reminders") }, onAbout = { nav.navigate("about") }, onSignedOut = {
                             nav.navigate("connect") { popUpTo(0) { inclusive = true } }
                         })
                     }
