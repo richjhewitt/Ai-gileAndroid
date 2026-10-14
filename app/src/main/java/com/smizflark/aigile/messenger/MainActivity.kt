@@ -102,6 +102,7 @@ class MainActivity : FragmentActivity() {
                         val ref = repo.store.cachedChats()?.firstOrNull { it.key == key }
                         if (ref == null) LaunchedEffect(Unit) { nav.popBackStack() }
                         else ChatScreen(repo, ref, onBack = { nav.popBackStack() }, focus = card, openAt = msg,
+                            onEditReplies = { nav.navigate("settings?replies=true") },   // AII-255
                             onOpenChat = { next -> nav.popBackStack(); nav.openChat(next.key) },   // AII-204: as if tapped in the chats list
                             onOpenCard = { id -> nav.navigate("chat/" + Uri.encode(key) + "?card=" + Uri.encode(id)) })
                     }
@@ -113,8 +114,8 @@ class MainActivity : FragmentActivity() {
                         })
                     }
                     composable("about") { AboutScreen(onBack = { nav.popBackStack() }) }   // AII-220
-                    composable("settings") {
-                        SettingsScreen(repo, onBack = { nav.popBackStack() }, onReminders = { nav.navigate("reminders") }, onAbout = { nav.navigate("about") }, onSignedOut = {
+                    composable("settings?replies={replies}", arguments = listOf(navArgument("replies") { defaultValue = false; type = NavType.BoolType })) { e ->
+                        SettingsScreen(repo, showReplies = e.arguments?.getBoolean("replies") == true, onBack = { nav.popBackStack() }, onReminders = { nav.navigate("reminders") }, onAbout = { nav.navigate("about") }, onSignedOut = {
                             nav.navigate("connect") { popUpTo(0) { inclusive = true } }
                         })
                     }
@@ -169,14 +170,17 @@ class MainActivity : FragmentActivity() {
         val lockOn = (application as App).repo.store.lock
         // No chat preview in the recent apps list while the lock is on.
         if (Build.VERSION.SDK_INT >= 33) setRecentsScreenshotEnabled(!lockOn)
-        if (Lock.shouldLock(lockOn, unlocked, leftAt, SystemClock.elapsedRealtime())) {
+        if (Lock.shouldLock(lockOn, unlocked, leftAt, SystemClock.elapsedRealtime(), (application as App).repo.store.lockAfter)) {
             unlocked = false; locked = true
         }
     }
-    override fun onStop() { super.onStop(); App.inForeground = false; leftAt = SystemClock.elapsedRealtime() }
+    override fun onStop() {
+        super.onStop(); App.inForeground = false
+        if (!isChangingConfigurations) leftAt = SystemClock.elapsedRealtime()   // turning the phone is not leaving
+    }
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean("unlocked", unlocked)
-        outState.putLong("leftAt", leftAt ?: SystemClock.elapsedRealtime())
+        leftAt?.let { outState.putLong("leftAt", it) }
     }
 }

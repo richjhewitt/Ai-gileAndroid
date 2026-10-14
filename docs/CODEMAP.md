@@ -46,7 +46,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/SavedPictures.kt: size of the saved pictures and which files Clear may delete, never ones waiting in the outbox (AII-215).
 - data/Store.kt: on-disk storage: pairing in the "messenger" prefs (not backed up), settings in the "settings" prefs (backed up, AII-81), drafts and cache.
 - data/Transcript.kt: a whole chat as plain text, for Share this chat (AII-139) and Save as file (AII-229, safe file name here; saveTextFile in ui/ChatDetails.kt writes to Downloads).
-- data/UndoSend.kt: a sent message held 5 seconds with an Undo bar (AII-202); used by ui/ChatScreen.kt.
+- data/UndoSend.kt: a sent message held 5 or 10 seconds (Settings, AII-233) with an Undo bar (AII-202); used by ui/ChatScreen.kt.
 - data/Swipe.kt: what a swipe on a chat row does.
 - data/Update.kt: 'New version' bar: latest GitHub release (tag build-N = versionCode), checked once a day.
 
@@ -58,14 +58,14 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ChatTopBar.kt: the chat's top bar (name, 'working on', find, Mute; menu: Go to date, My last message AII-242).
 - ui/ChatRows.kt: builds the chat's rows (days, card headers, messages, waiting sends) and counts unread below.
 - ui/ChatBubble.kt: one message bubble (copy, reply, forward, options, retry; long ones fold with Read more, AII-184).
-- ui/ChatComposer.kt: the message input with pictures, reply, dictation and quick replies (AII-179).
+- ui/ChatComposer.kt: the message input with pictures, reply, dictation and quick replies (AII-179); hold a quick reply to edit them in Settings (AII-255).
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
 - ui/ChatsScreen.kt: every chat in one list.
 - ui/ChatRow.kt: one row of the chats list (swipe, hold menu, badges, a bell when the chat has a reminder AII-226; Remind me in 1 hour on its newest cached message, AII-240) and its preview, draft and unsent labels.
 - ui/ConnectScreen.kt: connect the phone to a board, or try the demo.
 - ui/Dictate.kt: voice to text with the phone's recogniser.
 - ui/Find.kt: find in a chat (pure).
-- ui/Lock.kt: app lock with fingerprint, face or PIN.
+- ui/Lock.kt: app lock with fingerprint, face or PIN; Lock after straight away / 1 / 5 minutes (AII-234, Store lockAfter, not backed up like lock).
 - ui/Markdown.kt: renders message markdown ([name](link), bare web addresses and • bullets like the board, AII-187; ⧉ after a **Label:** value copies the value, AII-191).
 - ui/MuteFor.kt: the Mute for how long dialog (AII-157), used by the chats list, chat menu and chat details.
 - ui/NewMessageScreen.kt: a new message to any team.
@@ -76,6 +76,9 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/SearchScreen.kt: search across all chats, with Pictures, Links and Starred chips (AII-192, AII-246).
 - ui/SettingsScreen.kt: settings.
 - ui/RemindersScreen.kt: every reminder, soonest first (AII-209, a Reminders row in Settings when there are any); tap one, its chat opens at the message (AII-247); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
+- ui/SearchScreen.kt: search across all chats, with Pictures and Links chips (AII-192).
+- ui/SettingsScreen.kt: settings, in sections Connection, Look, Chats, Alerts, Privacy, Storage, About (AII-232); the small pieces (SectionHeader, Toggle, Stepper, SwipePick, ChangeBoard) are in ui/SettingsSections.kt.
+- ui/RemindersScreen.kt: every reminder, soonest first (AII-209, a Reminders row in Settings when there are any); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
 - ui/AboutScreen.kt: About, from the bottom of Settings (AII-220): app name, version, build number and a hand-written list of open-source licences (LICENCES, keep in step with app/build.gradle.kts); tap one to open its licence page.
 - ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); Share all in the top bar sends what is listed as text via Stars.asText (AII-243); tap one, its chat opens at it; chat-name chips (2+ chats, AII-228) show one chat's stars (Stars.onlyChat).
 - ui/WaitingScreen.kt: every Send later message from all chats, soonest first (AII-166, See every waiting message under the Scheduled chip); tap one, its chat opens at it.
