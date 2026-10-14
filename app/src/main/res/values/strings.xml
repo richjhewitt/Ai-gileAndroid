@@ -84,6 +84,8 @@
     <string name="waiting_on_you">waiting on you</string>
     <string name="mute_alerts">Mute alerts</string>
     <string name="unmute">Unmute</string>
+    <string name="silent_alerts">Silent alerts</string>
+    <string name="silent_alerts_off">Alerts with sound</string>
     <string name="jump_unread">%1$d new</string>
     <string name="jump_newest">Jump to newest</string>
     <string name="open_card">Open %1$s</string>

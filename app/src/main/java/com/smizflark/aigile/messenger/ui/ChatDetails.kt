@@ -49,6 +49,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onClose: () -> Unit) {
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
+    var silent by remember { mutableStateOf(ref.key in repo.store.silent) }
     var pinned by remember { mutableStateOf(ref.key in repo.store.pinned) }
     var muteAsk by remember { mutableStateOf(false) }   // AII-157: Mute asks how long
     var muteEnds by remember { mutableStateOf(repo.store.mutedUntil()[ref.key]) }   // AII-160: when a timed mute ends
@@ -83,6 +84,9 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
             muteEnds?.takeIf { muted }?.let { end ->
                 Text(stringResource(R.string.muted_until, com.smizflark.aigile.messenger.data.Mute.endTime(end)), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("details-mute-ends"))
+            }
+            SwitchRow(stringResource(R.string.silent_alerts), silent, "details-silent") {
+                repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent
             }
             SwitchRow(stringResource(R.string.pin), pinned, "details-pin") {
                 repo.store.pinned = togglePin(repo.store.pinned, ref.key); pinned = ref.key in repo.store.pinned

@@ -45,7 +45,7 @@ import com.smizflark.aigile.messenger.data.Repo
 @Composable
 internal fun ChatTopBar(
     ref: ChatRef, repo: Repo, focus: String?, focusBubble: Bubble?, working: Boolean, workingOn: String?, muted: Boolean,
-    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {},
+    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {}, silent: Boolean = false, onSilent: () -> Unit = {},
 ) {
     TopAppBar(
         navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
@@ -81,6 +81,12 @@ internal fun ChatTopBar(
                     leadingIcon = { Icon(if (muted) Icons.Default.Notifications else Icons.Default.NotificationsOff, null) },
                     onClick = { onMute(); menu = false },
                     modifier = Modifier.testTag("mute"),
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(if (silent) R.string.silent_alerts_off else R.string.silent_alerts)) },
+                    leadingIcon = { Icon(Icons.Default.NotificationsOff, null) },
+                    onClick = { onSilent(); menu = false },
+                    modifier = Modifier.testTag("silent"),
                 )
             }
         },
