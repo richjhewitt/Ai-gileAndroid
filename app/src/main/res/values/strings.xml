@@ -46,6 +46,8 @@
     <string name="back">Back</string>
     <string name="more">More</string>
     <string name="search">Search</string>
+    <string name="my_last_message">My last message</string>
+    <string name="no_my_message">You have not sent a message here yet</string>
     <string name="go_to_date">Go to date</string>
     <string name="find_in_chat">Find in this chat</string>
     <string name="share_chat">Share this chat</string>
@@ -211,6 +213,9 @@
     <string name="play_gifs">Play GIF links</string>
     <string name="play_gifs_sub">GIF links (giphy, tenor) play in the chat; off keeps them as links</string>
     <string name="compact_list">Compact list</string>
+    <string name="sort_chats">Sort chats</string>
+    <string name="sort_newest">Newest first</string>
+    <string name="sort_az">A to Z</string>
     <string name="muted_last">Muted chats at the bottom</string>
     <string name="muted_last_sub">Muted chats move below all the others</string>
     <string name="compact_list_sub">Smaller rows, so more chats fit on the screen</string>

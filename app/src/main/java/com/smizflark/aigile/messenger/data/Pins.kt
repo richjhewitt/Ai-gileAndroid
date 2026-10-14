@@ -17,3 +17,7 @@ fun mutedLast(chats: List<ChatRef>, pinned: Set<String>, muted: Set<String>): Li
     val (quiet, loud) = rest.partition { it.key in muted }
     return top + loud + quiet
 }
+
+/** Sort chats (AII-241): the board's order (newest first) or A to Z by name. Applied before pins and muted-last, so those still win. */
+fun sortChats(chats: List<ChatRef>, azSort: Boolean): List<ChatRef> =
+    if (azSort) chats.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name }) else chats

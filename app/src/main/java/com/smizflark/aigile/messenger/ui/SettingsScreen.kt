@@ -147,6 +147,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             Toggle(stringResource(R.string.muted_last), stringResource(R.string.muted_last_sub), Appearance.mutedLast, Modifier.testTag("mutedLast")) {
                 Appearance.mutedLast = it; s.mutedLast = it
             }
+            SortPick(Appearance.sortAz) { Appearance.sortAz = it; s.sortChats = if (it) "az" else "newest" }
             SwipePick(stringResource(R.string.swipe_right), Appearance.swipeRight, "swipeRight") { Appearance.swipeRight = it; s.swipeRight = it.id }
             SwipePick(stringResource(R.string.swipe_left), Appearance.swipeLeft, "swipeLeft") { Appearance.swipeLeft = it; s.swipeLeft = it.id }
             Toggle(stringResource(R.string.buzz), stringResource(R.string.buzz_sub), Appearance.buzz, Modifier.testTag("buzz")) {
@@ -392,6 +393,30 @@ private fun SwipePick(title: String, value: com.smizflark.aigile.messenger.data.
                         .testTag("$tag:${c.id}"), verticalAlignment = Alignment.CenterVertically) {
                         RadioButton(selected = c == value, onClick = null)
                         Text(swipeLabel(c), Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+        }, confirmButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.cancel)) } })
+}
+
+/** Sort chats (AII-241): Newest first or A to Z. */
+@Composable
+private fun SortPick(az: Boolean, onPick: (Boolean) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    val title = stringResource(R.string.sort_chats)
+    Column(Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(role = androidx.compose.ui.semantics.Role.Button) { open = true }.testTag("sortChats"),
+        verticalArrangement = Arrangement.Center) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(if (az) R.string.sort_az else R.string.sort_newest), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    if (open) AlertDialog(onDismissRequest = { open = false }, title = { Text(title) },
+        text = {
+            Column(Modifier.selectableGroup()) {
+                listOf(false to R.string.sort_newest, true to R.string.sort_az).forEach { (v, label) ->
+                    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected = v == az, role = androidx.compose.ui.semantics.Role.RadioButton) { onPick(v); open = false }
+                        .testTag("sortChats:${if (v) "az" else "newest"}"), verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = v == az, onClick = null)
+                        Text(stringResource(label), Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }

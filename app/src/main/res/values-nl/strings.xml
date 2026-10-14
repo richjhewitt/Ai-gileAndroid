@@ -46,6 +46,8 @@
     <string name="back">Terug</string>
     <string name="more">Meer</string>
     <string name="search">Zoeken</string>
+    <string name="my_last_message">Mijn laatste bericht</string>
+    <string name="no_my_message">Je hebt hier nog geen bericht verstuurd</string>
     <string name="go_to_date">Ga naar datum</string>
     <string name="find_in_chat">Zoeken in dit gesprek</string>
     <string name="share_chat">Gesprek delen</string>
@@ -211,6 +213,9 @@
     <string name="play_gifs">GIF-links afspelen</string>
     <string name="play_gifs_sub">GIF-links (giphy, tenor) spelen af in het gesprek; uit laat ze als link staan</string>
     <string name="compact_list">Compacte lijst</string>
+    <string name="sort_chats">Gesprekken sorteren</string>
+    <string name="sort_newest">Nieuwste eerst</string>
+    <string name="sort_az">A tot Z</string>
     <string name="muted_last">Gedempte gesprekken onderaan</string>
     <string name="muted_last_sub">Gedempte gesprekken staan onder alle andere</string>
     <string name="compact_list_sub">Kleinere rijen, zodat er meer gesprekken op het scherm passen</string>

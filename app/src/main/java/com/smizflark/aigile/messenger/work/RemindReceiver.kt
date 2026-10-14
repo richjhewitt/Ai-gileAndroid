@@ -4,9 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.smizflark.aigile.messenger.App
-import com.smizflark.aigile.messenger.data.Now
-import com.smizflark.aigile.messenger.data.Remind
-import com.smizflark.aigile.messenger.data.Reminder
 
 /** The Remind me in 1 hour button on a message alert (AII-210): the alert goes at once and the alert's newest message is set as a reminder (Remind.add + RemindWorker.schedule). */
 class RemindReceiver : BroadcastReceiver() {
@@ -20,10 +17,7 @@ class RemindReceiver : BroadcastReceiver() {
         // AII-224: from a reminder alert only that alert goes; from a message alert the chat's alert goes.
         val own = intent.getIntExtra(EXTRA_NOTIFY, 0)
         if (own != 0) androidx.core.app.NotificationManagerCompat.from(app).cancel(own) else ChatNotifier.clear(app, chat)
-        val at = Remind.at(Now.millis(), Remind.When.HOUR) ?: return
-        val r = Reminder(Remind.idOf(chat, msg), chat, name, msg, text, at)
-        app.repo.store.setReminders(Remind.add(app.repo.store.reminders(), r))
-        RemindWorker.schedule(app, r)
+        RemindWorker.inAnHour(app, app.repo.store, chat, name, msg, text)
     }
 
     companion object {

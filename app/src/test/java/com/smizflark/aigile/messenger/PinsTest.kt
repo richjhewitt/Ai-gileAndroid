@@ -4,6 +4,7 @@ import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.pinFirst
 import com.smizflark.aigile.messenger.data.mutedLast
+import com.smizflark.aigile.messenger.data.sortChats
 import com.smizflark.aigile.messenger.data.togglePin
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -36,5 +37,16 @@ class PinsTest {
     @Test fun mutedSinkButPinnedStayFirst() {
         assertEquals(listOf(d, c, a, b), mutedLast(listOf(a, b, c, d), setOf(d.key), setOf(a.key, b.key, d.key)))
         assertEquals(listOf(c, a), mutedLast(listOf(a, c), emptySet(), setOf(a.key)))
+    }
+
+    @Test fun aToZSortsByNameIgnoringCaseAndNewestKeepsBoardOrder() {
+        val z = ChatRef(Kind.LEAD, "z", "zed", "", "")
+        assertEquals(listOf(a, b, d, z), sortChats(listOf(z, b, d, a), true))
+        assertEquals(listOf(z, b, a), sortChats(listOf(z, b, a), false))
+    }
+
+    @Test fun pinsAndMutedStillWinAfterSorting() {
+        val sorted = sortChats(listOf(d, c, b, a), true)
+        assertEquals(listOf(d, a, c, b), mutedLast(sorted, setOf(d.key), setOf(b.key, d.key)))
     }
 }
