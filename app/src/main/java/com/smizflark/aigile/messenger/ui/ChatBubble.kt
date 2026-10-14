@@ -271,7 +271,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                     Text(b.author, style = MaterialTheme.typography.labelMedium, color = cs.primary)
                 }
                 // AII-188: GIF links in the text play here too, like on the board.
-                val pics = remember(b.pics, b.text, b.unverified) { if (b.unverified) b.pics else b.pics + Gif.pics(b.text) }
+                val pics = remember(b.pics, b.text, b.unverified, Appearance.gifs) { if (b.unverified || !Appearance.gifs) b.pics else b.pics + Gif.pics(b.text) }
                 if (pics.isNotEmpty()) MessagePictures(pics, repo)
                 val (forwarded, body) = Forward.split(b.text)
                 if (forwarded) Text(stringResource(R.string.forwarded_label), style = MaterialTheme.typography.labelSmall, color = fg.copy(alpha = 0.6f), modifier = Modifier.testTag("forwarded"))

@@ -10,6 +10,7 @@ import coil.ImageLoader
 import coil.intercept.Interceptor
 import coil.request.ErrorResult
 import com.smizflark.aigile.messenger.data.Bubble
+import com.smizflark.aigile.messenger.ui.Appearance
 import com.smizflark.aigile.messenger.ui.MessageBubble
 import com.smizflark.aigile.messenger.ui.MessengerTheme
 import com.smizflark.aigile.messenger.ui.Row
@@ -43,7 +44,7 @@ class GifBubbleTest : ShotBase() {
         }.build()
     }
 
-    @After fun reset() = Coil.reset()
+    @After fun reset() { Coil.reset(); Appearance.gifs = true }
 
     private fun show(text: String) {
         Coil.setImageLoader(fakeWeb())
@@ -61,6 +62,13 @@ class GifBubbleTest : ShotBase() {
         RuntimeEnvironment.setQualifiers("+notnight")
         show("- Shipped it https://giphy.com/gifs/party-l0MYt5jPR6QX5pnqM")
         rule.onAllNodesWithTag("pic").assertCountEquals(1)
+    }
+
+    /** AII-198: with Play GIF links off, the link stays a link and nothing loads. */
+    @Test fun switchedOff() {
+        Appearance.gifs = false
+        show("- Shipped it https://giphy.com/gifs/party-l0MYt5jPR6QX5pnqM")
+        rule.onAllNodesWithTag("pic").assertCountEquals(0)
     }
 
     @Test fun brokenGifHides() {
