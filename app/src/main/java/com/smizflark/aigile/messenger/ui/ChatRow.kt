@@ -106,6 +106,15 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
         verticalAlignment = Alignment.CenterVertically,
     ) {
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            // AII-240: Remind me in 1 hour about the chat's newest message (from the cache; hidden when there is none).
+            val newest = remember(menu) { if (menu) repo.store.cachedConversation(c.key)?.bubbles?.lastOrNull() else null }
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            if (newest != null) DropdownMenuItem(text = { Text(stringResource(R.string.remind_in_hour)) }, leadingIcon = { Icon(Icons.Default.NotificationsActive, null) },
+                onClick = {
+                    menu = false
+                    val at = com.smizflark.aigile.messenger.work.RemindWorker.inAnHour(ctx, repo.store, c.key, c.name, newest.key, Markdown.plain(Markdown.render(newest.text, Color.Transparent, Color.Transparent)).trim())
+                    if (at != null) android.widget.Toast.makeText(ctx, ctx.getString(R.string.remind_set, Mute.endTime(at)), android.widget.Toast.LENGTH_SHORT).show()
+                }, modifier = Modifier.testTag("menu-remind"))
             // Read chats offer Mark as unread instead (AII-119); the Lead Scrum Master goes by the board's count, so it can't.
             if (fresh || c.kind == Kind.WATCHMAN) DropdownMenuItem(text = { Text(stringResource(R.string.mark_read)) }, enabled = fresh, onClick = { menu = false; onRead() })
             else DropdownMenuItem(text = { Text(stringResource(R.string.mark_unread)) }, onClick = { menu = false; onUnread() }, modifier = Modifier.testTag("menu-unread"))
