@@ -105,7 +105,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var at by rememberSaveable { mutableStateOf(0) }   // which match, 0 = the newest
     // AII-49: a little tick on send and when a reply lands. performHapticFeedback follows the phone's touch feedback setting.
     val view = LocalView.current
-    fun tick() = view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
+    fun tick() = Appearance.buzz && view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
     val owner = repo.store.owner.ifBlank { "You" }
     val res = LocalContext.current.resources
 
