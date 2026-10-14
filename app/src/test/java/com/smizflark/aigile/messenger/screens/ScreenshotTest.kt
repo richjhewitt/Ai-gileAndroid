@@ -113,6 +113,19 @@ class ScreenshotTest {
         shot("chats_sends_at", false) { ChatsScreen(repo, {}, {}, {}) }
         rule.onNodeWithText("⏰ Sends at 08:00").assertIsDisplayed()
     }
+    /** AII-152: with a Send later message waiting, the Scheduled chip keeps just that chat. */
+    @Test fun scheduledChip() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        val l = lead()
+        repo.queue(l, "Morning team", null, sendAt = java.time.Instant.parse("2026-10-14T07:00:00Z"))
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("filter:scheduled").fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithTag("filter:scheduled").performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("chat:${l.key}").assertIsDisplayed()
+        org.junit.Assert.assertTrue(chats.filter { it.key != l.key }.all { c -> rule.onAllNodesWithTag("chat:${c.key}").fetchSemanticsNodes().isEmpty() })
+        rule.onRoot().captureRoboImage("../docs/shots/chats_scheduled_light.png")
+    }
     /** AII-103: hold a chat: Mute sits in the menu, and tapping it again unmutes. */
     @Test fun muteFromMenuLight() {
         val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }

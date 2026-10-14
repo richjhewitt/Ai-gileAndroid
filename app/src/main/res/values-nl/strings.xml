@@ -23,6 +23,7 @@
     <string name="empty_waiting">Niets wacht op jou</string>
     <string name="empty_teams">Nog geen teamchats</string>
     <string name="empty_friends">Nog geen vrienden</string>
+    <string name="empty_scheduled">Geen berichten die later verstuurd worden</string>
     <string name="empty_show_all">Alle chats tonen</string>
     <string name="empty_loading">Chats laden…</string>
     <string name="search_hint">Typ minstens 2 letters om in alle chats te zoeken</string>
@@ -115,6 +116,7 @@
     <string name="filter_waiting">Wacht op mij</string>
     <string name="filter_teams">Teams</string>
     <string name="filter_friends">Vrienden</string>
+    <string name="filter_scheduled">Gepland</string>
     <string name="unsent_failed">⚠️ %1$d niet verstuurd: tik om opnieuw te proberen</string>
     <string name="unsent_waiting">⏳ %1$d wachten om verstuurd te worden</string>
     <string name="unsent_later">⏰ Gaat om %1$s</string>

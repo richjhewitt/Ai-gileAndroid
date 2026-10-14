@@ -20,5 +20,11 @@ class FilterTest {
     @Test fun teamsAreLeadsAndTheScrumMaster() = assertEquals(listOf(lead, quiet, watch), of(ChatFilter.TEAMS))
     @Test fun friendsOnlyFriends() = assertEquals(listOf(friend), of(ChatFilter.FRIENDS))
     @Test fun unreadOnlyWhereABadgeShows() = assertEquals(listOf(quiet, friend), all.filter { ChatFilter.UNREAD.keep(it, it == quiet || it == friend) })
+    @Test fun scheduledOnlyWhereASendLaterWaits() = assertEquals(listOf(friend), all.filter { ChatFilter.SCHEDULED.keep(it, scheduled = it == friend) })
+    @Test fun scheduledChipOnlyWhenNeeded() {
+        assertEquals(false, ChatFilter.SCHEDULED in ChatFilter.shown(false, ChatFilter.ALL))
+        assertEquals(true, ChatFilter.SCHEDULED in ChatFilter.shown(true, ChatFilter.ALL))
+        assertEquals(true, ChatFilter.SCHEDULED in ChatFilter.shown(false, ChatFilter.SCHEDULED))   // sent meanwhile: stays until you pick another
+    }
     @Test fun unreadComesRightAfterAll() = assertEquals(ChatFilter.UNREAD, ChatFilter.entries[1])
 }
