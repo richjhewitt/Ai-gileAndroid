@@ -120,6 +120,7 @@
     <string name="picture_not_shared">Couldn\'t share the picture</string>
     <string name="remove_picture">Remove picture</string>
     <string name="chats_title">Messages</string>
+    <string name="copy_name">Copy name</string>
     <string name="chats_title_demo">Demo</string>
     <string name="chats_offline">%1$s\nShowing chats from %2$s.</string>
     <string name="mark_all_read">Mark all as read</string>

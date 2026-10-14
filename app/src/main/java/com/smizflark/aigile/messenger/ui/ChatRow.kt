@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -117,6 +118,15 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
                     val at = com.smizflark.aigile.messenger.work.RemindWorker.inAnHour(ctx, repo.store, c.key, c.name, newest.key, Markdown.plain(Markdown.render(newest.text, Color.Transparent, Color.Transparent)).trim())
                     if (at != null) android.widget.Toast.makeText(ctx, ctx.getString(R.string.remind_set, Mute.endTime(at)), android.widget.Toast.LENGTH_SHORT).show()
                 }, modifier = Modifier.testTag("menu-remind"))
+            // AII-249: Copy name.
+            val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
+            DropdownMenuItem(text = { Text(stringResource(R.string.copy_name)) }, leadingIcon = { Icon(Icons.Default.ContentCopy, null) },
+                onClick = {
+                    menu = false
+                    clipboard.setText(androidx.compose.ui.text.AnnotatedString(c.name))
+                    // Android 13+ shows its own "copied" note.
+                    if (android.os.Build.VERSION.SDK_INT < 33) android.widget.Toast.makeText(ctx, R.string.copied, android.widget.Toast.LENGTH_SHORT).show()
+                }, modifier = Modifier.testTag("menu-copy-name"))
             // Read chats offer Mark as unread instead (AII-119); the Lead Scrum Master goes by the board's count, so it can't.
             if (fresh || c.kind == Kind.WATCHMAN) DropdownMenuItem(text = { Text(stringResource(R.string.mark_read)) }, enabled = fresh, onClick = { menu = false; onRead() })
             else DropdownMenuItem(text = { Text(stringResource(R.string.mark_unread)) }, onClick = { menu = false; onUnread() }, modifier = Modifier.testTag("menu-unread"))
