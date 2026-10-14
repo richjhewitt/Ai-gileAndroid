@@ -87,6 +87,11 @@ class Store(context: Context) {
         get() = prefs.getBoolean("lock", false)
         set(v) = prefs.edit().putBoolean("lock", v).apply()
 
+    /** AII-234: seconds away before the lock asks again; 0 = straight away. Kept with [lock], so not backed up. */
+    var lockAfter: Int
+        get() = prefs.getInt("lockAfter", 0)
+        set(v) = prefs.edit().putInt("lockAfter", v).apply()
+
     /** AII-208: the hour "Send in the morning" uses (Send later, AII-146). */
     var morning: Int
         get() = settings.getInt("morning", 8)
@@ -164,6 +169,10 @@ class Store(context: Context) {
     var undoSend: Boolean
         get() = settings.getBoolean("undoSend", false)
         set(v) = settings.edit().putBoolean("undoSend", v).apply()
+    /** AII-233: how long Undo send holds a message, 5 or 10 seconds. */
+    var undoSeconds: Int
+        get() = settings.getInt("undoSeconds", 5)
+        set(v) = settings.edit().putInt("undoSeconds", v).apply()
 
     var enterSends: Boolean
         get() = settings.getBoolean("enterSends", false)
@@ -304,7 +313,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft")
 
         /** What "Reset settings" clears (AII-217): every backed-up setting except the ones that are your data. */
         val KEPT_ON_RESET = setOf("pinned", "muted", "silent")

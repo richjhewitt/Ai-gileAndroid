@@ -163,7 +163,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         deliver(repo.queue(ref, t, to, files))
     }
 
-    // Undo send (AII-202): the message waits here for 5 seconds; leaving the chat sends it at once.
+    // Undo send (AII-202): the message waits here for 5 or 10 seconds; leaving the chat sends it at once.
     val snack = remember { SnackbarHostState() }
     var held by remember { mutableStateOf<Held?>(null) }
     fun sendHeld(h: Held) { held = null; send(h.body, h.to, h.files) }
@@ -190,8 +190,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             val h = Held(text, quoting, to, pics); held = h
             scope.launch {
                 snack.currentSnackbarData?.dismiss()
-                val r = withTimeoutOrNull(UndoSend.WAIT_MS) {
-                    snack.showSnackbar(res.getString(R.string.message_sent_undo), res.getString(R.string.undo), duration = SnackbarDuration.Indefinite)
+                val r = withTimeoutOrNull(UndoSend.waitMs(Appearance.undoSeconds)) {
+                    snack.showSnackbar(res.getString(R.string.message_sent_undo, UndoSend.seconds(Appearance.undoSeconds)), res.getString(R.string.undo), duration = SnackbarDuration.Indefinite)
                 }
                 if (held !== h) return@launch
                 if (r == SnackbarResult.ActionPerformed) {
