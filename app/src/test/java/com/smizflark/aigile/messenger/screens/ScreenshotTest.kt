@@ -107,6 +107,12 @@ class ScreenshotTest {
         shot("chats_draft", false) { ChatsScreen(repo, {}, {}, {}) }
         repo.store.saveDraft(lead().key, "")
     }
+    /** AII-148: a chat with a Send later message says when it goes. */
+    @Test fun sendsAtLight() {
+        repo.queue(lead(), "Morning team", null, sendAt = java.time.Instant.parse("2026-10-14T07:00:00Z"))
+        shot("chats_sends_at", false) { ChatsScreen(repo, {}, {}, {}) }
+        rule.onNodeWithText("⏰ Sends at 08:00").assertIsDisplayed()
+    }
     /** AII-103: hold a chat: Mute sits in the menu, and tapping it again unmutes. */
     @Test fun muteFromMenuLight() {
         val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }

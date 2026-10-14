@@ -115,6 +115,7 @@
     <string name="filter_friends">Friends</string>
     <string name="unsent_failed">⚠️ %1$d not sent: tap to retry</string>
     <string name="unsent_waiting">⏳ %1$d waiting to send</string>
+    <string name="unsent_later">⏰ Sends at %1$s</string>
     <string name="draft_label">Draft: %1$s</string>
     <string name="you_label">You: %1$s</string>
     <string name="working">working…</string>
