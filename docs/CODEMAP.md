@@ -17,6 +17,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Models.kt: data classes for the board's chats and messages.
 - data/News.kt: what is new since you last looked, and quiet hours.
 - data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
+- data/Mute.kt: mute a chat for 1 hour, 8 hours or until unmuted (AII-157); timed mutes end by themselves.
 - data/Outbox.kt: outbox state changes (retry / delete failed messages).
 - data/Pace.kt: pacing of sends / checks.
 - data/Closed.kt: Close chat, hidden until a newer message (board's dmclosed list).
@@ -52,6 +53,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/Find.kt: find in a chat (pure).
 - ui/Lock.kt: app lock with fingerprint, face or PIN.
 - ui/Markdown.kt: renders message markdown.
+- ui/MuteFor.kt: the Mute for how long dialog (AII-157), used by the chats list, chat menu and chat details.
 - ui/NewMessageScreen.kt: a new message to any team.
 - ui/Parts.kt: small shared UI helpers (colour parsing and similar).
 - ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).

@@ -50,6 +50,9 @@ import kotlinx.coroutines.launch
 fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onClose: () -> Unit) {
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var pinned by remember { mutableStateOf(ref.key in repo.store.pinned) }
+    var muteAsk by remember { mutableStateOf(false) }   // AII-157: Mute asks how long
+    if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false },
+        onDismiss = { muteAsk = false })
     var shown by remember { mutableStateOf<CardDetail?>(null) }   // AII-85: the open card tapped, shown under its row
     val scope = rememberCoroutineScope()
     ModalBottomSheet(onDismissRequest = onClose) {
@@ -73,7 +76,7 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 }
             }
             SwitchRow(stringResource(R.string.mute_alerts), muted, "details-mute") {
-                muted = it; repo.store.setMuted(ref.key, it)
+                if (it) muteAsk = true else { muted = false; repo.store.setMuted(ref.key, false) }
             }
             SwitchRow(stringResource(R.string.pin), pinned, "details-pin") {
                 repo.store.pinned = togglePin(repo.store.pinned, ref.key); pinned = ref.key in repo.store.pinned

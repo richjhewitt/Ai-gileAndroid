@@ -93,6 +93,7 @@ import com.smizflark.aigile.messenger.data.Update
 import com.smizflark.aigile.messenger.BuildConfig
 import androidx.compose.material.icons.filled.Close
 import kotlinx.coroutines.delay
+import com.smizflark.aigile.messenger.data.Mute
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -107,6 +108,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     fun counts() = chats.associate { it.key to News.unread(it, seen[it.key], repo.store.cachedConversation(it.key)) }
     var unread by remember { mutableStateOf(counts()) }
     var muted by remember { mutableStateOf(repo.store.muted()) }
+    var muteAsk by remember { mutableStateOf<ChatRef?>(null) }   // AII-157: the chat whose Mute asks how long
     var outbox by remember { mutableStateOf(repo.store.outbox()) }
     var drafts by remember { mutableStateOf(repo.store.drafts()) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -130,7 +132,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
         outbox = repo.store.outbox()   // first, so it shows at once even with no signal
         try { chats = repo.chats(); error = null }
         catch (e: Exception) { error = e.message }
-        seen = repo.store.seen(); unread = counts(); outbox = repo.store.outbox(); drafts = repo.store.drafts(); closed = repo.store.closed(); loaded = true
+        seen = repo.store.seen(); unread = counts(); outbox = repo.store.outbox(); drafts = repo.store.drafts(); closed = repo.store.closed(); muted = repo.store.muted(); loaded = true
         return chats != before
     }
 
@@ -154,6 +156,9 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     /** Mark as unread (AII-119), from a chat's menu. */
     fun markUnread(c: ChatRef) = scope.launch { repo.markUnread(c); seen = repo.store.seen(); unread = counts() }
     val total = unread.values.sum()
+    muteAsk?.let { c ->
+        MuteFor(onPick = { f -> repo.store.setMuted(c.key, true, Mute.until(Now.millis(), f)); muted = repo.store.muted(); muteAsk = null }, onDismiss = { muteAsk = null })
+    }
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
@@ -280,7 +285,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     val isShut = c in shut
                     ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, unsent[c.key].orEmpty(), drafts[c.key], isShut,
                         onRead = { markRead(listOf(c)) }, onUnread = { markUnread(c) },
-                        onMute = { on -> repo.store.setMuted(c.key, on); muted = repo.store.muted() },
+                        onMute = { on -> if (on) muteAsk = c else { repo.store.setMuted(c.key, false); muted = repo.store.muted() } },
                         onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned },
                         onClose = { shutIt -> scope.launch {
                             repo.setClosed(c, shutIt); closed = repo.store.closed()
