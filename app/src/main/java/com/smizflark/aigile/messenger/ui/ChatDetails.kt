@@ -123,7 +123,7 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
             SwitchRow(stringResource(R.string.pin), pinned, "details-pin") {
                 repo.store.pinned = togglePin(repo.store.pinned, ref.key); pinned = ref.key in repo.store.pinned
             }
-            Text(stringResource(R.string.open_cards), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
+            Text(heading(R.string.open_cards, info.openCards.size), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
             if (info.openCards.isEmpty()) Text(stringResource(R.string.no_open_cards), color = MaterialTheme.colorScheme.onSurfaceVariant)
             info.openCards.forEach { t ->
                 Text("⏳ ${t.label}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.fillMaxWidth()
@@ -133,7 +133,7 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
             }
             // AII-138: starred messages; tap one and the chat jumps to it.
             if (onStarred != null) {
-                Text(stringResource(R.string.starred), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+                Text(heading(R.string.starred, starred.size), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
                 if (starred.isEmpty()) Text(stringResource(R.string.no_starred), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 starred.forEach { s ->
                     Column(Modifier.fillMaxWidth().clickable { onStarred(s.key) }.padding(vertical = 6.dp).testTag("details-star")) {
@@ -162,13 +162,13 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                     }
                 }
             }
-            Text(stringResource(R.string.chat_pictures), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
+            Text(heading(R.string.chat_pictures, info.pictures.size), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
             if (info.pictures.isEmpty()) Text(stringResource(R.string.no_chat_pictures), color = MaterialTheme.colorScheme.onSurfaceVariant)
             // The sheet is its own window and would cover the full screen picture, so it closes first (AII-93).
             else MessagePictures(info.pictures, repo, onOpened = onClose)
             // AII-194: web links from the messages, newest first.
             if (info.links.isNotEmpty()) {
-                Text(stringResource(R.string.chat_links), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+                Text(heading(R.string.chat_links, info.links.size), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
                 info.links.forEach { l ->
                     Column(Modifier.fillMaxWidth().clickable { runCatching { uriHandler.openUri(l.url) } }.padding(vertical = 6.dp).testTag("details-link")) {
                         Text(l.title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -180,7 +180,7 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
             }
             // AII-197: files that are not pictures; tap to open.
             if (info.files.isNotEmpty()) {
-                Text(stringResource(R.string.chat_files), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+                Text(heading(R.string.chat_files, info.files.size), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
                 info.files.forEach { f -> FileLine(f, repo, Modifier.fillMaxWidth().padding(vertical = 6.dp).testTag("details-file")) }
             }
             Spacer(Modifier.size(24.dp))
@@ -195,3 +195,8 @@ private fun SwitchRow(label: String, on: Boolean, tag: String, onChange: (Boolea
         Switch(checked = on, onCheckedChange = onChange, modifier = Modifier.testTag(tag))
     }
 }
+
+/** AII-252: a section heading with how many it lists; no number while the section is empty. */
+@Composable
+private fun heading(res: Int, count: Int): String =
+    if (count > 0) stringResource(R.string.heading_count, stringResource(res), count) else stringResource(res)
