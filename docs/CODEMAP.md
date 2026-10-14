@@ -27,6 +27,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Closed.kt: Close chat, hidden until a newer message (board's dmclosed list).
 - data/Pause.kt: pause alerts for a while.
 - data/Pins.kt: pinned chats first.
+- data/NextUnread.kt: which chat the Next unread button at the bottom of a chat goes to (AII-204); button in ui/ChatParts.kt.
 - data/QuickReply.kt: replying from the notification.
 - data/Quote.kt: quoting a message in a reply.
 - data/Replies.kt: your own quick replies, one per line in Settings (AII-180).

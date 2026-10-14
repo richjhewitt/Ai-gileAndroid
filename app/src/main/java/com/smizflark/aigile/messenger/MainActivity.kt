@@ -95,6 +95,7 @@ class MainActivity : FragmentActivity() {
                         val ref = repo.store.cachedChats()?.firstOrNull { it.key == key }
                         if (ref == null) LaunchedEffect(Unit) { nav.popBackStack() }
                         else ChatScreen(repo, ref, onBack = { nav.popBackStack() }, focus = card, openAt = msg,
+                            onOpenChat = { next -> nav.popBackStack(); nav.openChat(next.key) },   // AII-204: as if tapped in the chats list
                             onOpenCard = { id -> nav.navigate("chat/" + Uri.encode(key) + "?card=" + Uri.encode(id)) })
                     }
                     composable("new") {
