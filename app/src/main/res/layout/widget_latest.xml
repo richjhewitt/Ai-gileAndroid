@@ -2,7 +2,7 @@
 <!-- Home-screen widget: the latest chats, newest first (filled in by widget/LatestWidget.kt) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:padding="12dp" android:background="@drawable/widget_bg">
+    android:orientation="vertical" android:padding="12dp" android:background="@drawable/widget_bg_light" android:id="@+id/root">
     <TextView android:id="@+id/header" android:layout_width="match_parent" android:layout_height="wrap_content"
         android:text="@string/app_name" android:textColor="@color/brand" android:textSize="13sp" android:textStyle="bold"
         android:paddingBottom="4dp" />
