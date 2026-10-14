@@ -119,7 +119,8 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 info.links.forEach { l ->
                     Column(Modifier.fillMaxWidth().clickable { runCatching { uriHandler.openUri(l.url) } }.padding(vertical = 6.dp).testTag("details-link")) {
                         Text(l.title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(com.smizflark.aigile.messenger.data.ChatLink.shown(l.url), style = MaterialTheme.typography.labelSmall,
+                        val address = com.smizflark.aigile.messenger.data.ChatLink.shown(l.url)
+                        if (address != l.title) Text(address, style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
