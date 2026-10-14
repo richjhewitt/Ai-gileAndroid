@@ -4,9 +4,12 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,9 +45,9 @@ import com.smizflark.aigile.messenger.data.togglePin
 import kotlinx.coroutines.launch
 
 /** Tap the chat name (AII-80): the team, its open cards, the pictures sent here, and the Mute and Pin switches. */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onClose: () -> Unit) {
+fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onClose: () -> Unit) {
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var pinned by remember { mutableStateOf(ref.key in repo.store.pinned) }
     var shown by remember { mutableStateOf<CardDetail?>(null) }   // AII-85: the open card tapped, shown under its row
@@ -60,8 +63,14 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 }
             }
             // AII-128: straight to the find bar from here.
-            if (onFind != null) OutlinedButton(onClick = onFind, modifier = Modifier.padding(top = 12.dp).testTag("details-find")) {
-                Icon(Icons.Default.Search, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.find_in_chat))
+            FlowRow(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (onFind != null) OutlinedButton(onClick = onFind, modifier = Modifier.testTag("details-find")) {
+                    Icon(Icons.Default.Search, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.find_in_chat))
+                }
+                // AII-139: the whole chat as text, out to any app.
+                if (onShare != null) OutlinedButton(onClick = onShare, modifier = Modifier.testTag("details-share")) {
+                    Icon(Icons.Default.Share, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.share_chat))
+                }
             }
             SwitchRow(stringResource(R.string.mute_alerts), muted, "details-mute") {
                 muted = it; repo.store.setMuted(ref.key, it)

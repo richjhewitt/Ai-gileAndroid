@@ -354,6 +354,7 @@ class ScreenshotTest {
         rule.onAllNodes(androidx.compose.ui.test.hasText("★", substring = true), useUnmergedTree = true).onFirst().assertExists()
         rule.onNodeWithTag("chat-title").performClick()
         rule.onNodeWithTag("details-star").assertExists()
+        rule.onNodeWithTag("details-share").assertExists()   // AII-139
         rule.waitForIdle()
         rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_starred_light.png")   // the sheet is its own window
         rule.onNodeWithTag("details-star").performClick()

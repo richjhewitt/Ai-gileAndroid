@@ -34,6 +34,7 @@
     <string name="more">Meer</string>
     <string name="search">Zoeken</string>
     <string name="find_in_chat">Zoeken in dit gesprek</string>
+    <string name="share_chat">Gesprek delen</string>
     <string name="find_hint">Zoek</string>
     <string name="find_count">%1$d van %2$d</string>
     <string name="find_none">Geen resultaten</string>
