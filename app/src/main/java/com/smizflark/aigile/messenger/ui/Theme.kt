@@ -76,9 +76,11 @@ object Appearance {
     var textSize by mutableStateOf(TextSize.Normal)
     /** Enter sends (AII-126): read by the message box. */
     var enterSends by mutableStateOf(false)
+    /** Quick replies above an empty message box (AII-179); off until loaded, so screenshots stay as they were. */
+    var quickReplies by mutableStateOf(false)
 
     fun load(store: Store) {
-        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends }
+        if (look == null) { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; quickReplies = store.quickReplies }
     }
 }
 

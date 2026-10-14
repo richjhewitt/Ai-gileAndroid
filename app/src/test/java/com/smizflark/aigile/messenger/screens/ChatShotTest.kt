@@ -265,6 +265,28 @@ class ChatShotTest : ShotBase() {
         rule.onNodeWithTag("enterSends").onChildren().filterToOne(androidx.compose.ui.test.isToggleable()).performClick()
         try { org.junit.Assert.assertTrue(repo.store.enterSends && Appearance.enterSends) } finally { Appearance.enterSends = false; repo.store.enterSends = false }
     }
+    /** AII-179: an empty box shows the quick replies; a tap puts one in the box (no send), and they hide while there is text. */
+    @Test fun quickReplies() {
+        val c = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }; prime(c); RuntimeEnvironment.setQualifiers("+notnight")
+        try {
+            Appearance.quickReplies = true
+            rule.setContent { MessengerTheme { ChatScreen(repo, c, onBack = {}) } }
+            rule.waitForIdle()
+            rule.onRoot().captureRoboImage("../docs/shots/quick_replies_light.png")
+            val before = rule.onAllNodesWithTag("mine").fetchSemanticsNodes().size
+            rule.onNodeWithText("Not yet").performClick()
+            rule.onNodeWithTag("input").assertTextEquals("Not yet", includeEditableText = true)
+            rule.onAllNodesWithTag("quick-replies").assertCountEquals(0)
+            org.junit.Assert.assertEquals(before, rule.onAllNodesWithTag("mine").fetchSemanticsNodes().size)
+        } finally { Appearance.quickReplies = false }
+    }
+    @Test fun quickRepliesSetting() {
+        rule.setContent { MessengerTheme { SettingsScreen(repo, {}, {}) } }
+        rule.onNodeWithTag("quickReplies").performScrollTo()
+        org.junit.Assert.assertTrue(Appearance.quickReplies)   // on to start with
+        rule.onNodeWithTag("quickReplies").onChildren().filterToOne(androidx.compose.ui.test.isToggleable()).performClick()
+        try { org.junit.Assert.assertFalse(repo.store.quickReplies || Appearance.quickReplies) } finally { Appearance.quickReplies = false; repo.store.quickReplies = true }
+    }
     /** AII-122: on a short screen, scroll to the bottom of the chats, tap the title: back at the first chat. */
     @Test @Config(qualifiers = "w411dp-h300dp-xxhdpi") fun titleTapGoesToTop() {
         RuntimeEnvironment.setQualifiers("+notnight")

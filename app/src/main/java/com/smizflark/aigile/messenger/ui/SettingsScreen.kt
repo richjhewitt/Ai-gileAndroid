@@ -106,6 +106,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
             Toggle(stringResource(R.string.enter_sends), stringResource(R.string.enter_sends_sub), Appearance.enterSends, Modifier.testTag("enterSends")) {
                 Appearance.enterSends = it; s.enterSends = it
             }
+            Toggle(stringResource(R.string.quick_replies), stringResource(R.string.quick_replies_sub), Appearance.quickReplies, Modifier.testTag("quickReplies")) {
+                Appearance.quickReplies = it; s.quickReplies = it
+            }
             HorizontalDivider()
 
             Text(stringResource(R.string.privacy), style = MaterialTheme.typography.titleMedium)
