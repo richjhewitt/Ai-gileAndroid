@@ -120,6 +120,7 @@
     <string name="picture_not_shared">Foto delen lukte niet</string>
     <string name="remove_picture">Foto verwijderen</string>
     <string name="chats_title">Berichten</string>
+    <string name="chats_title_unread">Berichten (%1$d)</string>
     <string name="copy_name">Naam kopiëren</string>
     <string name="chats_title_demo">Demo</string>
     <string name="chats_offline">%1$s\nChats van %2$s.</string>
