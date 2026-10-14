@@ -476,6 +476,12 @@ class ScreenshotTest {
         rule.onNodeWithTag("starred-unstar").performClick()
         rule.onAllNodesWithTag("starred-row").assertCountEquals(1)
         org.junit.Assert.assertEquals(1, repo.store.stars().size)
+        // AII-156: Undo puts it back.
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("../docs/shots/starred_undo_light.png")
+        rule.onNodeWithText("Undo").performClick()
+        rule.onAllNodesWithTag("starred-row").assertCountEquals(2)
+        org.junit.Assert.assertEquals(2, repo.store.stars().size)
     }
     @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }

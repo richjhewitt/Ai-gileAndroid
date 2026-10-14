@@ -250,6 +250,7 @@
     <string name="reopen_chat">Chat weer openen</string>
     <string name="chat_closed">Chat gesloten</string>
     <string name="undo">Ongedaan maken</string>
+    <string name="star_removed">Ster weggehaald</string>
     <string name="closed_show">%1$d gesloten tonen</string>
     <string name="closed_hide">Gesloten verbergen</string>
 </resources>
