@@ -217,6 +217,11 @@ class Store(context: Context) {
         get() = prefs.getLong("updateChecked", 0)
         set(v) = prefs.edit().putLong("updateChecked", v).apply()
 
+    /** The newest build already announced by a notification (AII-305): each update alerts once. */
+    var updateTold: Int
+        get() = prefs.getInt("updateTold", 0)
+        set(v) = prefs.edit().putInt("updateTold", v).apply()
+
     var release: Release?
         get() = prefs.getString("releaseUrl", null)?.let { Release(prefs.getInt("releaseBuild", 0), it) }
         set(v) = prefs.edit().putInt("releaseBuild", v?.build ?: 0).putString("releaseUrl", v?.url).apply()

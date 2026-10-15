@@ -13,6 +13,8 @@ data class Release(val build: Int, val url: String)
 object Update {
     const val LATEST = "https://api.github.com/repos/richjhewitt/Ai-gileAndroid/releases/latest"
     const val DAY = 24 * 60 * 60 * 1000L
+    /** The background check (AII-305): a few times a day, so an update alert comes soon after a release. */
+    const val EVERY = 6 * 60 * 60 * 1000L
 
     @Serializable private data class Asset(val name: String = "", val browser_download_url: String = "")
     @Serializable private data class Latest(val tag_name: String = "", val html_url: String = "", val assets: List<Asset> = emptyList())
@@ -28,7 +30,7 @@ object Update {
         if (l.tag_name.isBlank() || url.isBlank()) null else Release(build(l.tag_name), url)
     }.getOrNull()
 
-    fun due(now: Long, last: Long) = now - last >= DAY || now < last
+    fun due(now: Long, last: Long, every: Long = DAY) = now - last >= every || now < last
     fun newer(r: Release?, mine: Int) = r != null && r.build > mine
 
     /** One call to GitHub; null on no signal, no release yet, or any error. Blocking: call off the main thread. */

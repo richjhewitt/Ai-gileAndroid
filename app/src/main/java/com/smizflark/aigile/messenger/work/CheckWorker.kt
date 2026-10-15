@@ -7,7 +7,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import com.smizflark.aigile.messenger.BuildConfig
+import com.smizflark.aigile.messenger.data.Update
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -35,6 +38,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
     override suspend fun doWork(): Result {
         val repo = (applicationContext as App).repo
         val store = repo.store
+        if (!store.demo) runCatching { updateAlert(applicationContext) }   // AII-305: independent of message alerts
         if (!store.connected || store.demo || !store.alerts) return Result.success()
         return try {
             check(applicationContext)
@@ -90,6 +94,26 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                 Pause.paused(System.currentTimeMillis(), store.pausedUntil)
             if (news.isNotEmpty() && store.alerts && !quiet && !App.inForeground) notify(context, news)
         }
+
+        /** AII-305: a new build on GitHub (asked every few hours) gets one 'Update ready, tap to install' notification. */
+        private fun updateAlert(context: Context) {
+            val store = (context.applicationContext as App).repo.store
+            val now = System.currentTimeMillis()
+            if (Update.due(now, store.updateChecked, Update.EVERY)) {
+                store.updateChecked = now
+                Update.fetch()?.let { store.release = it }
+            }
+            val r = store.release?.takeIf { Update.newer(it, BuildConfig.VERSION_CODE) && it.build > store.updateTold } ?: return
+            if (!allowed(context)) return
+            val open = PendingIntent.getActivity(context, 0, Intent(Intent.ACTION_VIEW, Uri.parse(r.url)),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            NotificationManagerCompat.from(context).notify(UPDATE_ID, base(context)
+                .setContentTitle(context.getString(R.string.update_ready)).setContentText(context.getString(R.string.update_ready_text))
+                .setContentIntent(open).build())
+            store.updateTold = r.build
+        }
+
+        private const val UPDATE_ID = 7305
 
         private fun allowed(context: Context) = Build.VERSION.SDK_INT < 33 ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
