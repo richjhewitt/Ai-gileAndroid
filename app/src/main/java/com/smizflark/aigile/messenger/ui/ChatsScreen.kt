@@ -70,6 +70,7 @@ import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pause
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.Update
+import com.smizflark.aigile.messenger.data.WhatsNew
 import com.smizflark.aigile.messenger.data.pinFirst
 import com.smizflark.aigile.messenger.data.mutedLast
 import com.smizflark.aigile.messenger.data.togglePin
@@ -80,7 +81,7 @@ import kotlinx.coroutines.launch
 /** Journey 2: every chat in one list. Shows the last list at once, then fetches. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit, onSearch: () -> Unit = {}, onStarred: () -> Unit = {}, onWaiting: () -> Unit = {}) {
+fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSettings: () -> Unit, onSearch: () -> Unit = {}, onStarred: () -> Unit = {}, onWaiting: () -> Unit = {}, onWhatsNew: () -> Unit = {}, build: Int = BuildConfig.VERSION_CODE) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var seen by remember { mutableStateOf(repo.store.seen()) }
     fun counts() = chats.associate { it.key to News.unread(it, seen[it.key], repo.store.cachedConversation(it.key)) }
@@ -164,6 +165,11 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
         }
     }
 
+    // AII-268: the first open after an update shows a What's new bar; a brand-new install just stores the version.
+    var whatsNew by remember { mutableStateOf(WhatsNew.show(repo.store.lastSeenVersion, build)) }
+    LaunchedEffect(Unit) { if (repo.store.lastSeenVersion == 0) repo.store.lastSeenVersion = build }
+    fun seeWhatsNew() { repo.store.lastSeenVersion = build; whatsNew = false }
+
     val list = androidx.compose.foundation.lazy.rememberLazyListState()
     Scaffold(
         topBar = {
@@ -214,6 +220,17 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         Text(stringResource(R.string.paused_until, at), Modifier.weight(1f), color = MaterialTheme.colorScheme.onSecondaryContainer,
                             style = MaterialTheme.typography.bodyMedium)
                         androidx.compose.material3.TextButton(onClick = { pausedUntil = 0L; repo.store.pausedUntil = 0L }, modifier = Modifier.testTag("resume")) { Text(stringResource(R.string.resume)) }
+                    }
+                }
+                if (whatsNew) item {
+                    Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primaryContainer).testTag("whatsNew")
+                        .clickable { seeWhatsNew(); onWhatsNew() }.padding(start = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.whats_new_bar), Modifier.weight(1f), color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            style = MaterialTheme.typography.bodyMedium)
+                        IconButton(onClick = { seeWhatsNew() }, modifier = Modifier.testTag("whatsNewClose")) {
+                            Icon(Icons.Default.Close, stringResource(R.string.whats_new_close), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
                     }
                 }
                 release?.takeIf { Update.newer(it, BuildConfig.VERSION_CODE) }?.let { r ->

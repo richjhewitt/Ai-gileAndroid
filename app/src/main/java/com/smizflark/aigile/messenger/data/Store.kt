@@ -198,6 +198,11 @@ class Store(context: Context) {
         get() = settings.getStringSet("pinned", emptySet())?.toSet() ?: emptySet()
         set(v) = settings.edit().putStringSet("pinned", v).apply()
 
+    /** What's new bar (AII-268): the version code last seen; 0 on a brand-new install. */
+    var lastSeenVersion: Int
+        get() = settings.getInt("lastSeenVersion", 0)
+        set(v) = settings.edit().putInt("lastSeenVersion", v).apply()
+
     var lastSync: Long
         get() = prefs.getLong("lastSync", 0)
         set(v) = prefs.edit().putLong("lastSync", v).apply()

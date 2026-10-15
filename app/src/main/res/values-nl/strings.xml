@@ -134,6 +134,8 @@
     <string name="pause_tomorrow">Tot %1$d uur \'s ochtends</string>
     <string name="paused_until">Meldingen gepauzeerd tot %1$s</string>
     <string name="resume">Hervatten</string>
+    <string name="whats_new_bar">Wat is er nieuw</string>
+    <string name="whats_new_close">Wat is er nieuw sluiten</string>
     <string name="new_version">Nieuwe versie: tik om te installeren</string>
     <string name="mark_read">Als gelezen markeren</string>
     <string name="mark_unread">Als ongelezen markeren</string>

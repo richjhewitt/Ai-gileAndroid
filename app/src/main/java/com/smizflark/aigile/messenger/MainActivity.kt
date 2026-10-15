@@ -79,7 +79,7 @@ class MainActivity : FragmentActivity() {
                     composable("chats") {
                         ChatsScreen(repo, onOpen = { nav.openChat(it.key) }, onNew = { nav.navigate("new") },
                             onSettings = { nav.navigate("settings") }, onSearch = { nav.navigate("search") }, onStarred = { nav.navigate("starred") },
-                            onWaiting = { nav.navigate("waiting") })
+                            onWaiting = { nav.navigate("waiting") }, onWhatsNew = { nav.navigate("about") })
                     }
                     composable("waiting") {   // AII-166: every Send later message; tap one, its chat opens at it
                         WaitingScreen(repo, onOpen = { ref, msg -> nav.openChat(ref.key, msg) }, onBack = { nav.popBackStack() })
