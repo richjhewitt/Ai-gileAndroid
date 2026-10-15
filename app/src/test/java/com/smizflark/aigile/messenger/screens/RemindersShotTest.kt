@@ -25,6 +25,6 @@ class RemindersShotTest : ShotBase() {
         ))
     }
 
-    @Test fun remindersLight() { seed(); shot("reminders_groups", false) { RemindersScreen(repo, {}) } }
-    @Test fun remindersDark() { seed(); shot("reminders_groups", true) { RemindersScreen(repo, {}) } }
+    @Test fun remindersLight() { seed(); shot("reminders_groups", false) { RemindersScreen(repo, { _, _ -> }, {}) } }
+    @Test fun remindersDark() { seed(); shot("reminders_groups", true) { RemindersScreen(repo, { _, _ -> }, {}) } }
 }
