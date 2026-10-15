@@ -347,6 +347,9 @@
     <string name="notify_remind">Reminder: %1$s</string>
     <string name="reminders">Reminders</string>
     <string name="empty_reminders">No reminders</string>
+    <string name="reminders_today">Today</string>
+    <string name="reminders_tomorrow">Tomorrow</string>
+    <string name="reminders_later">Later</string>
     <string name="cancel_reminder">Cancel</string>
     <string name="remind_in_hour">Remind me in 1 hour</string>
     <string name="remind_again">Again in 1 hour</string>

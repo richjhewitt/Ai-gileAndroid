@@ -92,4 +92,25 @@ class RemindTest {
         assertEquals(listOf(b, a), Remind.inChat(listOf(a, o, b), "c"))
         assertEquals(emptyList<Reminder>(), Remind.inChat(listOf(o), "c"))
     }
+
+    /** AII-269: groups around midnight, soonest first, empty groups left out. */
+    @Test fun groupsSplitAtMidnight() {
+        fun r(id: String, at: Long) = Reminder(id, "c", "C", id, id, at)
+        val now = ms(23, 59)
+        val late = r("late", ms(23, 59, 14) + 60_000)   // 00:00 on the 15th
+        val today = r("today", ms(23, 58))
+        val tomorrowEnd = r("tend", ms(23, 59, 15))
+        val later = r("later", ms(0, 0, 16))
+        val g = Remind.groups(listOf(later, tomorrowEnd, late, today), now, zone)
+        assertEquals(listOf(Remind.Group.TODAY, Remind.Group.TOMORROW, Remind.Group.LATER), g.map { it.first })
+        assertEquals(listOf(today), g[0].second)
+        assertEquals(listOf(late, tomorrowEnd), g[1].second)
+        assertEquals(listOf(later), g[2].second)
+    }
+
+    @Test fun groupsLeaveOutEmptyOnes() {
+        val a = Reminder("a", "c", "C", "m", "t", ms(15))
+        assertEquals(listOf(Remind.Group.TODAY to listOf(a)), Remind.groups(listOf(a), ms(10), zone))
+        assertEquals(emptyList<Any>(), Remind.groups(emptyList(), ms(10), zone))
+    }
 }

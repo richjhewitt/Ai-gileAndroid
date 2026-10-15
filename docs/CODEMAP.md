@@ -53,8 +53,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 
 ## ui/ (Compose screens)
 - ui/CardDetails.kt: card detail sheet and the board's column names.
-- ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, this chat's reminders (AII-223, tap jumps to the message, X cancels via cancelReminder in ui/RemindersScreen.kt), pictures, links (AII-194), Mute and Silent alerts side by side (AII-245), and Pin.
-- ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, this chat's reminders (AII-223, tap jumps to the message, X cancels via cancelReminder in ui/RemindersScreen.kt), pictures, links (AII-194), Mute and Pin; section headings show their counts (AII-252).
+- ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, this chat's reminders (AII-223, tap jumps to the message, X cancels via cancelReminder in ui/RemindersScreen.kt), pictures, links (AII-194), Mute and Silent alerts side by side (AII-245), and Pin; section headings show their counts (AII-252).
 - ui/ChatScreen.kt: the chat screen itself (list, find, scrolling).
 - ui/ChatGestures.kt: the pinch-to-zoom text size (AII-259) and the next unread chat lookup (AII-204) for ui/ChatScreen.kt.
 - ui/ChatScroll.kt: remembered scroll place and New messages opening (AII-72, AII-102), Go to date scroll (AII-193), day and new-line rows, share/save the chat as text (AII-139, AII-229).
@@ -81,10 +80,8 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
 - ui/SearchScreen.kt: search across all chats, with Pictures, Links, Files, Starred and Last 7 days chips (AII-192, AII-267, AII-246, AII-258).
 - ui/SettingsScreen.kt: settings.
-- ui/RemindersScreen.kt: every reminder, soonest first (AII-209, a Reminders row in Settings when there are any); tap one, its chat opens at the message (AII-247); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
-- ui/SearchScreen.kt: search across all chats, with Pictures and Links chips (AII-192).
+- ui/RemindersScreen.kt: every reminder under Today, Tomorrow, Later headings (AII-269, Remind.groups), soonest first in each (AII-209, a Reminders row in Settings when there are any); tap one, its chat opens at the message (AII-247); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
 - ui/SettingsScreen.kt: settings, in sections Connection, Look, Chats, Alerts, Privacy, Storage, About (AII-232); the small pieces (SectionHeader, Toggle, Stepper, SwipePick, ChangeBoard) are in ui/SettingsSections.kt.
-- ui/RemindersScreen.kt: every reminder, soonest first (AII-209, a Reminders row in Settings when there are any); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
 - ui/AboutScreen.kt: About, from the bottom of Settings (AII-220): app name, version, build number and a hand-written list of open-source licences (LICENCES, keep in step with app/build.gradle.kts); tap one to open its licence page.
 - ui/StarredScreen.kt: every starred message from all chats (AII-140, the ★ on the chats list); Share all in the top bar sends what is listed as text via Stars.asText (AII-243); tap one, its chat opens at it; chat-name chips (2+ chats, AII-228) show one chat's stars (Stars.onlyChat).
 - ui/WaitingScreen.kt: every Send later message from all chats, soonest first (AII-166, See every waiting message under the Scheduled chip); tap one, its chat opens at it.

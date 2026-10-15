@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.smizflark.aigile.messenger.R
+import com.smizflark.aigile.messenger.data.Now
 import com.smizflark.aigile.messenger.data.Remind
 import com.smizflark.aigile.messenger.data.Reminder
 import com.smizflark.aigile.messenger.data.Repo
@@ -64,9 +65,19 @@ fun RemindersScreen(repo: Repo, onOpen: (String, String) -> Unit, onBack: () -> 
         Column(Modifier.fillMaxSize().padding(pad)) {
             if (all.isEmpty()) EmptyState(stringResource(R.string.empty_reminders))
             LazyColumn(Modifier.fillMaxSize()) {
-                items(all, key = { it.id }) { r ->
-                    ReminderRow(r, onOpen = { onOpen(r.chat, r.msg) }, onCancel = { cancel(r) })
-                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                Remind.groups(all, Now.millis()).forEach { (g, rows) ->
+                    item(key = "group-$g") {
+                        Text(stringResource(when (g) {
+                            Remind.Group.TODAY -> R.string.reminders_today
+                            Remind.Group.TOMORROW -> R.string.reminders_tomorrow
+                            Remind.Group.LATER -> R.string.reminders_later
+                        }), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp).testTag("reminder-group"))
+                    }
+                    items(rows, key = { it.id }) { r ->
+                        ReminderRow(r, onOpen = { onOpen(r.chat, r.msg) }, onCancel = { cancel(r) })
+                        HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    }
                 }
             }
         }

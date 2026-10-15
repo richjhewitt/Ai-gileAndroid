@@ -12,6 +12,9 @@ data class Reminder(val id: String, val chat: String, val chatName: String, val 
 object Remind {
     enum class When { HOUR, EVENING, TOMORROW }
 
+    /** The headings of the Reminders list (AII-269). */
+    enum class Group { TODAY, TOMORROW, LATER }
+
     const val EVENING_HOUR = 18
     const val MORNING_HOUR = 9
 
@@ -40,6 +43,15 @@ object Remind {
 
     /** The chats that have a reminder (AII-226), for the bell on the chats list. */
     fun chatKeys(all: List<Reminder>): Set<String> = all.map { it.chat }.toSet()
+
+    /** The list in groups (AII-269): Today (anything before tomorrow), Tomorrow, Later; soonest first inside each, empty groups left out. */
+    fun groups(all: List<Reminder>, now: Long, zone: ZoneId = ZoneId.systemDefault()): List<Pair<Group, List<Reminder>>> {
+        val day = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+        val tomorrow = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val later = day.plusDays(2).atStartOfDay(zone).toInstant().toEpochMilli()
+        val by = sorted(all).groupBy { if (it.at < tomorrow) Group.TODAY else if (it.at < later) Group.TOMORROW else Group.LATER }
+        return Group.values().mapNotNull { g -> by[g]?.let { g to it } }
+    }
 
     /** Cancelling one (AII-209): gone from the list; the caller also cancels its WorkManager job. */
     fun cancel(all: List<Reminder>, id: String) = all.filterNot { it.id == id }
