@@ -17,11 +17,11 @@ class DemoSource : ChatSource {
         "ai-gile" to WireThread(
             slug = "ai-gile", name = "AI-gile", emoji = "🗂️", color = "#16a34a", lead = "Lead",
             messages = mutableListOf(
-                WireMsg("AIG-1", "💬 Phone app", "Rich", "Can I read my DMs on the phone yet?", ago(95), mine = true,
+                WireMsg("AIG-1", "💬 Phone app", "Rich", "Can I read my chats on my phone yet?", ago(95), mine = true,
                     attachments = listOf(DEMO_SEA)),
-                WireMsg("AIG-1", "💬 Phone app", "Lead", "- Yes: this is the **Messenger** app\n\n- Reply here and it lands on the card", ago(90),
+                WireMsg("AIG-1", "💬 Phone app", "Lead", "- Yes, you're looking at it! This is the **Messenger** app\n\n- Type a reply below and I'll see it straight away", ago(90),
                     attachments = listOf(DEMO_PICTURE)),
-                WireMsg("AIG-2", "Dark mode for the board?", "Lead", "- Dark mode: follow the phone's setting, or always dark?\n\n- I'm assuming **follow the phone**", ago(12), options = listOf("Follow the phone", "Always dark")),
+                WireMsg("AIG-2", "Dark mode for the board?", "Lead", "- Should dark mode follow your phone's setting, or always be dark?\n\n- I'd suggest **follow the phone**", ago(12), options = listOf("Follow the phone", "Always dark")),
             ),
             open = listOf(OpenCard("AIG-2", "Dark mode for the board?")),
             cards = mapOf("AIG-1" to CardInfo("💬 Phone app", "idea"), "AIG-2" to CardInfo("Dark mode for the board?", "question", waiting = true)),
@@ -29,16 +29,16 @@ class DemoSource : ChatSource {
         "tunio" to WireThread(
             slug = "tunio", name = "Tunio", emoji = "🎵", color = "#ca8a04", lead = "Lead",
             messages = mutableListOf(
-                WireMsg("TUN-7", "💬 Playlist export", "Rich", "Export playlists as M3U please", ago(300), mine = true),
-                WireMsg("TUN-7", "💬 Playlist export", "Lead", "- Try it on the PC first:\n\n```\ntunio export --all --format m3u\n```", ago(260)),   // AII-115: a command box to tap
-                WireMsg("TUN-7", "💬 Playlist export", "Lead", "- Done: **Export** button on each playlist\n\n- It's in For you to test", ago(240)),
+                WireMsg("TUN-7", "💬 Playlist export", "Rich", "Can you let me save my playlists as M3U files?", ago(300), mine = true),
+                WireMsg("TUN-7", "💬 Playlist export", "Lead", "- Sure! You can try it on your computer first:\n\n```\ntunio export --all --format m3u\n```", ago(260)),   // AII-115: a command box to tap
+                WireMsg("TUN-7", "💬 Playlist export", "Lead", "- All done: every playlist now has an **Export** button\n\n- Have a go and tell me what you think", ago(240)),
             ),
             cards = mapOf("TUN-7" to CardInfo("💬 Playlist export", "idea")),
         ),
         "_watchman" to WireThread(
             slug = "_watchman", name = "Lead Scrum Master", emoji = "🧭", watchman = true,
             messages = mutableListOf(
-                WireMsg("_night", "Tonight", "🧭 Lead Scrum Master", "- Night shift: 3 teams working, nothing stuck", ago(30)),
+                WireMsg("_night", "Tonight", "🧭 Lead Scrum Master", "- Good evening! 3 of your projects are being worked on and all is going well", ago(30)),
             ),
         ),
     )
@@ -62,7 +62,7 @@ class DemoSource : ChatSource {
         val title = t.cards[id]?.title ?: return null
         val steps = if (id == "TUN-7") "- Open a playlist\n\n- Tap **Export**\n\n- Check the .m3u file opens in your music app" else ""
         return CardDetail(id, title, placed[id] ?: if (t.open.any { it.id == id }) "team" else "doing", "task",
-            "- A demo card from **${t.name}**\n\n- On a real board this shows the card's own description", steps, assignee = t.lead ?: "")
+            "- This is a sample task from **${t.name}**\n\n- With your own projects, the details of each task show up here", steps, assignee = t.lead ?: "")
     }
 
     override suspend fun verdict(slug: String, id: String, accept: Boolean, text: String) {
@@ -107,7 +107,7 @@ class DemoSource : ChatSource {
         val msgs = t.messages.toMutableList()
         msgs += WireMsg(card, title, "Rich", text, now, mine = true, attachments = att)
         // The demo lead answers at once, so you can see a reply arrive.
-        msgs += WireMsg(card, title, t.lead ?: "🧭 Lead Scrum Master", if (ref.kind == Kind.WATCHMAN) "- Passed on to the AI-gile team" else "- Got it: on it now", Now.instant().plusSeconds(1).toString())
+        msgs += WireMsg(card, title, t.lead ?: "🧭 Lead Scrum Master", if (ref.kind == Kind.WATCHMAN) "- Thanks, I've passed that on" else "- Got it, I'm on it!", Now.instant().plusSeconds(1).toString())
         threads[ref.id] = t.copy(
             messages = msgs,
             open = t.open.filter { it.id != card },
