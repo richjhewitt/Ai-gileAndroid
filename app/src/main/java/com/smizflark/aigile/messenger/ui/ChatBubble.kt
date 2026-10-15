@@ -237,7 +237,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
         ) {
             /* ---------- menus (BubbleMenu.kt) ---------- */
             RemindMenu(remindMenu, { remindMenu = false }) { at -> noteAt = at; noteText = "" }   // AII-244: ask for an optional note before saving
-            noteAt?.let { at -> RemindNoteDialog(at, ref, b, shown, repo, noteText, { noteText = it }) { noteAt = null } }
+            noteAt?.let { at -> RemindNoteDialog(at, ref, b, shown, repo, noteText, { noteText = it }, onSaved = onReminded) { noteAt = null } }
             HoldMenu(menu, { menu = false }, b, shown, starred, onStar, onReply, onForward, onRemind = { remindMenu = true }, onSelect = { selecting = true })
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
                 if (!b.mine && ref.kind != Kind.FRIEND && b.author.isNotBlank()) {

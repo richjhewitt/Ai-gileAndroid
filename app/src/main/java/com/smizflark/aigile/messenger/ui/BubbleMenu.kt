@@ -54,7 +54,7 @@ internal fun RemindMenu(expanded: Boolean, onDismiss: () -> Unit, setRemind: (Lo
 
 // AII-244: a chosen time [at] waits for its optional note, then the reminder is saved.
 @Composable
-internal fun RemindNoteDialog(at: Long, ref: ChatRef, b: Bubble, shown: AnnotatedString, repo: Repo, noteText: String, onNoteText: (String) -> Unit, onDone: () -> Unit) {
+internal fun RemindNoteDialog(at: Long, ref: ChatRef, b: Bubble, shown: AnnotatedString, repo: Repo, noteText: String, onNoteText: (String) -> Unit, onSaved: () -> Unit = {}, onDone: () -> Unit) {
     val ctx = LocalContext.current
     val save = { note: String? ->
         onDone()
@@ -62,6 +62,7 @@ internal fun RemindNoteDialog(at: Long, ref: ChatRef, b: Bubble, shown: Annotate
             Markdown.plain(shown).trim(), at, note)
         repo.store.setReminders(com.smizflark.aigile.messenger.data.Remind.add(repo.store.reminders(), r))
         com.smizflark.aigile.messenger.work.RemindWorker.schedule(ctx, r)
+        onSaved()   // the bubble shows its bell line straight away (AII-251)
         Toast.makeText(ctx, ctx.getString(R.string.remind_set, com.smizflark.aigile.messenger.data.Mute.endTime(at)), Toast.LENGTH_SHORT).show()
     }
     androidx.compose.material3.AlertDialog(onDismissRequest = onDone,
