@@ -32,6 +32,11 @@ class CardDetailTest {
         assertEquals("- broken", c.description); assertEquals("- Open it", c.testSteps); assertEquals("verify", c.status)
     }
 
+    @Test fun verdictGoesToTheBoardsVerdictRoute() = runBlocking {
+        board(200, "{}").verdict("ai-gile", "AIG-12", accept = false, text = "Broken")
+        assertEquals(listOf("/api/projects/ai-gile/cards/AIG-12/verdict"), asked)
+    }
+
     @Test fun anOlderBoardWithoutTheRouteGivesNothing() = runBlocking {
         assertNull(board(404, """{"error":"not found"}""").card("ai-gile", "AIG-12"))
     }

@@ -154,6 +154,10 @@ class Repo(context: Context) {
     /** One card for the card view (AII-45); null if it can't be fetched (the view still shows its messages). */
     suspend fun card(ref: ChatRef, id: String): CardDetail? = runCatching { source.card(ref.id, id) }.getOrNull()
 
+    /** Accept or send back a card in For you to test (AII-273); false when the board said no. */
+    suspend fun verdict(ref: ChatRef, id: String, accept: Boolean, text: String = ""): Boolean =
+        runCatching { source.verdict(ref.id, id, accept, text) }.isSuccess
+
     /* ---------- sending through the outbox: nothing typed is lost ---------- */
 
     fun queue(ref: ChatRef, text: String, target: String?, files: List<String> = emptyList(), sendAt: Instant? = null): Pending {

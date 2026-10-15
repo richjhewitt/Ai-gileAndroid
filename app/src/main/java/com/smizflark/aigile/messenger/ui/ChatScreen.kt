@@ -367,7 +367,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                         }
                     }
                     if (convo == null && error == null) item { Text(stringResource(R.string.loading), Modifier.padding(24.dp)) }
-                    detail?.let { d -> item(key = "card-details") { CardDetails(d) } }   // last item = top of the reversed list
+                    detail?.let { d -> item(key = "card-details") { CardDetails(d, ref, repo) { detail = it } } }   // last item = top of the reversed list
                     if (convo != null && convo!!.bubbles.isEmpty() && pending.isEmpty()) item {
                         Text(stringResource(R.string.chat_empty), Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }

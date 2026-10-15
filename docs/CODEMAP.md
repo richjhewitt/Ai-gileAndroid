@@ -53,6 +53,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 
 ## ui/ (Compose screens)
 - ui/CardDetails.kt: card detail sheet and the board's column names.
+- ui/CardDetails.kt also: Accept / Send back (reason dialog) on a card in For you to test (AII-273; Source.verdict -> board POST .../cards/<id>/verdict); the demo card TUN-7 waits in For you to test (AII-274).
 - ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, this chat's reminders (AII-223, tap jumps to the message, X cancels via cancelReminder in ui/RemindersScreen.kt), pictures, links (AII-194), Mute and Silent alerts side by side (AII-245), and Pin; section headings show their counts (AII-252).
 - ui/ChatScreen.kt: the chat screen itself (list, find, scrolling).
 - ui/ChatGestures.kt: the pinch-to-zoom text size (AII-259) and the next unread chat lookup (AII-204) for ui/ChatScreen.kt.

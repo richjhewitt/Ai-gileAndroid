@@ -355,6 +355,18 @@ class ChatShotTest : ShotBase() {
         rule.waitForIdle()
         rule.onNodeWithTag("details-pin").fetchSemanticsNode()
     }
+    /** AII-273: the demo's test card with Accept and Send back; Accept moves it to Done and the buttons go. */
+    private fun testCard(dark: Boolean) {
+        val t = chats.first { it.id == "tunio" }; prime(t)
+        show(dark) { ChatScreen(repo, t, onBack = {}, focus = "TUN-7") }
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("card-accept").fetchSemanticsNodes().isNotEmpty() }
+        rule.onRoot().captureRoboImage("../docs/shots/card_test_${if (dark) "dark" else "light"}.png")
+        rule.onNodeWithTag("card-accept").performClick()
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("card-accept").fetchSemanticsNodes().isEmpty() }
+        rule.onNodeWithText("Done · Lead").assertExists()
+    }
+    @Test fun testCardLight() = testCard(false)
+    @Test fun testCardDark() = testCard(true)
     /** AII-219: tapping "working on AIG-2" opens that card, like a card link. */
     @Test fun workingOnTapOpensTheCard() {
         prime(lead())
