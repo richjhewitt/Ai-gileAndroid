@@ -43,10 +43,13 @@ function Find($pattern) {
   }
   $null
 }
+# a slow first boot can show "X isn't responding": tap Wait and carry on
+function DismissPopup {
+  if ((Dump).OuterXml -match "isn.t responding") { $w = Find '^Wait$'; if ($w) { & $adb shell input tap $w[0] $w[1]; Write-Host "dismissed a not-responding popup" } }
+}
 function TapWhenFound($pattern, $what, $tries = 20) {
   for ($i = 0; $i -lt $tries; $i++) {
-    # a slow first boot can show "X isn't responding": tap Wait and carry on
-    if ((Dump).OuterXml -match "isn.t responding") { $w = Find '^Wait$'; if ($w) { & $adb shell input tap $w[0] $w[1]; Write-Host "dismissed a not-responding popup" } }
+    DismissPopup
     $p = Find $pattern
     if ($p) { & $adb shell input tap $p[0] $p[1]; Write-Host "tapped $what"; return }
     Start-Sleep 1
@@ -85,22 +88,63 @@ Write-Host "booted"
 & $adb shell input keyevent 3
 $main = (& $adb shell cmd package resolve-activity --brief -c android.intent.category.LAUNCHER $pkg | Select-Object -Last 1).Trim()
 & $adb shell am start -W -n $main | Out-Null
+# a cold boot can swallow the first start: launch again until the sign-in screen shows
+for ($t = 0; $t -lt 3 -and -not (Find 'Try the demo'); $t++) { Start-Sleep 5; if (-not (Find 'Try the demo')) { & $adb shell am start -W -n $main | Out-Null } }
 
 TapWhenFound 'Try the demo' 'Try the demo'
 TapWhenFound 'Tunio' 'Tunio chat' 30
 TapWhenFound '^Message$|Message the' 'message field'
 & $adb shell input text $msg
 TapWhenFound '^Send$' 'Send'
-Start-Sleep 2
-$ui = (Dump).OuterXml
-if ($ui -notmatch [regex]::Escape($msg)) { Fail "sent text '$msg' not visible after send" }
+$ok = $false
+for ($i = 0; $i -lt 5 -and -not $ok; $i++) { Start-Sleep 2; DismissPopup; $ok = (Dump).OuterXml -match [regex]::Escape($msg) }
+if (-not $ok) { Fail "sent text '$msg' not visible after send" }
 Write-Host "sent '$msg' shown in chat"
 
+# AII-201/251: hold the message -> Remind me -> In 1 hour -> (note dialog) Skip -> a bell line shows under it
+$bell = [string][char]0xD83D + [char]0xDD14
+$ok = $false
+for ($try = 0; $try -lt 4 -and -not $ok; $try++) {
+  $p = Find ([regex]::Escape($msg))
+  if ($p) { & $adb shell input swipe $p[0] $p[1] $p[0] $p[1] 900 }
+  for ($i = 0; $i -lt 4 -and -not $ok; $i++) { Start-Sleep 1; $ok = [bool](Find '^Remind me$') }
+  if (-not $ok) { & $adb shell input keyevent 4; Start-Sleep 1 }   # menu did not open (message still sending?): retry
+}
+if (-not $ok) { Fail "hold on message did not show 'Remind me'" }
+TapWhenFound '^Remind me$' 'Remind me'
+TapWhenFound '^In 1 hour$' 'In 1 hour'
+TapWhenFound '^Skip$' 'Skip note'
+$ok = $false
+for ($i = 0; $i -lt 10 -and -not $ok; $i++) { Start-Sleep 1; $ok = (Dump).OuterXml -match [regex]::Escape($bell) }
+if (-not $ok) { Fail "no bell line under the message after Remind me" }
+Write-Host "Remind me in 1 hour shows the bell line"
+
+# AII-204: another demo chat is unread and this one is at the bottom, so Next unread shows
+$ok = $false
+for ($i = 0; $i -lt 5 -and -not $ok; $i++) { $ok = [bool](Find '^Next unread'); if (-not $ok) { Start-Sleep 1 } }
+if (-not $ok) { Fail "no 'Next unread' button at the bottom of the chat" }
+Write-Host "Next unread button shown"
+
 # AII-92: pictures on a real phone (the JVM tests can't draw them): details -> hills full screen -> swipe
+TapWhenFound '^Back$' 'Back to chats'
+
+# AII-232/202: Settings has its section headings and the Undo send switch (scroll down to find each)
+function ScrollFind($pattern, $what) {
+  for ($i = 0; $i -lt 12; $i++) {
+    for ($j = 0; $j -lt 3; $j++) { if (Find $pattern) { Write-Host "settings shows '$what'"; return }; Start-Sleep 1 }   # the screen may still be drawing
+    & $adb shell input swipe 540 1700 540 700 300; Start-Sleep 1
+  }
+  Fail "Settings: '$what' not found"
+}
+TapWhenFound '^Settings$' 'Settings'
+foreach ($h in 'Connection', 'Look', 'Chats') { ScrollFind "^$h$" "$h heading" }
+ScrollFind '^Undo send$' 'Undo send switch'   # in the Chats section
+foreach ($h in 'Alerts', 'Privacy') { ScrollFind "^$h$" "$h heading" }
 TapWhenFound '^Back$' 'Back to chats'
 TapWhenFound '^AI-gile$' 'AI-gile chat' 30
 Start-Sleep 2
 TapWhenFound '^AI-gile$' 'chat name'
+for ($i = 0; $i -lt 6 -and -not (Find '^hills\.png$'); $i++) { & $adb shell input swipe 540 1800 540 900 300; Start-Sleep 1 }   # the details sheet is long now: scroll to the pictures
 TapWhenFound '^hills\.png$' 'hills picture' 15
 Start-Sleep 2
 $g = Find '^Got it$'   # Android's one-time "Viewing full screen" hint (AII-93 hides the bars)
