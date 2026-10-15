@@ -118,8 +118,8 @@ class MainActivity : FragmentActivity() {
                     }
                     composable("about") { AboutScreen(onBack = { nav.popBackStack() }) }   // AII-220
                     composable("settings?replies={replies}", arguments = listOf(navArgument("replies") { defaultValue = false; type = NavType.BoolType })) { e ->
-                        SettingsScreen(repo, showReplies = e.arguments?.getBoolean("replies") == true, onBack = { nav.popBackStack() }, onReminders = { nav.navigate("reminders") }, onAbout = { nav.navigate("about") }, onSignedOut = {
-                            nav.navigate("connect?out=true") { popUpTo(0) { inclusive = true } }
+                        SettingsScreen(repo, showReplies = e.arguments?.getBoolean("replies") == true, onBack = { nav.popBackStack() }, onReminders = { nav.navigate("reminders") }, onAbout = { nav.navigate("about") }, onSignedOut = { wasDemo ->   // AII-289: a real Sign out leads with Scan QR code; Leave the demo goes back to the first screen (AII-278)
+                            nav.navigate(if (wasDemo) "connect" else "connect?out=true") { popUpTo(0) { inclusive = true } }
                         })
                     }
                 } }

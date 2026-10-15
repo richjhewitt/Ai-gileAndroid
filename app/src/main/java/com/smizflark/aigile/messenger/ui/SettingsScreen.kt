@@ -79,7 +79,7 @@ import com.smizflark.aigile.messenger.data.SavedPictures
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onReminders: () -> Unit = {}, onAbout: () -> Unit = {}, showReplies: Boolean = false) {
+fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolean) -> Unit, onReminders: () -> Unit = {}, onAbout: () -> Unit = {}, showReplies: Boolean = false) {
     val s = repo.store
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -308,7 +308,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit, onRe
             Text(stringResource(if (s.demo) R.string.leave_demo_text else R.string.sign_out_text))
         },
         confirmButton = {
-            TextButton(onClick = { confirmSignOut = false; CheckWorker.cancel(ctx); repo.signOut(); onSignedOut() }) {
+            TextButton(onClick = { confirmSignOut = false; val wasDemo = s.demo; CheckWorker.cancel(ctx); repo.signOut(); onSignedOut(wasDemo) }) {
                 Text(stringResource(if (s.demo) R.string.leave else R.string.sign_out_short), color = MaterialTheme.colorScheme.error)
             }
         },
