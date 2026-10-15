@@ -87,7 +87,7 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
     ) {
         Spacer(Modifier.height(24.dp))
         Text("💬", style = MaterialTheme.typography.displayMedium)
-        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)   // no Surface here: without a colour it is black in dark mode
         Text(stringResource(R.string.connect_tagline), style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
@@ -99,7 +99,7 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
         Text(stringResource(R.string.connect_demo_note), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(12.dp))
-        Text(stringResource(R.string.connect_own_board), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.connect_own_board), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
 
         OutlinedButton(
             onClick = { scan.launch(ScanOptions().setPrompt(scanPrompt).setBeepEnabled(false).setOrientationLocked(false)) },
