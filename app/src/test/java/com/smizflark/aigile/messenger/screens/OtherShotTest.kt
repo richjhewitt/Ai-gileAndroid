@@ -60,6 +60,7 @@ import org.robolectric.annotation.GraphicsMode
 class OtherShotTest : ShotBase() {
     @Test fun connectLight() = shot("connect", false) { ConnectScreen(repo, null) {} }
     @Test fun connectDark() = shot("connect", true) { ConnectScreen(repo, null) {} }
+    @Test fun connectAfterSignOut() = shot("connect-signed-out", false) { ConnectScreen(repo, null, scanFirst = true) {} }   // AII-289
     /** AII-138: hold a message, Star: a ★ by its time, and it shows under Starred in the details; tapping it closes the sheet. */
     @Test fun starredLight() {
         prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")

@@ -49,9 +49,9 @@ import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Repo
 import kotlinx.coroutines.launch
 
-/** Journey 1: connect the phone to your board, or try the demo. */
+/** Journey 1: connect the phone to your board, or try the demo. [scanFirst]: just signed out, so Scan QR code leads (AII-289). */
 @Composable
-fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit) {
+fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, scanFirst: Boolean = false, onDone: () -> Unit) {
     var url by rememberSaveable { mutableStateOf(prefill?.first ?: repo.store.url) }
     var key by rememberSaveable { mutableStateOf(prefill?.second ?: "") }
     var busy by rememberSaveable { mutableStateOf(false) }
@@ -92,21 +92,26 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
         // AII-275: the demo comes first and big; connecting a board is below it, in plain words.
-        Button(
-            onClick = { repo.startDemo(); onDone() },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("try-demo"), enabled = !busy,
-        ) { Text(stringResource(R.string.try_demo), style = MaterialTheme.typography.titleMedium) }
-        Text(stringResource(R.string.connect_demo_note), style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(12.dp))
-        Text(stringResource(R.string.connect_own_board), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-
-        OutlinedButton(
-            onClick = { scan.launch(ScanOptions().setPrompt(scanPrompt).setBeepEnabled(false).setOrientationLocked(false)) },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = !busy,
-        ) {
-            Icon(Icons.Default.QrCodeScanner, null); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.scan_qr))
+        // AII-289: after Sign out it is the other way round, so pairing a new board is the first tap.
+        val demo = @Composable {
+            Button(
+                onClick = { repo.startDemo(); onDone() },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("try-demo"), enabled = !busy,
+            ) { Text(stringResource(R.string.try_demo), style = MaterialTheme.typography.titleMedium) }
+            Text(stringResource(R.string.connect_demo_note), style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        val board = @Composable {
+            Text(stringResource(R.string.connect_own_board), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+            OutlinedButton(
+                onClick = { scan.launch(ScanOptions().setPrompt(scanPrompt).setBeepEnabled(false).setOrientationLocked(false)) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp).testTag("scan-qr"), enabled = !busy,
+            ) {
+                Icon(Icons.Default.QrCodeScanner, null); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.scan_qr))
+            }
+        }
+        if (scanFirst) { board(); Spacer(Modifier.height(12.dp)); demo(); Spacer(Modifier.height(12.dp)) }
+        else { demo(); Spacer(Modifier.height(12.dp)); board() }
         if (hasClip) OutlinedButton(
             onClick = {
                 val pair = pairingIn(clipboard.getText()?.text)

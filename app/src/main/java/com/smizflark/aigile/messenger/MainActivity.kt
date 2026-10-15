@@ -38,6 +38,9 @@ import com.smizflark.aigile.messenger.ui.WaitingScreen
 import com.smizflark.aigile.messenger.ui.Shortcuts
 import com.smizflark.aigile.messenger.work.CheckWorker
 
+/** The Connect screen's route; out=true after Sign out puts Scan QR code first (AII-289). */
+private const val CONNECT = "connect?out={out}"
+
 class MainActivity : FragmentActivity() {
     /** A pairing link (aigile://pair?...) or a chat to open from an alert. */
     private var pairing by mutableStateOf<Pair<String, String>?>(null)
@@ -66,13 +69,13 @@ class MainActivity : FragmentActivity() {
         setContent {
             MessengerTheme(repo.store) {
                 val nav = rememberNavController()
-                val start = if (repo.store.connected) "chats" else "connect"
+                val start = if (repo.store.connected) "chats" else CONNECT
                 PictureHost { NavHost(nav, startDestination = start) {
-                    composable("connect") {
-                        ConnectScreen(repo, pairing) {
+                    composable(CONNECT, arguments = listOf(navArgument("out") { defaultValue = false; type = NavType.BoolType })) { e ->
+                        ConnectScreen(repo, pairing, scanFirst = e.arguments?.getBoolean("out") == true) {   // AII-289
                             pairing = null
                             if (repo.store.alerts && !repo.store.demo) CheckWorker.schedule(this@MainActivity)
-                            nav.navigate("chats") { popUpTo("connect") { inclusive = true } }
+                            nav.navigate("chats") { popUpTo(CONNECT) { inclusive = true } }
                             if (shared != null) nav.navigate("new")
                         }
                     }
@@ -116,12 +119,12 @@ class MainActivity : FragmentActivity() {
                     composable("about") { AboutScreen(onBack = { nav.popBackStack() }) }   // AII-220
                     composable("settings?replies={replies}", arguments = listOf(navArgument("replies") { defaultValue = false; type = NavType.BoolType })) { e ->
                         SettingsScreen(repo, showReplies = e.arguments?.getBoolean("replies") == true, onBack = { nav.popBackStack() }, onReminders = { nav.navigate("reminders") }, onAbout = { nav.navigate("about") }, onSignedOut = {
-                            nav.navigate("connect") { popUpTo(0) { inclusive = true } }
+                            nav.navigate("connect?out=true") { popUpTo(0) { inclusive = true } }
                         })
                     }
                 } }
                 // A new pairing link while running: back to Connect, filled in.
-                LaunchedEffect(pairing) { if (pairing != null && nav.currentDestination?.route != "connect") nav.navigate("connect") }
+                LaunchedEffect(pairing) { if (pairing != null && nav.currentDestination?.route != CONNECT) nav.navigate("connect") }
                 // Shared from another app: straight to New message (after Connect if not signed in yet).
                 LaunchedEffect(shared) {
                     if (shared != null && repo.store.connected) nav.navigate("new") { launchSingleTop = true }
