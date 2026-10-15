@@ -42,12 +42,16 @@ object Search {
                 val hay = listOfNotNull(b.text, b.cardTitle, b.author).joinToString("\n")
                 val ok = (!pictures || hasPicture(b)) && (!links || hasLink(b.text)) && (!files || hasFile(b)) && (starred == null || Stars.has(starred, c.ref.key, b.key)) && (!last7 || inLast7(b.at, since)) && (!typed || fold(hay).contains(q))
                 if (!ok) return@mapNotNull null
-                val snip = if (typed) snippet(b.text, q) else tidy(b.text).replace(Regex("\\s+"), " ").trim().take(AROUND * 2)
+                val snip = if (files) fileNames(b) else if (typed) snippet(b.text, q) else tidy(b.text).replace(Regex("\\s+"), " ").trim().take(AROUND * 2)
                 if (snip.isEmpty()) Hit(ref, b, b.cardTitle ?: b.author) else Hit(ref, b, snip, if (typed) marks(snip, q) else emptyList())
             }
         }.sortedByDescending { it.bubble?.at ?: "" }
         return (byName + inMessages).take(MAX_HITS)
     }
+
+    /** AII-270: the Files chip shows "📎 name.pdf" (each file of the message) instead of the raw link. */
+    fun fileNames(b: Bubble): String =
+        b.pics.filter { isFile(it) }.joinToString("  ") { "📎 " + it.name.ifEmpty { it.path.substringBefore('?').substringAfterLast('/') } }
 
     /** The text around the first match, on one line, with "…" where it was cut. */
     fun snippet(text: String, foldedQuery: String): String {
