@@ -316,6 +316,9 @@
     <string name="notify_remind">Herinnering: %1$s</string>
     <string name="reminders">Herinneringen</string>
     <string name="empty_reminders">Geen herinneringen</string>
+    <string name="reminders_today">Vandaag</string>
+    <string name="reminders_tomorrow">Morgen</string>
+    <string name="reminders_later">Later</string>
     <string name="cancel_reminder">Annuleren</string>
     <string name="remind_in_hour">Herinner mij over 1 uur</string>
     <string name="unstar">Ster weghalen</string>
