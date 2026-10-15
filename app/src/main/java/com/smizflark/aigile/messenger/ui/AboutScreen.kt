@@ -44,23 +44,29 @@ val LICENCES = listOf(
 )
 
 /**
- * What's new (AII-261), newest first, at most about 15 lines. To add one: put its id at the TOP of this list
- * and add the English and Dutch string to values/strings.xml and values-nl/strings.xml.
+ * What's new (AII-261); About shows only the 3 newest builds (AII-271). To add one: put its id at the TOP of this list
+ * as `R.string.new_x to <build number it came in>`, and add the English and Dutch string to values/strings.xml and values-nl/strings.xml.
  */
-val WHATS_NEW = listOf(
-    R.string.new_remind,
-    R.string.new_undo,
-    R.string.new_next_unread,
-    R.string.new_settings,
-    R.string.new_pinch,
-    R.string.new_chat_list,
-    R.string.new_swipe,
-    R.string.new_details,
-    R.string.new_silent,
-    R.string.new_star,
-    R.string.new_starred,
-    R.string.new_widget,
+val WHATS_NEW: List<Pair<Int, Int>> = listOf(
+    R.string.new_remind to 308,
+    R.string.new_undo to 308,
+    R.string.new_next_unread to 308,
+    R.string.new_settings to 347,
+    R.string.new_pinch to 407,
+    R.string.new_chat_list to 347,
+    R.string.new_swipe to 316,
+    R.string.new_details to 308,
+    R.string.new_silent to 310,
+    R.string.new_star to 308,
+    R.string.new_starred to 209,
+    R.string.new_widget to 351,
 )
+
+/** AII-271: the lines from the [keep] newest builds in [lines], newest build first. */
+fun whatsNewShown(lines: List<Pair<Int, Int>> = WHATS_NEW, keep: Int = 3): List<Pair<Int, Int>> {
+    val builds = lines.map { it.second }.distinct().sortedDescending().take(keep).toSet()
+    return lines.filter { it.second in builds }.sortedByDescending { it.second }
+}
 
 /** About (AII-220): app name, version and the open-source licences; tap one to read it in the browser. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,7 +85,7 @@ fun AboutScreen(onBack: () -> Unit, build: Int = BuildConfig.VERSION_CODE) {
             Text(stringResource(R.string.build_number, build), color = MaterialTheme.colorScheme.onSurfaceVariant)
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             Text(stringResource(R.string.whats_new), style = MaterialTheme.typography.titleMedium)
-            WHATS_NEW.forEach { Text("• " + stringResource(it), Modifier.padding(vertical = 3.dp).testTag("whats_new")) }
+            whatsNewShown().forEach { (line, since) -> Text("• " + stringResource(line) + " (" + stringResource(R.string.new_build, since) + ")", Modifier.padding(vertical = 3.dp).testTag("whats_new")) }
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             Text(stringResource(R.string.licences), style = MaterialTheme.typography.titleMedium)
             LICENCES.forEach { l ->

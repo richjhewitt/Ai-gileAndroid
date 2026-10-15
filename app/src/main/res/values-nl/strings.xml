@@ -409,4 +409,5 @@
     <string name="new_star">Dubbeltik op een bericht om het een ster te geven; Kopieer als citaat</string>
     <string name="new_starred">Lijst met sterren: filter op chat, alles delen als tekst</string>
     <string name="new_widget">Widget toont ongelezen aantallen en volgt de stijl van de app</string>
+    <string name="new_build">build %1$d</string>
 </resources>
