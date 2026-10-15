@@ -47,6 +47,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Transcript.kt: a whole chat as plain text, for Share this chat (AII-139).
 - data/UndoSend.kt: a sent message held 5 seconds with an Undo bar (AII-202); used by ui/ChatScreen.kt.
 - data/Swipe.kt: what a swipe on a chat row does.
+- data/WhatsNew.kt: What's new bar (AII-268): top of the chats list on the first open after the version code changes (never on a new install); tap opens About, X closes; last seen version in Store.
 - data/Update.kt: 'New version' bar: latest GitHub release (tag build-N = versionCode), checked once a day.
 
 ## ui/ (Compose screens)

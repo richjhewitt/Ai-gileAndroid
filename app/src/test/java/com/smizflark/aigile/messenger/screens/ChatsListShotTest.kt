@@ -73,6 +73,18 @@ class ChatsListShotTest : ShotBase() {
         shot("chats_new_version", false) { ChatsScreen(repo, {}, {}, {}) }
         rule.onNodeWithTag("newVersion").assertExists()
     }
+    @Test fun whatsNewLight() {   // AII-268: fixed versions, so the shot never drifts
+        repo.store.lastSeenVersion = 100
+        shot("chats_whats_new", false) { ChatsScreen(repo, {}, {}, {}, build = 101) }
+        rule.onNodeWithTag("whatsNew").assertExists()
+        rule.onNodeWithTag("whatsNewClose").performClick()
+        rule.onNodeWithTag("whatsNew").assertDoesNotExist()
+    }
+    @Test fun noWhatsNewOnNewInstall() {
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}, build = 101) } }
+        rule.onNodeWithTag("whatsNew").assertDoesNotExist()
+        assert(repo.store.lastSeenVersion == 101)
+    }
     @Test fun noBarWhenUpToDate() {
         repo.store.release = com.smizflark.aigile.messenger.data.Release(com.smizflark.aigile.messenger.BuildConfig.VERSION_CODE, "https://example.com/a.apk")
         rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
