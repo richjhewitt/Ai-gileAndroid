@@ -118,13 +118,13 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
                     else stringResource(R.string.board_info, s.url, s.owner, Mapper.maskKey(s.key)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("connection"))
             }
+            OutlinedButton(onClick = { confirmSignOut = true }, modifier = Modifier.fillMaxWidth().testTag("signOut")) {   // AII-285: right under the connection, easy to see
+                Text(stringResource(if (s.demo) R.string.leave_demo else R.string.sign_out), color = MaterialTheme.colorScheme.error)
+            }
             ChangeBoard(repo, onSaved = { owner ->
                 saved++; note = ctx.getString(R.string.saved_as, owner)
                 if (s.alerts) CheckWorker.schedule(ctx)
             })
-            TextButton(onClick = { confirmSignOut = true }) {
-                Text(stringResource(if (s.demo) R.string.leave_demo else R.string.sign_out), color = MaterialTheme.colorScheme.error)
-            }
 
             SectionHeader(stringResource(R.string.look))
             AppearanceSettings(s)
