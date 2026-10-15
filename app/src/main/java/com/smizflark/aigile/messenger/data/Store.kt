@@ -203,6 +203,11 @@ class Store(context: Context) {
         get() = settings.getInt("lastSeenVersion", 0)
         set(v) = settings.edit().putInt("lastSeenVersion", v).apply()
 
+    /** Demo welcome tips (AII-276): true once Got it was tapped. */
+    var tipsSeen: Boolean
+        get() = settings.getBoolean("tipsSeen", false)
+        set(v) = settings.edit().putBoolean("tipsSeen", v).apply()
+
     var lastSync: Long
         get() = prefs.getLong("lastSync", 0)
         set(v) = prefs.edit().putLong("lastSync", v).apply()

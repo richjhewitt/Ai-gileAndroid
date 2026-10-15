@@ -172,7 +172,7 @@
     <string name="connect_failed_unchanged">Couldn\'t connect. Nothing was changed.</string>
     <string name="connect_bad_qr">That QR code isn\'t a board pairing code.</string>
     <string name="connect_bad_link">What you copied isn\'t a pairing link. Copy it again from the board\'s Setup &gt; Phones.</string>
-    <string name="connect_tagline">Your team leads and friends, from your board at home.</string>
+    <string name="connect_tagline">A messenger for chatting with your AI team.</string>
     <string name="scan_prompt">Scan the QR code in the board\'s Setup &gt; Phones</string>
     <string name="scan_qr">Scan QR code</string>
     <string name="use_copied_link">Use copied link</string>
@@ -181,7 +181,13 @@
     <string name="phone_key">Phone key</string>
     <string name="http_warning">⚠️ Plain http outside Tailscale sends your key unprotected. Use https or your Tailscale address.</string>
     <string name="connect">Connect</string>
-    <string name="try_demo">Try the demo (no board needed)</string>
+    <string name="try_demo">Try the demo</string>
+    <string name="connect_demo_note">Look around with made-up chats. No setup needed.</string>
+    <string name="connect_own_board">Already have your own board? Connect it here:</string>
+    <string name="tips_got_it">Got it</string>
+    <string name="tip_1">1. Tap a chat to read it.</string>
+    <string name="tip_2">2. Reply at the bottom of the chat.</string>
+    <string name="tip_3">3. Tap a card to test it.</string>
     <string name="new_to">To</string>
     <string name="new_card_for">New 💬 card for %1$s</string>
     <string name="new_placeholder">What do you want to say?</string>

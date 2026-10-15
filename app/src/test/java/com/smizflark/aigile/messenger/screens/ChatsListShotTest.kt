@@ -80,6 +80,14 @@ class ChatsListShotTest : ShotBase() {
         rule.onNodeWithTag("whatsNewClose").performClick()
         rule.onNodeWithTag("whatsNew").assertDoesNotExist()
     }
+    @Test fun welcomeTipsLight() {   // AII-276
+        repo.store.tipsSeen = false
+        shot("chats_tips", false) { ChatsScreen(repo, {}, {}, {}) }
+        rule.onNodeWithTag("tips").assertExists()
+        rule.onNodeWithTag("tipsGotIt").performClick()
+        rule.onNodeWithTag("tips").assertDoesNotExist()
+        assert(repo.store.tipsSeen)
+    }
     @Test fun noWhatsNewOnNewInstall() {
         rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}, build = 101) } }
         rule.onNodeWithTag("whatsNew").assertDoesNotExist()
