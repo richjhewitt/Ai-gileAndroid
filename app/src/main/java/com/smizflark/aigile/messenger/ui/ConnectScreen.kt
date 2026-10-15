@@ -28,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -92,8 +91,17 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
         Text(stringResource(R.string.connect_tagline), style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
-
+        // AII-275: the demo comes first and big; connecting a board is below it, in plain words.
         Button(
+            onClick = { repo.startDemo(); onDone() },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("try-demo"), enabled = !busy,
+        ) { Text(stringResource(R.string.try_demo), style = MaterialTheme.typography.titleMedium) }
+        Text(stringResource(R.string.connect_demo_note), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(12.dp))
+        Text(stringResource(R.string.connect_own_board), style = MaterialTheme.typography.titleMedium)
+
+        OutlinedButton(
             onClick = { scan.launch(ScanOptions().setPrompt(scanPrompt).setBeepEnabled(false).setOrientationLocked(false)) },
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = !busy,
         ) {
@@ -129,10 +137,6 @@ fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, onDone: () -> Unit
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("error")) }
         OutlinedButton(onClick = ::connect, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             if (busy) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.connect))
-        }
-        Spacer(Modifier.height(8.dp))
-        TextButton(onClick = { repo.startDemo(); onDone() }, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.try_demo))
         }
     }
 }

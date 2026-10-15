@@ -172,7 +172,7 @@
     <string name="connect_failed_unchanged">Kon geen verbinding maken. Er is niets gewijzigd.</string>
     <string name="connect_bad_qr">Die QR-code is geen koppelcode van een bord.</string>
     <string name="connect_bad_link">Wat je hebt gekopieerd is geen koppellink. Kopieer hem opnieuw uit Setup &gt; Phones op het bord.</string>
-    <string name="connect_tagline">Je teamleads en vrienden, vanaf je bord thuis.</string>
+    <string name="connect_tagline">Een messenger om met je AI-team te chatten.</string>
     <string name="scan_prompt">Scan de QR-code in Setup &gt; Phones op het bord</string>
     <string name="scan_qr">QR-code scannen</string>
     <string name="use_copied_link">Gekopieerde link gebruiken</string>
@@ -181,7 +181,13 @@
     <string name="phone_key">Telefoonsleutel</string>
     <string name="http_warning">⚠️ Gewone http buiten Tailscale stuurt je sleutel onbeschermd. Gebruik https of je Tailscale-adres.</string>
     <string name="connect">Verbinden</string>
-    <string name="try_demo">Probeer de demo (geen bord nodig)</string>
+    <string name="try_demo">Probeer de demo</string>
+    <string name="connect_demo_note">Kijk rond met verzonnen chats. Geen installatie nodig.</string>
+    <string name="connect_own_board">Heb je al een eigen bord? Verbind het hier:</string>
+    <string name="tips_got_it">Begrepen</string>
+    <string name="tip_1">1. Tik op een chat om hem te lezen.</string>
+    <string name="tip_2">2. Antwoord onderaan de chat.</string>
+    <string name="tip_3">3. Tik op een kaart om hem te testen.</string>
     <string name="new_to">Aan</string>
     <string name="new_card_for">Nieuwe 💬-kaart voor %1$s</string>
     <string name="new_placeholder">Wat wil je zeggen?</string>

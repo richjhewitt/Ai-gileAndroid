@@ -92,6 +92,7 @@ $main = (& $adb shell cmd package resolve-activity --brief -c android.intent.cat
 for ($t = 0; $t -lt 3 -and -not (Find 'Try the demo'); $t++) { Start-Sleep 5; if (-not (Find 'Try the demo')) { & $adb shell am start -W -n $main | Out-Null } }
 
 TapWhenFound 'Try the demo' 'Try the demo'
+TapWhenFound 'Got it' 'welcome tips' 30   # AII-276
 TapWhenFound 'Tunio' 'Tunio chat' 30
 TapWhenFound '^Message$|Message the' 'message field'
 & $adb shell input text $msg

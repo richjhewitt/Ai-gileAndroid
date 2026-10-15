@@ -70,6 +70,7 @@ import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pause
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.Update
+import com.smizflark.aigile.messenger.data.Tips
 import com.smizflark.aigile.messenger.data.WhatsNew
 import com.smizflark.aigile.messenger.data.pinFirst
 import com.smizflark.aigile.messenger.data.mutedLast
@@ -170,6 +171,8 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     LaunchedEffect(Unit) { if (repo.store.lastSeenVersion == 0) repo.store.lastSeenVersion = build }
     fun seeWhatsNew() { repo.store.lastSeenVersion = build; whatsNew = false }
 
+    var tips by remember { mutableStateOf(Tips.show(repo.store.demo, repo.store.tipsSeen)) }   // AII-276
+
     val list = androidx.compose.foundation.lazy.rememberLazyListState()
     Scaffold(
         topBar = {
@@ -230,6 +233,19 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                             style = MaterialTheme.typography.bodyMedium)
                         IconButton(onClick = { seeWhatsNew() }, modifier = Modifier.testTag("whatsNewClose")) {
                             Icon(Icons.Default.Close, stringResource(R.string.whats_new_close), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+                    }
+                }
+                if (tips) item {
+                    Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primaryContainer).testTag("tips").padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            listOf(R.string.tip_1, R.string.tip_2, R.string.tip_3).forEach {
+                                Text(stringResource(it), color = MaterialTheme.colorScheme.onPrimaryContainer, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                        androidx.compose.material3.TextButton(onClick = { repo.store.tipsSeen = true; tips = false }, modifier = Modifier.testTag("tipsGotIt")) {
+                            Text(stringResource(R.string.tips_got_it))
                         }
                     }
                 }
