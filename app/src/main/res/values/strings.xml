@@ -204,6 +204,11 @@
     <string name="status_verify">For you to test</string>
     <string name="status_team">For the team</string>
     <string name="status_done">Done</string>
+    <string name="card_accept">Accept</string>
+    <string name="card_send_back">Send back</string>
+    <string name="card_send_back_title">Send back to the team</string>
+    <string name="card_send_back_hint">Say what is wrong</string>
+    <string name="card_verdict_failed">The board didn\'t take that. Try again.</string>
     <string name="card_to_test">To test</string>
     <string name="alerts_permission">Alerts need permission: allow notifications in Android settings.</string>
     <string name="connection">Connection</string>

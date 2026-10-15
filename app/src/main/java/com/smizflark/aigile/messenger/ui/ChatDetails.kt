@@ -132,7 +132,7 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 Text("⏳ ${t.label}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.fillMaxWidth()
                     .clickable { if (shown?.id == t.id) shown = null else scope.launch { shown = t.id?.let { repo.card(ref, it) } } }
                     .padding(vertical = 6.dp).testTag("details-card-${t.id}"))
-                shown?.takeIf { it.id == t.id }?.let { CardDetails(it) }
+                shown?.takeIf { it.id == t.id }?.let { CardDetails(it, ref, repo) { d -> shown = d } }
             }
             // AII-138: starred messages; tap one and the chat jumps to it.
             if (onStarred != null) {

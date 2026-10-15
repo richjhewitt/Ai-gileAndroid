@@ -54,11 +54,19 @@ class DemoSource : ChatSource {
 
     override suspend fun owner() = "Rich"
 
+    /** AII-274: where the demo's test card is; Accept and Send back only change this (AII-273). */
+    private val placed = mutableMapOf("TUN-7" to "verify")
+
     override suspend fun card(slug: String, id: String): CardDetail? {
         val t = threads[slug] ?: return null
         val title = t.cards[id]?.title ?: return null
-        return CardDetail(id, title, if (t.open.any { it.id == id }) "team" else "doing", "task",
-            "- A demo card from **${t.name}**\n\n- On a real board this shows the card's own description", assignee = t.lead ?: "")
+        val steps = if (id == "TUN-7") "- Open a playlist\n\n- Tap **Export**\n\n- Check the .m3u file opens in your music app" else ""
+        return CardDetail(id, title, placed[id] ?: if (t.open.any { it.id == id }) "team" else "doing", "task",
+            "- A demo card from **${t.name}**\n\n- On a real board this shows the card's own description", steps, assignee = t.lead ?: "")
+    }
+
+    override suspend fun verdict(slug: String, id: String, accept: Boolean, text: String) {
+        if (placed[id] == "verify") placed[id] = if (accept) "done" else "team"
     }
 
     override suspend fun chats(): List<ChatRef> {

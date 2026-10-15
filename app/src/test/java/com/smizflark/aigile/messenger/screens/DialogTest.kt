@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -99,6 +100,16 @@ class DialogTest {
         rule.onNodeWithText("Save").performClick()
         rule.onNodeWithTag("error").assertIsDisplayed()
         assertTrue(repo.store.demo)
+    }
+
+    /** AII-273: Send back needs a reason, then hands it on. */
+    @Test fun sendBackAsksForAReason() {
+        var sent: String? = null
+        rule.setContent { MessengerTheme { com.smizflark.aigile.messenger.ui.SendBackDialog(onSend = { sent = it }, onDismiss = {}) } }
+        rule.onNodeWithTag("send-back-go").assertIsNotEnabled()
+        rule.onNodeWithTag("send-back-reason").performTextInput("  Export is empty ")
+        rule.onNodeWithTag("send-back-go").performClick()
+        assertEquals("Export is empty", sent)
     }
 
     /** Change board: Cancel after typing leaves the saved board alone and closes the form. */

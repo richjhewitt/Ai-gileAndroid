@@ -204,6 +204,11 @@
     <string name="status_verify">Om jij te testen</string>
     <string name="status_team">Voor het team</string>
     <string name="status_done">Klaar</string>
+    <string name="card_accept">Accepteren</string>
+    <string name="card_send_back">Terugsturen</string>
+    <string name="card_send_back_title">Terugsturen naar het team</string>
+    <string name="card_send_back_hint">Zeg wat er mis is</string>
+    <string name="card_verdict_failed">Het bord nam dat niet aan. Probeer het nog eens.</string>
     <string name="card_to_test">Testen</string>
     <string name="alerts_permission">Meldingen hebben toestemming nodig: sta meldingen toe in de Android-instellingen.</string>
     <string name="connection">Verbinding</string>
