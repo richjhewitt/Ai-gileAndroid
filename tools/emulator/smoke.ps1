@@ -126,6 +126,16 @@ for ($i = 0; $i -lt 5 -and -not $ok; $i++) { $ok = [bool](Find '^Next unread'); 
 if (-not $ok) { Fail "no 'Next unread' button at the bottom of the chat" }
 Write-Host "Next unread button shown"
 
+# AII-273/279: the friends demo path: open the TUN-7 card to test, Accept, and the buttons go
+TapWhenFound '^Open TUN-7$' 'TUN-7 card'
+for ($i = 0; $i -lt 6 -and -not (Find '^Accept$'); $i++) { & $adb shell input swipe 540 700 540 1700 300; Start-Sleep 1 }   # the card view opens at the newest message: scroll up to its steps
+TapWhenFound '^Accept$' 'Accept'
+$ok = $false
+for ($i = 0; $i -lt 5 -and -not $ok; $i++) { Start-Sleep 1; $ok = -not (Find '^Accept$') }
+if (-not $ok) { Fail "Accept still showing after tapping it" }
+Write-Host "card accepted"
+TapWhenFound '^Back$' 'Back to the chat'
+
 # AII-92: pictures on a real phone (the JVM tests can't draw them): details -> hills full screen -> swipe
 TapWhenFound '^Back$' 'Back to chats'
 
@@ -173,4 +183,13 @@ for ($i = 0; $i -lt 10 -and -not $shared; $i++) { Start-Sleep 1; $shared = (Dump
 if (-not $shared) { Fail "share menu did not open" }
 Write-Host "share menu opened"
 & $adb shell input keyevent 4
-Write-Host "PASS: message sent, pictures swipe, save and share (screen in TEMP\smoke-pass.png)"; Cleanup; exit 0
+# AII-278/279: Leave the demo goes back to the first screen
+for ($i = 0; $i -lt 4 -and -not (Find '^Settings$'); $i++) { & $adb shell input keyevent 4; Start-Sleep 1 }
+TapWhenFound '^Settings$' 'Settings'
+ScrollFind '^Leave the demo$' 'Leave the demo'
+TapWhenFound '^Leave the demo$' 'Leave the demo'
+TapWhenFound '^Leave$' 'Leave'
+$ok = $false; for ($i = 0; $i -lt 10 -and -not $ok; $i++) { Start-Sleep 1; $ok = [bool](Find 'Try the demo') }
+if (-not $ok) { Fail "Leave the demo did not go back to the first screen" }
+Write-Host "left the demo"
+Write-Host "PASS: message sent, card accepted, pictures swipe, save and share, left the demo (screen in TEMP\smoke-pass.png)"; Cleanup; exit 0
