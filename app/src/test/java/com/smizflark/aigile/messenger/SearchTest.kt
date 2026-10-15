@@ -124,6 +124,11 @@ class SearchTest {
         assertEquals(listOf("AIG-5"), Search.run("", listOf(gile), chipConvs, files = true).map { it.bubble?.card })
     }
 
+    @Test fun filesChipShowsTheFileName() {
+        val hit = Search.run("", listOf(gile), chipConvs, files = true).single()
+        assertTrue(hit.snippet, hit.snippet.startsWith("📎 ") && !hit.snippet.contains("/api/") && !hit.snippet.contains("]("))
+    }
+
     @Test fun chipsHideChatsAndStillUseTheQuery() {
         assertTrue(Search.run("ai-gile", listOf(gile), chipConvs, links = true).isEmpty())
         assertEquals(listOf("AIG-3"), Search.run("dnbloco", listOf(gile), chipConvs, links = true).map { it.bubble?.card })
