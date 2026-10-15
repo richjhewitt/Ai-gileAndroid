@@ -365,6 +365,15 @@ class ChatShotTest : ShotBase() {
         rule.waitUntil(5_000) { rule.onAllNodesWithTag("card-accept").fetchSemanticsNodes().isEmpty() }
         rule.onNodeWithText("Done · Lead").assertExists()
     }
+    /** AII-282: a busy card waiting for your test opens at its steps, so Accept is on screen. */
+    @Test fun busyCardToTestOpensAtItsSteps() {
+        val t = chats.first { it.id == "tunio" }; prime(t)
+        repeat(15) { repo.queue(t, "Another note on the export, number $it", "TUN-7") }
+        show(false) { ChatScreen(repo, t, onBack = {}, focus = "TUN-7") }
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("card-accept").fetchSemanticsNodes().isNotEmpty() }
+        rule.waitForIdle()
+        rule.onNodeWithTag("card-accept").assertIsDisplayed()
+    }
     @Test fun testCardLight() = testCard(false)
     @Test fun testCardDark() = testCard(true)
     /** AII-219: tapping "working on AIG-2" opens that card, like a card link. */

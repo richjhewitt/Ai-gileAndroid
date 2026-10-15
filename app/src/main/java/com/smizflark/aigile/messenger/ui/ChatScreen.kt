@@ -259,6 +259,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     LaunchedEffect(atBottom, newest, restoring) { if (atBottom && !restoring) seenNewest = newest }
     val latestItems by rememberUpdatedState(items)
     RestoreScroll(list, items, placeKey, place, openAt, seenNewest) { restoring = false }   // AII-72, AII-102 (ChatScroll.kt)
+    // AII-282: a card waiting for your test opens at its steps and Accept (the top), unless a saved place or a search result wins.
+    val toTest = detail?.status == "verify"
+    LaunchedEffect(toTest) {
+        if (toTest && place == null && openAt == null) { snapshotFlow { list.layoutInfo.totalItemsCount }.first { it > 0 }; list.scrollToItem(list.layoutInfo.totalItemsCount - 1) }
+    }
     val unread = if (atBottom) 0 else unreadBelow(convo?.bubbles.orEmpty(), seenNewest)
     // AII-204: the next unread chat in chats-list order, worked out as the chats list does it; looked at again whenever you reach the bottom.
     val nextChat = remember(atBottom, convo, Appearance.nextUnread) {

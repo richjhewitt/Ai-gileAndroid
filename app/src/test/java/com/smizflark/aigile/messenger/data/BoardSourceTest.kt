@@ -38,6 +38,8 @@ class BoardSourceTest {
             while (b == null && up != null) { File(up, "AI-gile/server.js").takeIf { it.exists() }?.let { b = it.parentFile }; up = up.parentFile }
             assumeTrue("no AI-gile board found (set AIGILE_BOARD)", b != null)
             val (code, out) = node("start", "--board", b!!.path)
+            // A test board already running is someone else's (e.g. on Rich's phone, AII-67): skip, and never stop it.
+            assumeTrue("a test board is already running: skipped so it keeps running", !out.contains("already running"))
             check(code == 0) { "test board did not start: $out" }
             url = out.lines().last { it.startsWith("http") }
         }
