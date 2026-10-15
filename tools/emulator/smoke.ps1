@@ -127,6 +127,7 @@ if (-not $ok) { Fail "no 'Next unread' button at the bottom of the chat" }
 Write-Host "Next unread button shown"
 
 # AII-273/279: the friends demo path: open the TUN-7 card to test, Accept, and the buttons go
+for ($i = 0; $i -lt 6 -and -not (Find '^Open TUN-7$'); $i++) { & $adb shell input swipe 540 700 540 1700 300; Start-Sleep 1 }   # AII-292: the sent message and bell line push its header off the top
 TapWhenFound '^Open TUN-7$' 'TUN-7 card'
 for ($i = 0; $i -lt 6 -and -not (Find '^Accept$'); $i++) { & $adb shell input swipe 540 700 540 1700 300; Start-Sleep 1 }   # the card view opens at the newest message: scroll up to its steps
 TapWhenFound '^Accept$' 'Accept'
@@ -192,4 +193,9 @@ TapWhenFound '^Leave$' 'Leave'
 $ok = $false; for ($i = 0; $i -lt 10 -and -not $ok; $i++) { Start-Sleep 1; $ok = [bool](Find 'Try the demo') }
 if (-not $ok) { Fail "Leave the demo did not go back to the first screen" }
 Write-Host "left the demo"
+# AII-289/293: only a real Sign out puts Scan QR code first; leaving the demo keeps Try the demo on top
+$d = Find '^Try the demo$'; $q = Find '^Scan QR code$'
+if (-not $d -or -not $q) { Fail "first screen is missing Try the demo or Scan QR code" }
+if ($d[1] -gt $q[1]) { Fail "after Leave the demo, Scan QR code is above Try the demo" }
+Write-Host "Leave the demo keeps Try the demo first"
 Write-Host "PASS: message sent, card accepted, pictures swipe, save and share, left the demo (screen in TEMP\smoke-pass.png)"; Cleanup; exit 0
