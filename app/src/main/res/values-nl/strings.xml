@@ -34,6 +34,7 @@
     <string name="empty_loading">Chats laden…</string>
     <string name="search_pictures">Foto’s</string>
     <string name="search_links">Links</string>
+    <string name="search_files">Bestanden</string>
     <string name="search_none_filtered">Niets met een foto of link gevonden</string>
     <string name="search_hint">Typ minstens 2 letters om in alle chats te zoeken</string>
     <string name="search_searching">Zoeken…</string>

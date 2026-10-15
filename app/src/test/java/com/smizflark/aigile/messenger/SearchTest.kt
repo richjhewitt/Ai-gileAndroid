@@ -106,6 +106,10 @@ class SearchTest {
         assertEquals(listOf("AIG-1"), Search.run("", listOf(gile), chipConvs, pictures = true).map { it.bubble?.card })
     }
 
+    @Test fun filesChipOnlyTakesNonPictureFiles() {
+        assertEquals(listOf("AIG-5"), Search.run("", listOf(gile), chipConvs, files = true).map { it.bubble?.card })
+    }
+
     @Test fun chipsHideChatsAndStillUseTheQuery() {
         assertTrue(Search.run("ai-gile", listOf(gile), chipConvs, links = true).isEmpty())
         assertEquals(listOf("AIG-3"), Search.run("dnbloco", listOf(gile), chipConvs, links = true).map { it.bubble?.card })
