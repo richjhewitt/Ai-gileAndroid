@@ -153,9 +153,18 @@ async function phoneTailscale() {
 }
 function pairPage(s, qr, address) {
   const page = path.join(s.dir, 'pair.html');
+  // Black mode (AII-284), like the app's Settings > Look > Black: follows the PC's dark mode, and the 🌙 button flips it
+  // (remembered). The QR code keeps its white square so the phone can still read it.
   fs.writeFileSync(page, `<!doctype html><meta charset="utf-8"><title>Test board: pair the app</title>
-<body style="font:18px system-ui;text-align:center;padding:2em"><h2>📱 Test board</h2><p>In the app: <b>Scan QR code</b></p>
-${qrSvg(s.board, qr)}<p style="color:#666;font-size:14px">${address} (demo chats, not your real board)</p></body>`);
+<style>body{font:18px system-ui;text-align:center;padding:2em;background:#fff;color:#111}.note{color:#666;font-size:14px}
+body.black{background:#000;color:#eee}body.black .note{color:#999}
+#look{position:fixed;top:1em;right:1em;font:inherit;font-size:14px;padding:.4em .8em;border-radius:2em;border:1px solid #888;background:none;color:inherit;cursor:pointer}</style>
+<body><button id="look">🌙 Black</button><h2>📱 Test board</h2><p>In the app: <b>Scan QR code</b></p>
+${qrSvg(s.board, qr)}<p class="note">${address} (demo chats, not your real board)</p>
+<script>const b=document.body,k='testboard-look',saved=localStorage.getItem(k);
+const set=on=>{b.classList.toggle('black',on);look.textContent=on?'☀️ Light':'🌙 Black';};
+set(saved?saved==='black':matchMedia('(prefers-color-scheme: dark)').matches);
+look.onclick=()=>{const on=!b.classList.contains('black');set(on);localStorage.setItem(k,on?'black':'light');};</script></body>`);
   console.log(`serving ${address}\npair the app with: ${page}`);
   if (!args.includes('--no-open')) spawn('explorer', [page], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
 }

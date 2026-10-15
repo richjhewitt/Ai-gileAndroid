@@ -69,7 +69,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
 - ui/ChatsScreen.kt: every chat in one list.
 - ui/ChatRow.kt: one row of the chats list (swipe, hold menu, badges, a bell when the chat has a reminder AII-226; Remind me in 1 hour on its newest cached message, AII-240) and its preview, draft and unsent labels.
-- ui/ConnectScreen.kt: connect the phone to a board, or try the demo.
+- ui/ConnectScreen.kt: connect the phone to a board, or try the demo; after Sign out (route connect?out=true) Scan QR code comes first (AII-289).
 - ui/Dictate.kt: voice to text with the phone's recogniser.
 - ui/Find.kt: find in a chat (pure).
 - ui/Lock.kt: app lock with fingerprint, face or PIN; Lock after straight away / 1 / 5 minutes (AII-234, Store lockAfter, not backed up like lock).
