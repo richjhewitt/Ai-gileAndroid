@@ -39,7 +39,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Repo.kt: the one place screens and background checks get chats from.
 - data/ScrollPlace.kt: remembers where you left each chat.
 - data/Seal.kt: seals every board call end to end (AES-256-GCM, key from pairing; vectors in docs/SEALED.md).
-- data/Search.kt: search results (chats and messages); Pictures / Links / Starred / Last 7 days (AII-258, `last7`) (AII-246, `starred` = the stars) filters list matching messages newest first (AII-192); snippets show markdown as read and carry the found-word ranges to bold (AII-195).
+- data/Search.kt: search results (chats and messages); Pictures / Links / Files (AII-267, `files`, non-picture files as in ChatInfo.isFile) / Starred / Last 7 days (AII-258, `last7`) (AII-246, `starred` = the stars) filters list matching messages newest first (AII-192); snippets show markdown as read and carry the found-word ranges to bold (AII-195).
 - data/Share.kt: text shared in from other apps.
 - data/Source.kt: chat source, the real board or the demo.
 - data/Stars.kt: starred messages (AII-138), listed in the chat details; lead chats kept in step with the board (AII-141, Repo syncStars; Starred refreshes them on open, AII-162).
@@ -78,7 +78,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ReadAloud.kt: Read aloud from the hold menu with the phone's own voice (AII-185); leaving a chat stops it.
 - ui/Files.kt: tap a file to download it to the cache and open it with another app (AII-197); used in bubbles and the chat details Files list.
 - ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
-- ui/SearchScreen.kt: search across all chats, with Pictures, Links, Starred and Last 7 days chips (AII-192, AII-246, AII-258).
+- ui/SearchScreen.kt: search across all chats, with Pictures, Links, Files, Starred and Last 7 days chips (AII-192, AII-267, AII-246, AII-258).
 - ui/SettingsScreen.kt: settings.
 - ui/RemindersScreen.kt: every reminder, soonest first (AII-209, a Reminders row in Settings when there are any); tap one, its chat opens at the message (AII-247); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
 - ui/SearchScreen.kt: search across all chats, with Pictures and Links chips (AII-192).

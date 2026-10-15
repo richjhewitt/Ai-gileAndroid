@@ -20,15 +20,17 @@ object Search {
     fun hasLink(text: String) = link.containsMatchIn(text)
     fun hasPicture(b: Bubble) = b.pics.any { it.image } || Gif.inText(b.text).isNotEmpty()   // a GIF link shows as a picture too (AII-188)
 
+    fun hasFile(b: Bubble) = b.pics.any { isFile(it) }   // AII-267: same detection as the chat info Files list
+
     /**
      * [starred] (AII-246): only messages in that list of stars (null = off).
      * [last7] (AII-258): only messages from the last 7 days (today and 6 before, by Now).
-     * [pictures] / [links] (AII-192): only messages with a picture / a web link; chats are left out, and an empty query
+     * [pictures] / [links] / [files] (AII-192, AII-267): only messages with a picture / a web link / a non-picture file; chats are left out, and an empty query
      * lists every match newest first.
      */
-    fun run(query: String, chats: List<ChatRef>, conversations: List<Conversation>, pictures: Boolean = false, links: Boolean = false, starred: List<Star>? = null, last7: Boolean = false): List<Hit> {
+    fun run(query: String, chats: List<ChatRef>, conversations: List<Conversation>, pictures: Boolean = false, links: Boolean = false, starred: List<Star>? = null, last7: Boolean = false, files: Boolean = false): List<Hit> {
         val q = fold(query.trim())
-        val filtered = pictures || links || starred != null || last7
+        val filtered = pictures || links || starred != null || last7 || files
         val since = Now.today().minusDays(6)   // AII-258: today and the 6 days before
         if (q.length < 2 && !filtered) return emptyList()
         val typed = q.length >= 2
@@ -38,7 +40,7 @@ object Search {
             val ref = known[c.ref.key] ?: c.ref
             c.bubbles.mapNotNull { b ->
                 val hay = listOfNotNull(b.text, b.cardTitle, b.author).joinToString("\n")
-                val ok = (!pictures || hasPicture(b)) && (!links || hasLink(b.text)) && (starred == null || Stars.has(starred, c.ref.key, b.key)) && (!last7 || inLast7(b.at, since)) && (!typed || fold(hay).contains(q))
+                val ok = (!pictures || hasPicture(b)) && (!links || hasLink(b.text)) && (!files || hasFile(b)) && (starred == null || Stars.has(starred, c.ref.key, b.key)) && (!last7 || inLast7(b.at, since)) && (!typed || fold(hay).contains(q))
                 if (!ok) return@mapNotNull null
                 val snip = if (typed) snippet(b.text, q) else tidy(b.text).replace(Regex("\\s+"), " ").trim().take(AROUND * 2)
                 if (snip.isEmpty()) Hit(ref, b, b.cardTitle ?: b.author) else Hit(ref, b, snip, if (typed) marks(snip, q) else emptyList())

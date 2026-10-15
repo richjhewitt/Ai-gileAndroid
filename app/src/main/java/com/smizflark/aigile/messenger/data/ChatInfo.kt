@@ -11,8 +11,11 @@ fun chatInfo(c: Conversation?): ChatInfo {
     return ChatInfo(open, pics, Links.of(c.bubbles.map { it.text }), files(c), about(c))
 }
 
+/** AII-197: a file is an attachment that is not a picture. */
+fun isFile(p: Pic): Boolean = !p.image && p.path.isNotBlank()
+
 /** AII-197: every file that is not a picture, newest first, each once. */
-fun files(c: Conversation): List<Pic> = c.bubbles.asReversed().flatMap { it.pics }.filter { !it.image && it.path.isNotBlank() }.distinctBy { it.path }
+fun files(c: Conversation): List<Pic> = c.bubbles.asReversed().flatMap { it.pics }.filter { isFile(it) }.distinctBy { it.path }
 
 /** AII-197: the MIME type to open a file with: its own type, else a guess from the name, else anything. */
 fun fileMime(p: Pic): String {
