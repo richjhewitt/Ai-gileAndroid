@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -74,7 +75,9 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
     var files by remember { mutableStateOf(false) }   // AII-267
     var starred by remember { mutableStateOf(false) }
     var last7 by remember { mutableStateOf(false) }   // AII-258
-    val hits = remember(query, convs, pictures, links, files, starred, last7) { Search.run(query, chats, convs, pictures, links, if (starred) repo.store.stars() else null, last7, files) }
+    var from by remember { mutableStateOf<String?>(null) }   // AII-386
+    var fromMenu by remember { mutableStateOf(false) }
+    val hits = remember(query, convs, pictures, links, files, starred, last7, from) { Search.run(query, chats, convs, pictures, links, if (starred) repo.store.stars() else null, last7, files, from) }
     val focus = remember { FocusRequester() }
     var recent by remember { mutableStateOf(repo.store.recentSearches()) }
     /** AII-155: a search counts once you press Search or open a result. */
@@ -127,8 +130,28 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
                     modifier = Modifier.testTag("search-starred"))
                 FilterChip(selected = last7, onClick = { last7 = !last7 }, label = { Text(stringResource(R.string.search_last7)) },
                     modifier = Modifier.testTag("search-last7"))
+                // AII-386: pick a person; the chip then reads "From: name" with an X to clear it.
+                androidx.compose.foundation.layout.Box {
+                    val fromName = from?.let { if (it == Search.YOU) stringResource(R.string.search_from_you) else it }
+                    val clearLabel = stringResource(R.string.search_from_clear)
+                    FilterChip(selected = from != null, onClick = { fromMenu = true },
+                        label = { Text(if (fromName == null) stringResource(R.string.search_from) else stringResource(R.string.search_from_named, fromName)) },
+                        trailingIcon = if (from != null) { {
+                            Icon(Icons.Default.Close, clearLabel, Modifier.size(18.dp).clickable { from = null }.testTag("search-from-clear"))
+                        } } else null,
+                        modifier = Modifier.testTag("search-from"))
+                    androidx.compose.material3.DropdownMenu(expanded = fromMenu, onDismissRequest = { fromMenu = false }) {
+                        val people = remember(convs) { Search.authors(convs) }
+                        people.forEach { p ->
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text(if (p == Search.YOU) stringResource(R.string.search_from_you) else p) },
+                                onClick = { from = p; fromMenu = false },
+                                modifier = Modifier.testTag("search-from-" + if (p == Search.YOU) "you" else p))
+                        }
+                    }
+                }
             }
-            val filtered = pictures || links || files || starred || last7
+            val filtered = pictures || links || files || starred || last7 || from != null
             if (filtered && hits.isEmpty() && fetching) EmptyState(stringResource(R.string.search_searching))
             else if (filtered && hits.isEmpty()) EmptyState(stringResource(R.string.search_none_filtered))
             else if (filtered) { }

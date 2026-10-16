@@ -160,6 +160,26 @@ class OtherShotTest : ShotBase() {
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("../docs/shots/search_links_light.png")
     }
+    /** AII-386: Search with the From chip picked. */
+    @Test fun searchFromLight() {
+        chats.forEach { prime(it) }
+        val zed = com.smizflark.aigile.messenger.data.ChatRef(com.smizflark.aigile.messenger.data.Kind.FRIEND, "zed", "Zed", "", "🙂")
+        repo.store.cacheChats(repo.store.cachedChats().orEmpty() + zed)
+        fun m(k: String, a: String, t: String, at: String) = com.smizflark.aigile.messenger.data.Bubble(k, a, t, at, mine = false)
+        repo.store.cacheConversation(com.smizflark.aigile.messenger.data.Conversation(zed, listOf(
+            m("f1", "Zed", "Zed here: the guide is ready", "2026-10-12T09:00:00Z"),
+            m("f2", "Mia", "Mia here: I will read it", "2026-10-13T09:00:00Z"),
+            m("f3", "Zed", "Zed again: thanks Mia", "2026-10-14T09:00:00Z"))))
+        show(false) { SearchScreen(repo, { _, _ -> }, {}) }
+        rule.onNodeWithTag("search-from").performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.waitUntil(5_000) { rule.onAllNodesWithText("Zed").fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithText("Zed").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("search-from").performScrollTo()
+        rule.waitForIdle()
+        rule.onRoot().captureRoboImage("../docs/shots/search_from_light.png")
+    }
     /** AII-195: typed word in bold, link shows its name. */
     @Test fun searchTidyLight() {
         chats.forEach { prime(it) }

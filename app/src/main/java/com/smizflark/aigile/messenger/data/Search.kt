@@ -17,6 +17,19 @@ object Search {
     fun inLast7(at: String, since: java.time.LocalDate): Boolean =
         runCatching { !java.time.Instant.parse(at).atZone(java.time.ZoneId.systemDefault()).toLocalDate().isBefore(since) }.getOrDefault(false)
 
+    /** AII-386: the "You" entry in [authors] and the value of `from` for the owner's own messages. */
+    const val YOU = ""
+
+    /** AII-386: who wrote messages in [conversations]: [YOU] first (if any message is mine), then the other names A to Z, distinct. */
+    fun authors(conversations: List<Conversation>): List<String> {
+        val all = conversations.flatMap { it.bubbles }
+        val others = all.filter { !it.mine && it.author.isNotBlank() }.map { it.author.trim() }
+            .distinctBy { fold(it) }.sortedBy { fold(it) }
+        return (if (all.any { it.mine }) listOf(YOU) else emptyList()) + others
+    }
+
+    fun isFrom(b: Bubble, from: String) = if (from == YOU) b.mine else !b.mine && fold(b.author.trim()) == fold(from)
+
     fun hasLink(text: String) = link.containsMatchIn(text)
     fun hasPicture(b: Bubble) = b.pics.any { it.image } || Gif.inText(b.text).isNotEmpty()   // a GIF link shows as a picture too (AII-188)
 
@@ -25,12 +38,13 @@ object Search {
     /**
      * [starred] (AII-246): only messages in that list of stars (null = off).
      * [last7] (AII-258): only messages from the last 7 days (today and 6 before, by Now).
+     * [from] (AII-386): only that person's messages ([YOU] = the phone's owner; otherwise the author's name).
      * [pictures] / [links] / [files] (AII-192, AII-267): only messages with a picture / a web link / a non-picture file; chats are left out, and an empty query
      * lists every match newest first.
      */
-    fun run(query: String, chats: List<ChatRef>, conversations: List<Conversation>, pictures: Boolean = false, links: Boolean = false, starred: List<Star>? = null, last7: Boolean = false, files: Boolean = false): List<Hit> {
+    fun run(query: String, chats: List<ChatRef>, conversations: List<Conversation>, pictures: Boolean = false, links: Boolean = false, starred: List<Star>? = null, last7: Boolean = false, files: Boolean = false, from: String? = null): List<Hit> {
         val q = fold(query.trim())
-        val filtered = pictures || links || starred != null || last7 || files
+        val filtered = pictures || links || starred != null || last7 || files || from != null
         val since = Now.today().minusDays(6)   // AII-258: today and the 6 days before
         if (q.length < 2 && !filtered) return emptyList()
         val typed = q.length >= 2
@@ -40,7 +54,7 @@ object Search {
             val ref = known[c.ref.key] ?: c.ref
             c.bubbles.mapNotNull { b ->
                 val hay = listOfNotNull(b.text, b.cardTitle, b.author).joinToString("\n")
-                val ok = (!pictures || hasPicture(b)) && (!links || hasLink(b.text)) && (!files || hasFile(b)) && (starred == null || Stars.has(starred, c.ref.key, b.key)) && (!last7 || inLast7(b.at, since)) && (!typed || fold(hay).contains(q))
+                val ok = (!pictures || hasPicture(b)) && (!links || hasLink(b.text)) && (!files || hasFile(b)) && (starred == null || Stars.has(starred, c.ref.key, b.key)) && (!last7 || inLast7(b.at, since)) && (from == null || isFrom(b, from)) && (!typed || fold(hay).contains(q))
                 if (!ok) return@mapNotNull null
                 val snip = if (files) fileNames(b) else if (typed) snippet(b.text, q) else tidy(b.text).replace(Regex("\\s+"), " ").trim().take(AROUND * 2)
                 if (snip.isEmpty()) Hit(ref, b, b.cardTitle ?: b.author) else Hit(ref, b, snip, if (typed) marks(snip, q) else emptyList())
