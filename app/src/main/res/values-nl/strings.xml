@@ -250,6 +250,9 @@
     <string name="seconds_short">%1$d s</string>
     <string name="play_gifs">GIF-links afspelen</string>
     <string name="play_gifs_sub">GIF-links (giphy, tenor) spelen af in het gesprek; uit laat ze als link staan</string>
+    <string name="link_previews">Linkvoorvertoning</string>
+    <string name="link_previews_sub">Je telefoon haalt de pagina zelf op om de titel en afbeelding onder een link te tonen</string>
+    <string name="link_preview_open">%1$s openen</string>
     <string name="compact_list">Compacte lijst</string>
     <string name="sort_chats">Gesprekken sorteren</string>
     <string name="sort_newest">Nieuwste eerst</string>

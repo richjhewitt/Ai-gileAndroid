@@ -14,6 +14,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Crash.kt: keeps the last crash and turns it into a bug message for the team.
 - data/Demo.kt: made-up chats that answer back, for trying the app with no board.
 - data/Gif.kt: GIF links in a message (giphy, tenor, .gif) shown as moving pictures in the bubble, like the board (AII-188).
+- data/LinkPreview.kt: link previews (AII-341): og:title / og:image (or <title>) of a message's first https link, fetched by the phone (4 s, 64 KB, in-memory cache); ui/LinkPreviewCard.kt draws the card under the bubble; Settings > Privacy switch, off by default (Store linkPreviews); shot LinkPreviewShotTest.
 - data/Drafts.kt: half-typed replies, one per chat.
 - data/GoToDate.kt: Go to date in a chat (AII-193): which day to land on, and the picker's range (dialog: ui/GoToDateDialog.kt, with a First message button that picks the range start, AII-231).
 - data/Filter.kt: the chips above the chats list.

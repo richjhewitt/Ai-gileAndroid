@@ -280,6 +280,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                         Text(stringResource(if (open) R.string.show_less else R.string.read_more))
                     }
                 }
+                if (!b.unverified && !b.deleted) BubbleLinkPreview(b.text)   // AII-341
                 // AII-326: reaction chips; tap one to add or take back yours.
                 if (b.reacts.isNotEmpty() && !b.deleted) FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     b.reacts.forEach { c ->

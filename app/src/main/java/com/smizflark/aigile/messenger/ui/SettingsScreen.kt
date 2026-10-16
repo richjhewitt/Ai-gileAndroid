@@ -216,6 +216,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
             }
 
             SectionHeader(stringResource(R.string.privacy))
+            Toggle(stringResource(R.string.link_previews), stringResource(R.string.link_previews_sub), Appearance.linkPreviews, Modifier.testTag("linkPreviews")) {
+                Appearance.linkPreviews = it; s.linkPreviews = it
+            }
             Toggle(stringResource(R.string.lock), stringResource(R.string.lock_sub), lockOn) {
                 if (it && !Lock.available(ctx)) note = ctx.getString(R.string.lock_unavailable)
                 else { lockOn = it; s.lock = it }

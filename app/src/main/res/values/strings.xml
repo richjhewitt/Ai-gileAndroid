@@ -250,6 +250,9 @@
     <string name="seconds_short">%1$d s</string>
     <string name="play_gifs">Play GIF links</string>
     <string name="play_gifs_sub">GIF links (giphy, tenor) play in the chat; off keeps them as links</string>
+    <string name="link_previews">Link previews</string>
+    <string name="link_previews_sub">Your phone fetches the page itself to show its title and picture under a link</string>
+    <string name="link_preview_open">Open %1$s</string>
     <string name="compact_list">Compact list</string>
     <string name="sort_chats">Sort chats</string>
     <string name="sort_newest">Newest first</string>
