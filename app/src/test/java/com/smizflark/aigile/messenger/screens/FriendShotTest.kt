@@ -61,6 +61,23 @@ class FriendShotTest : ShotBase() {
         rule.onNodeWithTag("safety-checked").assertIsDisplayed()
     }
 
+    /** AII-333: Davy's safety code changed: a warning in place of the message box, and nothing is sent until you accept. */
+    @Test fun davySafetyChangedDark() {
+        repo.store.setSafetySeen(mapOf(davy().id to "old words from before"))
+        val p = repo.queue(davy(), "Still there?", null)
+        val r = runBlocking { repo.deliver(davy(), p) }
+        org.junit.Assert.assertEquals(com.smizflark.aigile.messenger.data.SafetyWatch.CHANGED, r.exceptionOrNull()?.message)
+        repo.discard(p.id)
+        prime(davy())
+        shot("chat_friend_safety_changed", true) { ChatScreen(repo, davy(), onBack = {}) }
+        rule.onNodeWithTag("safety-changed").assertIsDisplayed()
+        rule.onAllNodesWithTag("input").assertCountEquals(0)
+        rule.onNodeWithTag("safety-accept").performClick()
+        rule.waitForIdle()
+        rule.onAllNodesWithTag("safety-changed").assertCountEquals(0)
+        org.junit.Assert.assertFalse(repo.safetyChanged(davy()))
+    }
+
     /** AII-331: Davy's voice note (play button, thin bar, length); the demo's file is missing, so Play says so. */
     @Test fun davyVoiceNoteDark() {
         val note = "file:///demo/voice-1760000000000.m4a"

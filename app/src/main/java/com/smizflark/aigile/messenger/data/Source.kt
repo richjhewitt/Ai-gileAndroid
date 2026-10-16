@@ -80,7 +80,10 @@ class BoardSource(
     deviceId: String = "",
 ) : ChatSource {
 
-    companion object { const val SEALED = "/api/phone/sealed" }
+    companion object {
+        const val SEALED = "/api/phone/sealed"
+        const val NOT_SEALED = "Not sent: messages to friends only go over a sealed link. Pair the phone again."
+    }
 
     val http: OkHttpClient = client ?: OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
@@ -115,6 +118,12 @@ class BoardSource(
 
     private suspend fun call(method: String, path: String, body: JsonObject? = null): String =
         if (sealed()) sealedCall(method, path, body) else plainCall(method, path, body)
+
+    /** AII-336: what you write to a friend only ever travels sealed; with no sealed link it stops here with a plain reason. */
+    private suspend fun friendCall(method: String, path: String, body: JsonObject?): String {
+        if (!sealed()) throw BoardError(NOT_SEALED)
+        return sealedCall(method, path, body)
+    }
 
     private suspend fun plainCall(method: String, path: String, body: JsonObject?): String = exchange(method, path, body?.toString(), bearer = true)
 
@@ -180,7 +189,7 @@ class BoardSource(
     override suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload>, reply: String?): String? = when {
         // Friend DMs carry their files inside the sealed message.
         ref.kind == Kind.FRIEND -> {
-            call("POST", "/api/dms/contacts/${ref.id}/messages", buildJsonObject {
+            friendCall("POST", "/api/dms/contacts/${ref.id}/messages", buildJsonObject {
                 put("text", text)
                 if (reply != null) put("reply", reply)
                 if (files.isNotEmpty()) put("attachments", buildJsonArray {
@@ -264,7 +273,7 @@ class BoardSource(
     }
 
     override suspend fun edit(ref: ChatRef, id: String, text: String) {
-        call("PATCH", "/api/dms/contacts/${ref.id}/messages/$id", buildJsonObject { put("text", text) })
+        friendCall("PATCH", "/api/dms/contacts/${ref.id}/messages/$id", buildJsonObject { put("text", text) })
     }
 
     override suspend fun delete(ref: ChatRef, id: String) {

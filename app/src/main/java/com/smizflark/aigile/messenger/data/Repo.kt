@@ -58,6 +58,7 @@ class Repo(context: Context) {
     suspend fun chats(): List<ChatRef> {
         val l = source.chats().map { Mapper.mineFromCache(it, store.cachedConversation(it.key)) }   // "You:" on the chats list (AII-106)
         store.cacheChats(l); store.lastSync = System.currentTimeMillis()
+        learnSafety(l)
         // In step with the board (AII-25): the Lead Scrum Master read on the PC counts as read here too.
         l.filter { it.kind == Kind.WATCHMAN && it.unread == 0 }.forEach { store.markSeen(it.key, it.last) }
         LatestWidget.refresh(app)
@@ -77,6 +78,24 @@ class Repo(context: Context) {
 
     /** This chat as the chats list has it now: is the team at work, and on which card (AII-112/113)? Null when the board can't be reached. */
     suspend fun fresh(ref: ChatRef): ChatRef? = runCatching { source.chats().firstOrNull { it.key == ref.key } }.getOrNull()
+
+    /* ---------- safety code change warning (AII-333) ---------- */
+
+    /** Friends seen for the first time: their safety words are the ones to compare with later. */
+    fun learnSafety(l: List<ChatRef>) {
+        val known = store.safetySeen()
+        val next = SafetyWatch.learn(known, l)
+        if (next != known) store.setSafetySeen(next)
+    }
+
+    /** True when this friend's safety words are not the ones accepted before: sending waits until you check them. */
+    fun safetyChanged(ref: ChatRef): Boolean = ref.kind == Kind.FRIEND && SafetyWatch.changed(store.safetySeen(), ref.id, ref.safety)
+
+    /** We read the new words to each other: keep them, and tell the board. */
+    suspend fun acceptSafety(ref: ChatRef) {
+        store.setSafetySeen(SafetyWatch.accept(store.safetySeen(), ref.id, ref.safety))
+        source.setChecked(ref)
+    }
 
     /** Mark as read (AII-25). Opening the Lead Scrum Master's chat is what reads it on the board, so that one is fetched. */
     suspend fun markRead(ref: ChatRef) {
@@ -197,6 +216,12 @@ class Repo(context: Context) {
     /** Sends one queued message. Returns the card it landed on; on failure it stays queued, marked failed. */
     suspend fun deliver(ref: ChatRef, p: Pending): Result<String?> = sending.withLock {
         if (store.outbox().none { it.id == p.id }) return Result.success(p.target)   // already sent
+        // AII-333: a changed safety code holds friend messages back, also from an alert's Reply or the outbox.
+        val listed = store.cachedChats()?.firstOrNull { it.key == ref.key }
+        if (safetyChanged(ref) || listed != null && safetyChanged(listed)) {
+            store.saveOutbox(Outbox.fail(store.outbox(), p.id, false))
+            return Result.failure(BoardError(SafetyWatch.CHANGED))
+        }
         val r = runCatching { source.send(ref, p.text, p.target, p.files.map { upload(it) }, p.reply) }
         val offline = r.exceptionOrNull()?.let(::isOffline) == true
         store.saveOutbox(

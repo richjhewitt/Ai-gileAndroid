@@ -1,14 +1,29 @@
 package com.smizflark.aigile.messenger.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.Bubble
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
@@ -52,4 +67,16 @@ internal fun friendReact(scope: CoroutineScope, repo: Repo, ref: ChatRef, b: Bub
 
 internal fun friendDelete(scope: CoroutineScope, repo: Repo, ref: ChatRef, b: Bubble, onError: (String?) -> Unit, reload: suspend () -> Unit) {
     scope.launch { runCatching { repo.source.delete(ref, b.id!!) }.onFailure { onError(it.message) }; reload() }
+}
+
+/** AII-333: in place of the message box while a friend's safety code is new to us. */
+@Composable
+internal fun SafetyChangedBar(name: String, onShow: () -> Unit, onChecked: () -> Unit) {
+    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer).padding(12.dp).testTag("safety-changed")) {
+        Text(stringResource(R.string.safety_changed, name), color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodyMedium)
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = onShow, modifier = Modifier.testTag("safety-show")) { Text(stringResource(R.string.safety_show)) }
+            Button(onClick = onChecked, modifier = Modifier.padding(start = 8.dp).testTag("safety-accept")) { Text(stringResource(R.string.we_checked_it)) }
+        }
+    }
 }

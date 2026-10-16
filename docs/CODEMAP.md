@@ -41,12 +41,13 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Repo.kt: the one place screens and background checks get chats from.
 - data/ScrollPlace.kt: remembers where you left each chat.
 - data/Seal.kt: seals every board call end to end (AES-256-GCM, key from pairing; vectors in docs/SEALED.md).
+- data/SafetyWatch.kt: a friend's safety words that change (AII-333): Store safetySeen, Repo learnSafety / safetyChanged / acceptSafety, deliver holds friend lines back; SafetyChangedBar in ui/ChatFriend.kt replaces the message box. Friend send / edit only go sealed (Source friendCall, AII-336).
 - data/DmCrypto.kt: end-to-end sealing for direct messages (P-256 ECDH, AES-GCM, safety number); see docs/DM.md (AII-325).
 - Reactions in friend chats (AII-326): FriendMsg.reacts to Bubble.reacts chips (Mapper.chips); Source.react toggles; quick emoji row in HoldMenu, chips in ui/ChatBubble.kt.
 - Friend DMs (AII-324) use the board's friend DMs: Source edit / delete / typing / setChecked; reply goes by id (Pending.reply, Held.reply); Edit and Delete dialogs in ui/BubbleMenu.kt; safety words and We checked it in ui/ChatDetails.kt; "typing…" polled every 3 s in ui/ChatScreen.kt.
 - Voice notes in friend chats (AII-331): data/Voice.kt (length label, too-short rule, audio check, file names); hold the mic in ui/ChatComposer.kt to record (ui/VoiceRecord.kt, MediaRecorder, RECORD_AUDIO), ui/VoicePlayer.kt plays them in the bubble (one at a time); ui/ChatFriend.kt holds the other friend-DM helpers.
 - data/Search.kt: search results (chats and messages); Pictures / Links / Files (AII-267, `files`, non-picture files as in ChatInfo.isFile; AII-270 snippet = "📎 name" via `fileNames`) / Starred / Last 7 days (AII-258, `last7`) (AII-246, `starred` = the stars) filters list matching messages newest first (AII-192); snippets show markdown as read and carry the found-word ranges to bold (AII-195).
-- data/Share.kt: text shared in from other apps.
+- data/Share.kt: text shared in from other apps. Pictures shared in (AII-338): MainActivity sharedImages / sharedPics, New message shows them (PickedPictures) and sends through the outbox.
 - data/Source.kt: chat source, the real board or the demo.
 - data/Stars.kt: starred messages (AII-138), listed in the chat details; lead chats kept in step with the board (AII-141, Repo syncStars; Starred refreshes them on open, AII-162).
 - data/PinnedMsgs.kt: pinned messages (AII-339), this phone only (Store pinnedMsgs); Pin / Unpin in the bubble hold menu, the pinned bar under the chat's top bar (PinnedBar in ui/ChatParts.kt; tap jumps and cycles "1 of N", X unpins). Not Pins.kt, which is pinned chats.

@@ -50,11 +50,15 @@ import kotlinx.coroutines.launch
 /** Journey 4: a new 💬 message to any team (or a friend, or the Lead Scrum Master). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewMessageScreen(repo: Repo, draft: String = "", onBack: () -> Unit, onSent: (ChatRef) -> Unit) {
+fun NewMessageScreen(repo: Repo, draft: String = "", pics: List<String> = emptyList(), onBack: () -> Unit, onSent: (ChatRef) -> Unit) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
     var pick by rememberSaveable { mutableStateOf<String?>(null) }
     // Starts from text shared in from another app; a new share replaces it.
     var text by rememberSaveable(draft) { mutableStateOf(draft) }
+    var files by remember(pics) { mutableStateOf(pics) }   // AII-338: pictures shared in from another app
+    var queued by remember { mutableStateOf(false) }
+    val leftFiles by androidx.compose.runtime.rememberUpdatedState(files)
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { if (!queued) leftFiles.forEach { java.io.File(it).delete() } } }   // left without sending
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -90,20 +94,27 @@ fun NewMessageScreen(repo: Repo, draft: String = "", onBack: () -> Unit, onSent:
                 placeholder = { Text(stringResource(R.string.new_placeholder)) },
                 trailingIcon = { MicButton { text = Dictate.join(text, it); error = null } }, modifier = Modifier.fillMaxWidth().testTag("input"),
             )
+            if (files.isNotEmpty()) PickedPictures(files) { f -> files = files - f; java.io.File(f).delete() }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 6.dp)) }
             Button(
                 onClick = {
                     val to = chats.firstOrNull { it.key == pick } ?: run { error = pickWho; return@Button }
+                    if (repo.safetyChanged(to)) { error = com.smizflark.aigile.messenger.data.SafetyWatch.CHANGED; return@Button }   // AII-333
                     busy = true
                     scope.launch {
                         try {
-                            repo.source.send(to, text.trim(), null)
+                            if (files.isEmpty()) repo.source.send(to, text.trim(), null)
+                            else {
+                                // With pictures it goes through the outbox, so a failed send waits in the chat with Tap to retry.
+                                val p = repo.queue(to, text.trim(), null, files); queued = true
+                                repo.deliver(to, p).onFailure { onSent(to); return@launch }
+                            }
                             onSent(to)
                         } catch (e: Exception) { error = e.message }
                         busy = false
                     }
                 },
-                enabled = !busy && text.isNotBlank(),
+                enabled = !busy && (text.isNotBlank() || files.isNotEmpty()),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).heightIn(min = 52.dp).testTag("send"),
             ) { Text(if (busy) stringResource(R.string.sending) else stringResource(R.string.send)) }
         }

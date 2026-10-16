@@ -436,6 +436,8 @@
     <string name="safety_hint">Lees deze woorden aan elkaar voor. Als ze overeenkomen, luistert niemand mee.</string>
     <string name="we_checked_it">We hebben het gecontroleerd</string>
     <string name="safety_checked">✓ Gecontroleerd</string>
+    <string name="safety_changed">⚠️ De veiligheidscode van %1$s is veranderd. Lees elkaar de nieuwe woorden voor voordat je iets stuurt.</string>
+    <string name="safety_show">Toon de woorden</string>
     <string name="friend_private">🔒 Privé</string>
     <string name="friend_checked">🔒 Privé, veiligheidscode gecontroleerd</string>
     <string name="pick_a_chat">Kies een chat</string>

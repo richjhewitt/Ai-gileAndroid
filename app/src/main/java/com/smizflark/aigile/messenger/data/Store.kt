@@ -290,6 +290,11 @@ class Store(context: Context) {
     fun pinnedMsgs(): List<PinnedMsg> = read("pinned_msgs.json") ?: emptyList()
     fun setPinnedMsgs(all: List<PinnedMsg>) = write("pinned_msgs.json", all)
 
+    /* ---------- friends' safety words last accepted (AII-333), per board ---------- */
+
+    fun safetySeen(): Map<String, String> = read("safety_seen.json") ?: emptyMap()
+    fun setSafetySeen(all: Map<String, String>) = write("safety_seen.json", all)
+
     /* ---------- reminders (AII-201) ---------- */
 
     fun reminders(): List<Reminder> = read("reminders.json") ?: emptyList()

@@ -222,6 +222,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
 
     val live = rememberLiveRef(repo, ref, text)   // AII-324 (ChatFriend.kt)
+    var safetyOk by remember(ref.key) { mutableStateOf(0) }   // AII-333: bumped when you accept new safety words
+    val safetyChanged = remember(live.safety, safetyOk) { repo.learnSafety(listOf(live)); repo.safetyChanged(live) }
     val items = remember(convo, pending, owner, focus) { rows(convo, pending, owner, focus, seenAtOpen).asReversed() }
     val hits = remember(items, query, finding) { if (finding) Find.matches(items.map { (it as? Row.Msg)?.b?.text.orEmpty() }, query) else emptyList() }
     val hitIds = remember(hits, items) { hits.map { items[it].id } }
@@ -283,7 +285,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
 
     androidx.compose.runtime.LaunchedEffect(details) { reminders = repo.store.reminders() }   // a reminder cancelled in the details
-    if (details) ChatDetails(live, repo, chatInfo(convo), onChecked = if (ref.kind == Kind.FRIEND) { { scope.launch { runCatching { repo.source.setChecked(ref) }.onFailure { error = it.message } } } } else null,
+    if (details) ChatDetails(live, repo, chatInfo(convo), onChecked = if (ref.kind == Kind.FRIEND) { { scope.launch { runCatching { repo.acceptSafety(live) }.onFailure { error = it.message }; safetyOk++ } } } else null,
  onFind = { details = false; finding = true },
         starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
         onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { shareTranscript(view.context, ref.name, c, owner) } },   // AII-139
@@ -375,7 +377,10 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 val next = if (list.firstVisibleItemIndex == 0 && convo != null && !finding) nextChat else null   // AII-204; only once its room at the end shows (AII-273: never over a message)
                 NextUnreadButton(next?.name) { next?.let(onOpenChat) }
             }
-            Composer(ref, text, { text = it }, targets.map { it.id to it.label }, target, { target = it; picked = true },
+            // AII-333: the friend's safety code changed: no message box until you have read the new words to each other.
+            if (safetyChanged) SafetyChangedBar(ref.name, onShow = { details = true },
+                onChecked = { scope.launch { runCatching { repo.acceptSafety(live) }.onFailure { error = it.message }; safetyOk++ } })
+            else Composer(ref, text,{ text = it }, targets.map { it.id to it.label }, target, { target = it; picked = true },
                 pics = pics, picNote = picNote,
                 onAttach = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 onRemovePic = { f -> pics = pics - f; File(f).delete() },

@@ -121,13 +121,11 @@ class PicturesTest {
         assertEquals(2, posts().last().second["attachments"]!!.jsonArray.size)
     }
 
-    @Test fun friendFilesTravelInsideTheMessage() = runBlocking {
-        src.send(friend, "hi", null, listOf(png))
-        val (path, body) = posts().single()
-        assertEquals("/api/dms/contacts/c1/messages", path)
-        val f = body["attachments"]!!.jsonArray.single().jsonObject
-        assertEquals("shot.png", f["name"]!!.jsonPrimitive.content)
-        assertEquals("AQID", f["data"]!!.jsonPrimitive.content)
+    /** AII-336: this board link is Bearer only, so a friend's picture never leaves the phone (sealed path: SealTest). */
+    @Test fun friendFilesNeverGoUnsealed() = runBlocking {
+        val e = runCatching { src.send(friend, "hi", null, listOf(png)) }.exceptionOrNull()
+        assertEquals(com.smizflark.aigile.messenger.data.BoardSource.NOT_SEALED, e?.message)
+        assertTrue(posts().isEmpty())
     }
 
     @Test fun plainTextSendsNoAttachments() = runBlocking {

@@ -33,3 +33,6 @@ The relay spec once planned here was dropped: the board already has secure frien
 - `POST /api/dms/contacts/<id>/messages/<mid>/react` `{emoji}`: toggle your reaction (reactions are not sealed, see DM-AUDIT.md)
 - `POST /api/dms/contacts/<id>/typing`: at most every 4 s
 - All calls ride the existing sealed phone link (`data/Seal.kt`)
+- Sending or editing a friend line needs that sealed link: an older Bearer-only pairing stops with "Pair the phone again" (AII-336)
+- The phone remembers each friend's safety words (`data/SafetyWatch.kt`); new words replace the message box with a warning until **We checked it**, and the outbox holds friend lines back too (AII-333)
+- The phone's own key is already sealed with the Android Keystore (`Vault` in `data/Store.kt`, AII-334)

@@ -107,6 +107,41 @@ class SealTest {
         assertEquals(listOf("GET /api/meta", "GET /api/meta", "GET /api/chats/x"), seen)
     }
 
+    /** AII-336: with no sealed link a friend message never leaves the phone, and says why. */
+    @Test fun friendMessageNeverGoesUnsealed() = runTest {
+        var calls = 0
+        val board = Interceptor { chain -> calls++; Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK")
+            .body("{}".toResponseBody("application/json".toMediaType())).build() }
+        val src = BoardSource("https://pc.ts.net", kB64, OkHttpClient.Builder().addInterceptor(board).build())   // older pairing: no device id
+        val friend = ChatRef(kind = Kind.FRIEND, id = "b", name = "Davy", subtitle = "", emoji = "")
+        try { src.send(friend, "hi", null); fail() } catch (e: BoardError) { assertEquals(BoardSource.NOT_SEALED, e.message) }
+        try { src.edit(friend, "m1", "hi"); fail() } catch (e: BoardError) { assertEquals(BoardSource.NOT_SEALED, e.message) }
+        assertEquals(0, calls)
+    }
+
+    @Test fun friendMessageGoesSealed() = runTest {
+        val seen = mutableListOf<String>()
+        var sent: JsonObject? = null
+        val board = Interceptor { chain ->
+            val r = chain.request()
+            assertEquals("/api/phone/sealed", r.url.encodedPath)
+            val inner = json.parseToJsonElement(link.openRequest(Buffer().also { r.body!!.writeTo(it) }.readUtf8())) as JsonObject
+            val p = inner["p"]!!.jsonPrimitive.content
+            seen += inner["m"]!!.jsonPrimitive.content + " " + p
+            if (p != "/api/meta") sent = inner["b"] as JsonObject
+            val answer = link.sealResponse(200, json.parseToJsonElement(if (p == "/api/meta") """{"owner":"Rich","sealed":1}""" else """{"ok":true}"""))
+            Response.Builder().request(r).protocol(Protocol.HTTP_1_1).code(200).message("OK")
+                .body(answer.toResponseBody("application/json".toMediaType())).build()
+        }
+        val src = BoardSource("https://pc.ts.net", kB64, OkHttpClient.Builder().addInterceptor(board).build(), deviceId = d)
+        src.send(ChatRef(kind = Kind.FRIEND, id = "b", name = "Davy", subtitle = "", emoji = ""), "hi", null, listOf(Upload("shot.png", "image/png", byteArrayOf(1, 2, 3))))
+        assertEquals(listOf("GET /api/meta", "POST /api/dms/contacts/b/messages"), seen)
+        // Friend files travel inside the sealed message.
+        val f = (sent!!["attachments"] as kotlinx.serialization.json.JsonArray).single() as JsonObject
+        assertEquals("shot.png", f["name"]!!.jsonPrimitive.content)
+        assertEquals("AQID", f["data"]!!.jsonPrimitive.content)
+    }
+
     private fun cOf(envelope: String) = (json.parseToJsonElement(envelope) as JsonObject)["c"]!!.jsonPrimitive.content
     private fun hex(s: String) = ByteArray(s.length / 2) { s.substring(it * 2, it * 2 + 2).toInt(16).toByte() }
     private fun expectBadTag(block: () -> Unit) {

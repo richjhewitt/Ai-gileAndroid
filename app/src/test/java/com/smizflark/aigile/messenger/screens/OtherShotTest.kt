@@ -126,6 +126,20 @@ class OtherShotTest : ShotBase() {
     }
     @Test fun newLight() = shot("new_message", false) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
     @Test fun newDark() = shot("new_message", true) { NewMessageScreen(repo, onBack = {}, onSent = {}) }
+    /** AII-338: a picture shared in from another app waits under the message box and goes with the message. */
+    @Test fun newWithSharedPictureDark() {
+        val f = java.io.File(androidx.test.core.app.ApplicationProvider.getApplicationContext<android.app.Application>().cacheDir, "shared-shot.png")
+        android.graphics.Bitmap.createBitmap(64, 64, android.graphics.Bitmap.Config.ARGB_8888).apply { eraseColor(android.graphics.Color.rgb(80, 160, 220)) }
+            .let { b -> f.outputStream().use { b.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) } }
+        var sentTo: String? = null
+        val davy = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
+        shot("new_message_shared_picture", true) { NewMessageScreen(repo, pics = listOf(f.path), onBack = {}, onSent = { sentTo = it.key }) }
+        rule.onNodeWithTag("to:${davy.key}").performClick()
+        rule.onNodeWithTag("send").performClick()
+        rule.waitUntil(5_000) { sentTo != null }
+        org.junit.Assert.assertEquals(davy.key, sentTo)
+        org.junit.Assert.assertTrue(repo.pendingFor(davy.key).isEmpty())   // sent, not left waiting
+    }
     @Test fun emptyChatsLight() = shot("empty_chats", false) { EmptyState("No chats yet", button = "New message") }
     @Test fun emptySearchDark() = shot("empty_search", true) { EmptyState("No results for “zebra”", button = "Clear search") }
     /** AII-192: Search with the Links chip on and no query. */

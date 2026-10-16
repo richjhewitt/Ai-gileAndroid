@@ -23,6 +23,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Share
+import com.smizflark.aigile.messenger.ui.MAX_PICS
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.smizflark.aigile.messenger.ui.ChatScreen
 import com.smizflark.aigile.messenger.ui.ChatsPanes
 import com.smizflark.aigile.messenger.ui.ChatsScreen
@@ -53,6 +58,8 @@ class MainActivity : FragmentActivity() {
     private var openMsg by mutableStateOf<String?>(null)
     /** Text shared in from another app, waiting to be sent from New message. */
     private var shared by mutableStateOf<String?>(null)
+    /** Pictures shared in from another app (AII-338), kept in the outbox folder, sent with the shared text. */
+    private var sharedPics by mutableStateOf<List<String>>(emptyList())
     /** New message from the app icon menu (AII-53). */
     private var openNew by mutableStateOf(false)
     /** App lock (AII-63): covers the app until unlocked; leftAt is when it last went to the background. */
@@ -130,8 +137,8 @@ class MainActivity : FragmentActivity() {
                     }
                     composable("new") {
                         // Leaving New message (sent, back button or gesture) drops the shared text.
-                        DisposableEffect(Unit) { onDispose { shared = null } }
-                        NewMessageScreen(repo, draft = shared ?: "", onBack = { nav.popBackStack() }, onSent = { to ->
+                        DisposableEffect(Unit) { onDispose { shared = null; sharedPics = emptyList() } }
+                        NewMessageScreen(repo, draft = shared ?: "", pics = sharedPics, onBack = { nav.popBackStack() }, onSent = { to ->
                             nav.popBackStack(); nav.openChat(to.key)
                         })
                     }
@@ -181,7 +188,28 @@ class MainActivity : FragmentActivity() {
         intent?.getStringExtra(CheckWorker.EXTRA_CHAT)?.let { openChat = it; openMsg = intent.getStringExtra(CheckWorker.EXTRA_MSG) }
         if (intent?.action == Intent.ACTION_SEND)
             Share.text(intent.getStringExtra(Intent.EXTRA_SUBJECT), intent.getStringExtra(Intent.EXTRA_TEXT))?.let { shared = it }
+        // AII-338: pictures shared in open New message at once; the copies follow when they are made.
+        val uris = sharedImages(intent)
+        if (uris.isNotEmpty()) {
+            shared = shared ?: ""; sharedPics = emptyList()
+            val repo = (application as App).repo
+            lifecycleScope.launch {
+                val kept = withContext(Dispatchers.IO) { uris.take(MAX_PICS).mapNotNull { repo.keepPicture(it) } }
+                if (shared != null) sharedPics = kept else kept.forEach { java.io.File(it).delete() }
+            }
+        }
         if (intent?.action == Shortcuts.ACTION_NEW) openNew = true
+    }
+
+    /** The pictures in a Share or Share many from another app (AII-338). */
+    @Suppress("DEPRECATION")
+    private fun sharedImages(intent: Intent?): List<Uri> {
+        if (intent?.type?.startsWith("image/") != true) return emptyList()
+        return when (intent.action) {
+            Intent.ACTION_SEND -> listOfNotNull(intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
+            Intent.ACTION_SEND_MULTIPLE -> intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM).orEmpty()
+            else -> emptyList()
+        }
     }
 
     private fun unlock() = Lock.ask(this) { unlocked = true; locked = false }
