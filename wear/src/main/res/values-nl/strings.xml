@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">AI-gile</string>
     <string name="waiting">Wachten op je telefoon…</string>
-    <string name="chats_count">%1$d chats</string>
-    <string name="chats_one">1 chat</string>
+    <string name="locked">Ontgrendel AI-gile op je telefoon</string>
+    <string name="not_yet">Nog niet op het horloge</string>
+    <string name="last_updated">Laatst bijgewerkt %1$s</string>
+    <string name="unread">Nieuwe berichten</string>
 </resources>

@@ -133,6 +133,7 @@ class Repo(context: Context) {
     suspend fun conversation(ref: ChatRef): Conversation {
         val c = source.conversation(ref)
         store.cacheConversation(c)
+        com.smizflark.aigile.messenger.wear.WearSync.updateChat(app, c)   // the watch app (AII-413)
         syncStars(c)
         return c
     }

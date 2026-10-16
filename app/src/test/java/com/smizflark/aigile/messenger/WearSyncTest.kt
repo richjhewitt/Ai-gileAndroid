@@ -1,5 +1,6 @@
 package com.smizflark.aigile.messenger
 
+import com.smizflark.aigile.messenger.data.Bubble
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.wear.WearSync
@@ -30,6 +31,28 @@ class WearSyncTest {
         assertEquals("My own name", out["name"]!!.jsonPrimitive.content)
         assertTrue(!out["last"]!!.jsonPrimitive.content.contains("secret"))
         assertEquals("true", out["unread"]!!.jsonPrimitive.content)
+    }
+
+    private fun b(i: Int, text: String = "m$i", mine: Boolean = false, deleted: Boolean = false) =
+        Bubble("k$i", "Sam", text, "2026-01-01T10:%02d:00Z".format(i), mine, deleted = deleted)
+
+    @Test fun chatPayloadLastFifteenWithMineFlag() {
+        val out = parse(WearSync.chatPayload((1..30).map { b(it, mine = it == 30) }, null))
+        assertEquals(15, out.size)
+        assertEquals("m16", out.first()["text"]!!.jsonPrimitive.content)
+        assertEquals("true", out.last()["mine"]!!.jsonPrimitive.content)
+        assertEquals("Sam", out.first()["who"]!!.jsonPrimitive.content)
+    }
+
+    @Test fun chatPayloadCapsTextAndHidesDeletedAndCleared() {
+        val out = parse(WearSync.chatPayload(listOf(b(1, "x".repeat(900)), b(2, "gone", deleted = true), b(3), b(4)), "2026-01-01T10:01:30Z"))
+        assertEquals(listOf("m3", "m4"), out.map { it["text"]!!.jsonPrimitive.content })
+        val capped = parse(WearSync.chatPayload(listOf(b(1, "x".repeat(900))), null)).single()
+        assertEquals(500, capped["text"]!!.jsonPrimitive.content.length)
+    }
+
+    @Test fun chatPathEscapes() {
+        assertEquals("/chat/lead:a%2Fb", WearSync.chatPath("lead:a/b"))
     }
 
     @Test fun lineAndTimeSent() {

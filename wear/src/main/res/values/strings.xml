@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">AI-gile</string>
     <string name="waiting">Waiting for your phone…</string>
-    <string name="chats_count">%1$d chats</string>
-    <string name="chats_one">1 chat</string>
+    <string name="locked">Unlock AI-gile on your phone</string>
+    <string name="not_yet">Not on the watch yet</string>
+    <string name="last_updated">Last updated %1$s</string>
+    <string name="unread">New messages</string>
 </resources>
