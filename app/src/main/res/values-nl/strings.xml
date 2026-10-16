@@ -73,6 +73,7 @@
     <string name="settings">Instellingen</string>
     <string name="send">Versturen</string>
     <string name="cancel">Annuleren</string>
+    <string name="close">Sluiten</string>
     <string name="save">Opslaan</string>
     <string name="loading">Laden…</string>
     <string name="sending">Versturen…</string>
@@ -135,7 +136,7 @@
     <string name="pictures_friend_only">Foto\'s kunnen alleen in vriendenchats</string>
     <string name="add_picture">Foto toevoegen</string>
     <string name="message_watchman">Bericht aan de Lead Scrum Master</string>
-    <string name="add_caption">Voeg een bijschrift toe</string>
+    <string name="add_caption">Bijschrift toevoegen</string>
     <string name="message">Bericht</string>
     <string name="pic_read_one">Een van die foto’s kon niet worden gelezen.</string>
     <string name="pic_read_copied">De gekopieerde foto kon niet worden gelezen.</string>
@@ -151,7 +152,7 @@
     <string name="chats_title">Berichten</string>
     <string name="chats_title_unread">Berichten (%1$d)</string>
     <string name="add_to_home">Toevoegen aan startscherm</string>
-    <string name="add_to_home_unsupported">Je launcher kan geen snelkoppelingen toevoegen</string>
+    <string name="add_to_home_unsupported">Je launcher ondersteunt geen snelkoppelingen</string>
     <string name="copy_name">Naam kopiëren</string>
     <string name="chats_title_demo">Demo</string>
     <string name="chats_offline">%1$s\nChats van %2$s.</string>
@@ -485,9 +486,9 @@
     <string name="restore_bad">Verkeerde wachtwoordzin, of geen instellingenbestand</string>
     <string name="backup_failed">Dat lukte niet</string>
     <string name="clear_chat">Chat wissen</string>
-    <string name="clear_chat_title">Dit gesprek wissen?</string>
-    <string name="clear_chat_body">Verbergt alle berichten tot nu, alleen op deze telefoon. Het bord en je vriend houden hun berichten, en nieuwere berichten zie je gewoon.</string>
-    <string name="chat_cleared">Gesprek gewist</string>
+    <string name="clear_chat_title">Deze chat wissen?</string>
+    <string name="clear_chat_body">Verbergt alle berichten tot nu toe, alleen op deze telefoon. Het bord en je vriend houden hun berichten en nieuwe berichten blijven gewoon zichtbaar.</string>
+    <string name="chat_cleared">Chat gewist</string>
     <string name="format_bold">Vet</string>
     <string name="format_italic">Cursief</string>
     <string name="format_code">Code</string>

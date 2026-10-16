@@ -106,7 +106,7 @@ private fun FullPicture(pics: List<Pic>, start: Int, repo: Repo, onClose: () -> 
         if (pics.size > 1) Text("${pager.currentPage + 1} / ${pics.size}", color = Color.White, style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.align(Alignment.BottomCenter).then(cutout).padding(24.dp).testTag("full-pic-count"))
         IconButton(onClick = onClose, modifier = Modifier.align(Alignment.TopEnd).then(cutout).padding(16.dp)) {
-            Icon(Icons.Default.Close, "Close", tint = Color.White)
+            Icon(Icons.Default.Close, stringResource(R.string.close), tint = Color.White)
         }
         val actions = rememberPictureActions()
         val p = pics[pager.currentPage]

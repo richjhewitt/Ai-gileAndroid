@@ -73,6 +73,7 @@
     <string name="settings">Settings</string>
     <string name="send">Send</string>
     <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
     <string name="save">Save</string>
     <string name="loading">Loading…</string>
     <string name="sending">Sending…</string>
