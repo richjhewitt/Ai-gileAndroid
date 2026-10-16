@@ -193,6 +193,25 @@ class OtherShotTest : ShotBase() {
         rule.onRoot().captureRoboImage("../docs/shots/settings_lock_light.png")
     }
 
+    /** AII-390: Privacy has Show when I'm typing, on by default; off is kept. English and Dutch shots. */
+    @Test fun settingsTypingLight() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { SettingsScreen(repo, {}, {}) } }
+        rule.onNodeWithTag("showTyping").performScrollTo().assertIsDisplayed()
+        rule.onRoot().captureRoboImage("../docs/shots/settings_typing_light.png")
+        org.junit.Assert.assertTrue(repo.store.showTyping)
+        rule.onNodeWithTag("showTyping").onChildren().filterToOne(androidx.compose.ui.test.isToggleable()).performClick()
+        org.junit.Assert.assertFalse(repo.store.showTyping)
+    }
+    @Test fun settingsTypingDutch() {
+        RuntimeEnvironment.setQualifiers("+nl-rNL-notnight")
+        try {
+            rule.setContent { MessengerTheme { SettingsScreen(repo, {}, {}) } }
+            rule.onNodeWithTag("showTyping").performScrollTo().assertIsDisplayed()
+            rule.onRoot().captureRoboImage("../docs/shots/settings_typing_nl_light.png")
+        } finally { RuntimeEnvironment.setQualifiers("+en-rUS") }
+    }
+
     @Test fun chatsBlack() = black("chats") { ChatsScreen(repo, {}, {}, {}) }
     @Test fun chatBlack() { prime(lead()); black("chat") { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun newBlack() = black("new_message") { NewMessageScreen(repo, onBack = {}, onSent = {}) }

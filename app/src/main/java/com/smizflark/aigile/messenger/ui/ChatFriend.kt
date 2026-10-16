@@ -27,6 +27,7 @@ import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.Bubble
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Kind
+import com.smizflark.aigile.messenger.data.sendTyping
 import com.smizflark.aigile.messenger.data.Repo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -52,7 +53,7 @@ internal fun rememberLiveRef(repo: Repo, ref: ChatRef, text: String): ChatRef {
     var lastTyping by remember(ref.key) { mutableStateOf(0L) }
     if (ref.kind == Kind.FRIEND) LaunchedEffect(text) {
         val now = System.currentTimeMillis()
-        if (text.isNotBlank() && text != typedAtOpen && now - lastTyping >= TYPING_EVERY_MS) { lastTyping = now; runCatching { repo.source.typing(ref) } }
+        if (text.isNotBlank() && text != typedAtOpen && now - lastTyping >= TYPING_EVERY_MS) { lastTyping = now; runCatching { sendTyping(repo.store.showTyping, repo.source, ref) } }
     }
     return live
 }
