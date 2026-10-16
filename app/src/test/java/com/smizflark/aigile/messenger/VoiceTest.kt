@@ -36,4 +36,19 @@ class VoiceTest {
         assertEquals("voice-1700.m4a", Voice.recordingFile(1700).substringAfter('-'))   // what Repo.upload sends
         assertEquals("audio/mp4", Mapper.mimeOf(Voice.fileName(1700)))
     }
+
+    @Test fun speedCyclesAndParses() {
+        assertEquals(1.5f, Voice.nextSpeed(1f))
+        assertEquals(2f, Voice.nextSpeed(1.5f))
+        assertEquals(1f, Voice.nextSpeed(2f))
+        assertEquals(1f, Voice.nextSpeed(3f))
+        assertEquals("1x", Voice.speedLabel(1f))
+        assertEquals("1.5x", Voice.speedLabel(1.5f))
+        assertEquals("2x", Voice.speedLabel(2f))
+        assertEquals(1.5f, Voice.parseSpeed("1.5x"))
+        assertEquals(2f, Voice.parseSpeed("2x"))
+        assertEquals(1f, Voice.parseSpeed(null))
+        assertEquals(1f, Voice.parseSpeed("7x"))
+        assertEquals(1f, Voice.parseSpeed("junk"))
+    }
 }

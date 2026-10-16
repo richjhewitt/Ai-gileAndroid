@@ -5,7 +5,11 @@ import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -55,7 +59,17 @@ object VoicePlayer {
     var position by mutableIntStateOf(0); private set
     /** Lengths found so far, by Pic path. */
     internal val lengths = mutableStateMapOf<String, Long>()
+    /** Playback speed (AII-378); the Store keeps it, VoiceNote loads it. */
+    var speed by mutableStateOf(1f); private set
     private var mp: MediaPlayer? = null
+
+    fun chooseSpeed(s: Float) { speed = s; applySpeed() }
+
+    /** Only while playing: setting params on a paused player can start it. */
+    private fun applySpeed() {
+        val m = mp ?: return
+        if (playing) runCatching { m.playbackParams = m.playbackParams.setSpeed(speed) }
+    }
 
     fun stop() {
         mp?.let { runCatching { it.stop() }; runCatching { it.release() } }
@@ -66,7 +80,7 @@ object VoicePlayer {
     fun toggle(path: String, file: File): Boolean {
         val cur = mp
         if (cur != null && key == path) {
-            if (playing) { cur.pause(); playing = false } else { cur.start(); playing = true }
+            if (playing) { cur.pause(); playing = false } else { cur.start(); playing = true; applySpeed() }
             return true
         }
         stop()
@@ -75,7 +89,7 @@ object VoicePlayer {
             p.setDataSource(file.path); p.prepare()
             p.setOnCompletionListener { stop() }
             p.start()
-            mp = p; key = path; playing = true; lengths[path] = p.duration.toLong()
+            mp = p; key = path; playing = true; applySpeed(); lengths[path] = p.duration.toLong()
             true
         } catch (e: Exception) { stop(); false }
     }
@@ -111,9 +125,13 @@ fun VoiceNote(p: Pic, repo: Repo) {
         }
     }
     LaunchedEffect(playing) { while (playing) { VoicePlayer.sync(); delay(150) } }
+    LaunchedEffect(Unit) { VoicePlayer.chooseSpeed(repo.store.voiceSpeed) }
+    val speed = VoicePlayer.speed
+    val speedLabel = Voice.speedLabel(speed)
     val label = if (known != null) Voice.label(known) else "–:–"
     val cs = MaterialTheme.colorScheme
     val desc = if (playing) stringResource(R.string.voice_pause) else if (known != null) stringResource(R.string.voice_play_len, label) else stringResource(R.string.voice_play)
+    val speedDesc = stringResource(R.string.voice_speed, speedLabel)
     val cant = stringResource(R.string.voice_cant_play)
     Row(Modifier.widthIn(min = 200.dp, max = 260.dp).fillMaxWidth().padding(bottom = 4.dp).testTag("voice-note"), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = {
@@ -126,6 +144,13 @@ fun VoiceNote(p: Pic, repo: Repo) {
         }
         val frac = if (mine && known != null && known > 0) (VoicePlayer.position.toFloat() / known).coerceIn(0f, 1f) else 0f
         LinearProgressIndicator(progress = { frac }, modifier = Modifier.weight(1f).height(3.dp).testTag("voice-progress"))
+        Text(
+            speedLabel, style = MaterialTheme.typography.labelMedium, color = cs.primary,
+            modifier = Modifier.padding(start = 8.dp).clip(RoundedCornerShape(50)).border(1.dp, cs.primary, RoundedCornerShape(50))
+                .clickable { val n = Voice.nextSpeed(speed); repo.store.voiceSpeed = n; VoicePlayer.chooseSpeed(n) }
+                .padding(horizontal = 8.dp, vertical = 2.dp)
+                .semantics { contentDescription = speedDesc }.testTag("voice-speed"),
+        )
         Text(label, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 8.dp))
     }
 }

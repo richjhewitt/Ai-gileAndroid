@@ -54,6 +54,10 @@ class Store(context: Context) : StoreFiles(context) {
         set(v) = settings.edit().putInt("morning", v).apply()
 
     /** AII-212: smaller chats list rows, so more chats fit. */
+    /** Voice note playback speed (AII-378): 1, 1.5 or 2. */
+    var voiceSpeed: Float
+        get() = Voice.parseSpeed(settings.getString("voiceSpeed", null))
+        set(v) = settings.edit().putString("voiceSpeed", Voice.speedLabel(v)).apply()
     /** Sort chats (AII-241): "newest" (default) or "az". */
     var sortChats: String
         get() = settings.getString("sortChats", "newest") ?: "newest"
