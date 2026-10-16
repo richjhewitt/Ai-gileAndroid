@@ -139,6 +139,18 @@
             </intent-filter>
         </service>
 
+        <!-- Quick Settings tile: New message (AII-400) -->
+        <service
+            android:name=".work.NewMessageTile"
+            android:exported="true"
+            android:icon="@drawable/ic_shortcut_new"
+            android:label="@string/new_message"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <!-- Pictures handed to the share menu (AII-96) -->
         <provider
             android:name="androidx.core.content.FileProvider"
