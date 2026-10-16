@@ -3,6 +3,7 @@ package com.smizflark.aigile.messenger.ui
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -362,6 +363,7 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<Strin
         else -> cs.surfaceContainerHigh
     }
     val fg = if (b.mine) cs.onPrimaryContainer else cs.onSurface
+    val failed = r.pending?.takeIf { b.state == SendState.FAILED }   // AII-62: a red outline; tap it for Retry or Delete
     val shown = Markdown.render(b.text, cs.surfaceVariant, cs.primary, cards, onCard)
     // AII-43: long-press a bubble to copy what it shows (without the ** marks).
     var menu by remember { mutableStateOf(false) }
@@ -371,11 +373,16 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<Strin
     Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalAlignment = if (b.mine) Alignment.End else Alignment.Start) {
         Surface(
             color = bg,
+            border = if (failed != null) BorderStroke(1.5.dp, cs.error) else null,
             shape = RoundedCornerShape(18.dp, 18.dp, if (b.mine) 4.dp else 18.dp, if (b.mine) 18.dp else 4.dp),
             modifier = Modifier.widthIn(max = 320.dp).semantics(mergeDescendants = true) {}.testTag(if (b.mine) "mine" else "theirs")
-                .combinedClickable(onClick = { showTime = !showTime }, onLongClick = { menu = true }),
+                .combinedClickable(onClick = { if (failed != null) menu = true else showTime = !showTime }, onLongClick = { menu = true }),
         ) {
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                if (failed != null) {
+                    DropdownMenuItem(text = { Text("Retry") }, modifier = Modifier.testTag("retry"), onClick = { menu = false; onRetry(failed) })
+                    DropdownMenuItem(text = { Text("Delete") }, modifier = Modifier.testTag("delete"), onClick = { menu = false; onDiscard(failed) })
+                }
                 DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
                     menu = false
                     clipboard.setText(AnnotatedString(shown.text))
@@ -392,7 +399,7 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<Strin
                 Text(
                     when (b.state) {
                         SendState.SENDING -> "Sending…"
-                        SendState.FAILED -> "Not sent"
+                        SendState.FAILED -> "⚠️ Not sent · tap for options"
                         SendState.SENT -> clock(b.at) + if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
                     },
                     style = MaterialTheme.typography.labelSmall,
@@ -403,11 +410,6 @@ private fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, cards: Set<Strin
         }
         if (showTime && b.at.isNotBlank()) Text(fullTime(b.at), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).testTag("fulltime"))
-        val p = r.pending
-        if (p != null && b.state == SendState.FAILED) Row {
-            TextButton(onClick = { onRetry(p) }) { Text("Tap to retry") }
-            TextButton(onClick = { onDiscard(p) }) { Text("Delete") }
-        }
         if (r.showOptions) FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             b.options.forEach { o -> OutlinedButton(onClick = { onOption(o) }) { Text(o) } }
         }
