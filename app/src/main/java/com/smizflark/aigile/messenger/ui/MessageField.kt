@@ -48,11 +48,14 @@ internal fun MessageField(
     val state = rememberTextFieldState(text, androidx.compose.ui.text.TextRange(text.length))
     val latestText by rememberUpdatedState(text)
     val latestOnText by rememberUpdatedState(onText)
+    // What the box last reported: an echo of it is the box's own typing coming back, not text from outside,
+    // so fast typing is never overwritten by a slightly older value.
+    val sent = remember { arrayOf(text) }
     LaunchedEffect(text) {
-        if (state.text.toString() != text) state.edit { replace(0, length, text); placeCursorAtEnd() }
+        if (text != sent[0] && state.text.toString() != text) { sent[0] = text; state.edit { replace(0, length, text); placeCursorAtEnd() } }
     }
     LaunchedEffect(state) {
-        snapshotFlow { state.text.toString() }.collect { if (it != latestText) latestOnText(it) }
+        snapshotFlow { state.text.toString() }.collect { if (it != latestText) { sent[0] = it; latestOnText(it) } }
     }
     val receiver = remember(onPictures) {
         object : ReceiveContentListener {
