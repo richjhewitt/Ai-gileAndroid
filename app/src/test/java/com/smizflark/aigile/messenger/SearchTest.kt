@@ -1,4 +1,4 @@
-package com.smizflark.aigile.messenger
+﻿package com.smizflark.aigile.messenger
 
 import com.smizflark.aigile.messenger.data.Bubble
 import com.smizflark.aigile.messenger.data.ChatRef
@@ -163,5 +163,14 @@ class SearchTest {
         assertEquals(listOf("Café menu is next"), Search.run("cafe", all, c, from = "Lead").map { it.bubble?.text })
         assertTrue(Search.run("radio", all, c, from = "Ann").isEmpty())
         assertTrue(Search.run("", all, c, pictures = true, from = "Ann").isEmpty())
+    }
+
+    @Test fun searchSkipsClearedAndDeletedMessages() {   // AII-405
+        val old = b("cafe old", "2026-10-01T10:00:00Z", author = "Ann")
+        val gone = b("cafe gone", "2026-10-05T10:00:00Z", author = "Ann").copy(deleted = true)
+        val fresh = b("cafe new", "2026-10-06T10:00:00Z", author = "Ann")
+        val c = listOf(Conversation(ann, listOf(old, gone, fresh)))
+        assertEquals(listOf("cafe new", "cafe old"), Search.run("cafe", listOf(ann), c).mapNotNull { it.bubble?.text })
+        assertEquals(listOf("cafe new"), Search.run("cafe", listOf(ann), c, cleared = mapOf(ann.key to "2026-10-02T00:00:00Z")).mapNotNull { it.bubble?.text })
     }
 }

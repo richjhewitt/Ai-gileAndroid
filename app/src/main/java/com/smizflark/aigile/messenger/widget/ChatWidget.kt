@@ -39,7 +39,7 @@ class ChatWidget : AppWidgetProvider() {
             val key = ChatWidgetPicks.load(context)[id]
             val chat = key?.let { k -> store.cachedChats().orEmpty().firstOrNull { it.key == k } }
             val lines = if (store.connected && chat != null)
-                ChatWidgetLogic.lines(store.cachedConversation(chat.key)?.bubbles.orEmpty(), context.getString(R.string.widget_you)) else emptyList()
+                ChatWidgetLogic.lines(store.cachedConversation(chat.key)?.bubbles.orEmpty(), context.getString(R.string.widget_you), clearedAt = store.cleared()[chat.key]) else emptyList()
             val v = RemoteViews(context.packageName, R.layout.widget_chat)
             val nightOn = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
             val c = WidgetLook.colours(Look.of(store.look), nightOn)

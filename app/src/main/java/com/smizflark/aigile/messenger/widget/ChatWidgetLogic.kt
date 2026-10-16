@@ -6,8 +6,8 @@ import com.smizflark.aigile.messenger.data.Bubble
 
 object ChatWidgetLogic {
     /** The newest [max] messages of a chat, oldest first, as one line each: "who: short text". */
-    fun lines(bubbles: List<Bubble>, you: String, max: Int = 3, maxChars: Int = 60): List<String> =
-        bubbles.filter { !it.deleted && it.text.isNotBlank() }
+    fun lines(bubbles: List<Bubble>, you: String, max: Int = 3, maxChars: Int = 60, clearedAt: String? = null): List<String> =
+        com.smizflark.aigile.messenger.data.Cleared.usable(bubbles, clearedAt).filter { it.text.isNotBlank() }   // AII-405
             .sortedBy { it.at }.takeLast(max)
             .map { "${if (it.mine) you else it.author.ifBlank { "?" }}: ${trim(it.text, maxChars)}" }
 

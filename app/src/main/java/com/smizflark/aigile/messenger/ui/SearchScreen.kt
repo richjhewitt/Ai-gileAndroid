@@ -77,7 +77,7 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
     var last7 by remember { mutableStateOf(false) }   // AII-258
     var from by remember { mutableStateOf<String?>(null) }   // AII-386
     var fromMenu by remember { mutableStateOf(false) }
-    val hits = remember(query, convs, pictures, links, files, starred, last7, from) { Search.run(query, chats, convs, pictures, links, if (starred) repo.store.stars() else null, last7, files, from) }
+    val hits = remember(query, convs, pictures, links, files, starred, last7, from) { Search.run(query, chats, convs, pictures, links, if (starred) repo.store.stars() else null, last7, files, from, repo.store.cleared()) }
     val focus = remember { FocusRequester() }
     var recent by remember { mutableStateOf(repo.store.recentSearches()) }
     /** AII-155: a search counts once you press Search or open a result. */

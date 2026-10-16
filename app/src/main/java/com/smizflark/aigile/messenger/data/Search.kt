@@ -42,7 +42,7 @@ object Search {
      * [pictures] / [links] / [files] (AII-192, AII-267): only messages with a picture / a web link / a non-picture file; chats are left out, and an empty query
      * lists every match newest first.
      */
-    fun run(query: String, chats: List<ChatRef>, conversations: List<Conversation>, pictures: Boolean = false, links: Boolean = false, starred: List<Star>? = null, last7: Boolean = false, files: Boolean = false, from: String? = null): List<Hit> {
+    fun run(query: String, chats: List<ChatRef>, conversations: List<Conversation>, pictures: Boolean = false, links: Boolean = false, starred: List<Star>? = null, last7: Boolean = false, files: Boolean = false, from: String? = null, cleared: Map<String, String> = emptyMap()): List<Hit> {
         val q = fold(query.trim())
         val filtered = pictures || links || starred != null || last7 || files || from != null
         val since = Now.today().minusDays(6)   // AII-258: today and the 6 days before
@@ -52,7 +52,7 @@ object Search {
         val known = chats.associateBy { it.key }
         val inMessages = conversations.flatMap { c ->
             val ref = known[c.ref.key] ?: c.ref
-            c.bubbles.mapNotNull { b ->
+            Cleared.usable(c.bubbles, cleared[c.ref.key]).mapNotNull { b ->   // AII-405
                 val hay = listOfNotNull(b.text, b.cardTitle, b.author).joinToString("\n")
                 val ok = (!pictures || hasPicture(b)) && (!links || hasLink(b.text)) && (!files || hasFile(b)) && (starred == null || Stars.has(starred, c.ref.key, b.key)) && (!last7 || inLast7(b.at, since)) && (from == null || isFrom(b, from)) && (!typed || fold(hay).contains(q))
                 if (!ok) return@mapNotNull null

@@ -59,4 +59,10 @@ class WidgetRowsTest {
         assertEquals("", by["lead:b"]!!.badge)
         assertEquals("", by["lead:c"]!!.badge)
     }
+
+    @Test fun clearedChatShowsNoOldPreview() {   // AII-405
+        val c = chat("a", "2026-10-13T09:00:00Z").copy(preview = "old news")
+        assertEquals("old news", WidgetRows.rows(listOf(c), emptyMap(), now)[0].subtitle)
+        assertEquals("", WidgetRows.rows(listOf(c), emptyMap(), now, cleared = mapOf("lead:a" to "2026-10-13T10:00:00Z"))[0].subtitle)
+    }
 }

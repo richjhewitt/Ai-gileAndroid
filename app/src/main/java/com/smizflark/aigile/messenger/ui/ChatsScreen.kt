@@ -311,11 +311,12 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     else EmptyState(androidx.compose.ui.res.stringResource(R.string.empty_loading))
                 }
                 val unsent = outbox.groupBy { it.chat }
+                val clearedMarks = repo.store.cleared()   // AII-405: a cleared chat row shows no old preview
                 val sorted = com.smizflark.aigile.messenger.data.sortChats(shown, Appearance.sort) { News.fresh(it, seen[it.key]) }
                 val rows = (if (Appearance.mutedLast) mutedLast(sorted, pinned, muted) else pinFirst(sorted, pinned)) + if (showClosed) shut else emptyList()
                 items(rows, key = { it.key }) { c ->
                     val isShut = c in shut
-                    ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, c.key in reminded, unsent[c.key].orEmpty(), drafts[c.key], isShut,
+                    ChatRow(com.smizflark.aigile.messenger.data.Cleared.row(c, clearedMarks[c.key]), repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, c.key in reminded, unsent[c.key].orEmpty(), drafts[c.key], isShut,
                         onRead = { markRead(listOf(c)) }, onUnread = { markUnread(c) },
                         onMute = { on -> if (on) muteAsk = c else { repo.store.setMuted(c.key, false); muted = repo.store.muted() } },
                         onAddHome = { if (!com.smizflark.aigile.messenger.data.HomeShortcut.pin(context, c.key, c.name)) scope.launch { snack.currentSnackbarData?.dismiss(); snack.showSnackbar(context.getString(R.string.add_to_home_unsupported)) } },

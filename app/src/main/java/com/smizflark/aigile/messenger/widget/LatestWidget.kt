@@ -28,8 +28,8 @@ object WidgetRows {
 
     /** The newest chats first, at most [max]. A chat is new when its last message is newer than the one you saw. */
     fun rows(chats: List<ChatRef>, seen: Map<String, String>, now: Instant, max: Int = 4,
-             unread: Map<String, Int> = emptyMap(), muted: Set<String> = emptySet()): List<Row> =
-        chats.sortedByDescending { it.last ?: "" }.take(max).map { c ->
+             unread: Map<String, Int> = emptyMap(), muted: Set<String> = emptySet(), cleared: Map<String, String> = emptyMap()): List<Row> =
+        chats.map { com.smizflark.aigile.messenger.data.Cleared.row(it, cleared[it.key]) }.sortedByDescending { it.last ?: "" }.take(max).map { c ->
             Row(
                 chat = c.key,
                 title = "${c.emoji} ${c.name}".trim(),
@@ -110,7 +110,7 @@ class LatestWidget : AppWidgetProvider() {
             val chats = store.cachedChats().orEmpty()
             val seen = store.seen()
             val unread = chats.associate { it.key to News.unread(it, seen[it.key], store.cachedConversation(it.key)) }
-            val rows = if (store.connected) WidgetRows.rows(chats, seen, Instant.now(), unread = unread, muted = store.muted()) else emptyList()
+            val rows = if (store.connected) WidgetRows.rows(chats, seen, Instant.now(), unread = unread, muted = store.muted(), cleared = store.cleared()) else emptyList()
             val v = RemoteViews(context.packageName, R.layout.widget_latest)
             val nightOn = (context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
             val c = WidgetLook.colours(Look.of(store.look), nightOn)

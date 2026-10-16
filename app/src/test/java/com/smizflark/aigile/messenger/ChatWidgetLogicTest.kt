@@ -37,4 +37,9 @@ class ChatWidgetLogicTest {
     @Test fun decodeIgnoresBadEntries() {
         assertEquals(mapOf(3 to "c"), ChatWidgetLogic.decode(setOf("3=c", "x=y", "=z", "5=", "nonsense")))
     }
+
+    @Test fun clearedMessagesAreLeftOut() {   // AII-405
+        val all = listOf(b(1, text = "old"), b(5, text = "new"))
+        assertEquals(listOf("Ann: new"), ChatWidgetLogic.lines(all, "You", clearedAt = "2026-01-01T10:03:00Z"))
+    }
 }
