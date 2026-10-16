@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AI-gile</string>
+    <string name="waiting">Waiting for your phone…</string>
+    <string name="chats_count">%1$d chats</string>
+    <string name="chats_one">1 chat</string>
+</resources>

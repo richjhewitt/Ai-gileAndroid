@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "AI-gile Messenger"
 include(":app")
+include(":wear")
