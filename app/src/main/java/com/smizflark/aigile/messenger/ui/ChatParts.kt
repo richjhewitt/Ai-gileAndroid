@@ -164,6 +164,7 @@ internal fun BoxScope.NextUnreadButton(name: String?, onClick: () -> Unit) {
     AssistChip(
         onClick = onClick, label = { Text(stringResource(R.string.next_unread, name), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
         modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp).widthIn(max = 320.dp).testTag("next-unread"),
+        colors = androidx.compose.material3.AssistChipDefaults.assistChipColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface),   // solid, so text never shows through
     )
 }
 

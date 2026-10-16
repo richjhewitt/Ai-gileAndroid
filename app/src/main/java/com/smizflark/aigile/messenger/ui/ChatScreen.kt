@@ -399,7 +399,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 }
                 DayPill(if (scrolling) topDay else null, onClick = { goToDate = true })
                 JumpToNewest(show = !atBottom && convo != null, unread = unread) { scope.launch { list.animateScrollToItem(0) } }
-                val next = if (atBottom && convo != null && !finding) nextChat else null   // AII-204
+                val next = if (list.firstVisibleItemIndex == 0 && convo != null && !finding) nextChat else null   // AII-204; only once its room at the end shows (AII-273: never over a message)
                 NextUnreadButton(next?.name) { next?.let(onOpenChat) }
             }
             Composer(ref, text, { text = it }, targets.map { it.id to it.label }, target, { target = it; picked = true },
