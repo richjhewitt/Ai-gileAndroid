@@ -424,4 +424,6 @@
     <string name="safety_hint">Read these words to each other. If they match, nobody is listening in.</string>
     <string name="we_checked_it">We checked it</string>
     <string name="safety_checked">✓ Checked</string>
+    <string name="friend_private">🔒 Private</string>
+    <string name="friend_checked">🔒 Private, safety code checked</string>
 </resources>

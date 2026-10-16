@@ -31,7 +31,7 @@ object Mapper {
         val friends = contacts.filter { !it.blocked }.sortedByDescending { it.last ?: "" }.map { c ->
             ChatRef(
                 kind = Kind.FRIEND, id = c.id, name = c.name.ifBlank { "Friend" },
-                subtitle = if (c.checked) "🔒 Private, safety code checked" else "🔒 Private",
+                subtitle = if (c.checked) com.smizflark.aigile.messenger.ui.Words.friendChecked else com.smizflark.aigile.messenger.ui.Words.friendPrivate,
                 emoji = "", last = c.last, lastIn = c.lastIn,
                 safety = c.safety, checked = c.checked, typing = c.typing,
             )

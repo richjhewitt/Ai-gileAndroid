@@ -424,4 +424,6 @@
     <string name="safety_hint">Lees deze woorden aan elkaar voor. Als ze overeenkomen, luistert niemand mee.</string>
     <string name="we_checked_it">We hebben het gecontroleerd</string>
     <string name="safety_checked">✓ Gecontroleerd</string>
+    <string name="friend_private">🔒 Privé</string>
+    <string name="friend_checked">🔒 Privé, veiligheidscode gecontroleerd</string>
 </resources>
