@@ -11,3 +11,4 @@ keystore/
 *.jks
 *.keystore
 dist/
+.kotlin/
