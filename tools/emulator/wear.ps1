@@ -32,6 +32,8 @@ if (-not (Test-Path "$env:USERPROFILE/.android/avd/$Avd.avd")) {
 Write-Host "starting headless Wear emulator ($Avd)"
 $emu = Start-Process "$Sdk/emulator/emulator.exe" -ArgumentList @('-avd', $Avd, '-port', '5586', '-no-window', '-no-audio', '-no-boot-anim', '-no-snapshot', '-gpu', 'swiftshader_indirect') -WindowStyle Hidden -PassThru
 $env:ANDROID_SERIAL = $serial
+Start-Sleep 20
+if ($emu.HasExited) { Fail 'emulator exited at once (low disk space on C: is the usual cause; it needs a few GB free)' }
 & $adb start-server | Out-Null
 & $adb wait-for-device
 $deadline = (Get-Date).AddSeconds($BootSeconds)
