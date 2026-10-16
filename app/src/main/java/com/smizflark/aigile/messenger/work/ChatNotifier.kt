@@ -14,6 +14,7 @@ import androidx.core.app.Person
 import androidx.core.app.RemoteInput
 import com.smizflark.aigile.messenger.MainActivity
 import com.smizflark.aigile.messenger.R
+import com.smizflark.aigile.messenger.data.ChatSound
 import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.QuickReply
 import com.smizflark.aigile.messenger.data.Replies
@@ -29,7 +30,7 @@ object ChatNotifier {
     const val SUMMARY = 1
     private const val MAX_LINES = 8
 
-    private fun base(context: Context) = NotificationCompat.Builder(context, CheckWorker.CHANNEL)
+    private fun base(context: Context, channel: String = CheckWorker.CHANNEL) = NotificationCompat.Builder(context, channel)
         .setSmallIcon(R.drawable.ic_notify)
         .setAutoCancel(true)
         .setOnlyAlertOnce(true)
@@ -59,6 +60,24 @@ object ChatNotifier {
         return Replies.parse(store.quickReplyText).ifEmpty { context.resources.getStringArray(R.array.quick_replies_list).toList() }.toTypedArray()
     }
 
+    /**
+     * AII-373: the channel for a chat's alert. A chat with its own sound has its own channel (Android fixes a channel's
+     * sound once made); channels of its earlier sounds are deleted. No choice: the normal channel.
+     */
+    fun channelFor(context: Context, chat: String, name: String): String {
+        val uri = ChatSound.of(Store(context).chatSounds, chat)
+        val id = ChatSound.channelId(chat, uri, CheckWorker.CHANNEL)
+        if (Build.VERSION.SDK_INT < 26) return id
+        val nm = context.getSystemService(NotificationManager::class.java)
+        nm.notificationChannels.filter { it.id.startsWith(ChatSound.prefix(chat)) && it.id != id }.forEach { nm.deleteNotificationChannel(it.id) }
+        if (uri.isEmpty() || nm.getNotificationChannel(id) != null) return id
+        val ch = android.app.NotificationChannel(id, name, NotificationManager.IMPORTANCE_DEFAULT).apply { description = context.getString(R.string.channel_desc) }
+        if (ChatSound.isNone(uri)) ch.setSound(null, null)
+        else ch.setSound(android.net.Uri.parse(uri), android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION).build())
+        nm.createNotificationChannel(ch)
+        return id
+    }
+
     /** A chat's notification with the lines of [style], and its Reply button. */
     private fun build(context: Context, chat: String, name: String, style: NotificationCompat.MessagingStyle, msg: String? = null, text: String? = null): NotificationCompat.Builder {
         val id = QuickReply.notificationId(chat)
@@ -80,7 +99,9 @@ object ChatNotifier {
             .build()
         // AII-207: Silent alerts for this chat: shown, but no sound and no buzz (Mute never gets here).
         val quiet = Store(context).let { com.smizflark.aigile.messenger.data.Silent.quiet(it.silent, it.muted(), chat) }
-        val b = base(context).setContentTitle(name).setStyle(style).setSilent(quiet)
+        val own = ChatSound.of(Store(context).chatSounds, chat)
+        val b = base(context, channelFor(context, chat, name)).setContentTitle(name).setStyle(style).setSilent(quiet || (ChatSound.isNone(own) && Build.VERSION.SDK_INT < 26))
+        if (own.isNotEmpty() && !ChatSound.isNone(own) && !quiet && Build.VERSION.SDK_INT < 26) b.setSound(android.net.Uri.parse(own))
             .setContentIntent(openChat(context, chat, id)).addAction(action).addAction(readAction).setGroup(GROUP)
         // AII-210: Remind me in 1 hour, for the newest message in this alert (kept in the alert's extras so later lines keep it).
         if (msg != null && text != null) {

@@ -27,6 +27,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Remind.kt: chatKeys = chats with a reminder (AII-226). Remind me about a message (AII-201): in 1 hour, this evening 18:00 (hidden after), tomorrow 9:00, or Pick a time… (day then time, Pause.onDay, AII-225); after the time a Note dialog (Save / Skip) sets Reminder.note, shown as "📝 note" first in the alert and the Reminders list (Remind.withNote, AII-244); reminders kept in Store, fired by work/RemindWorker.kt as an alert that opens the chat at the message.
 - data/Remind.kt also: forMessage / label give the "🔔 18:00" line under a bubble that has a reminder (AII-251; read once per chat in ui/ChatScreen.kt; the Remind me menu and note dialog are in ui/BubbleMenu.kt).
 - data/Silent.kt: Silent alerts for one chat (AII-207): its alerts show with no sound or buzz (setSilent in work/ChatNotifier.kt); Mute still wins; switch in chat details and the chat menu.
+- data/ChatSound.kt: a chat's own alert sound (AII-373): Store chatSounds, channel id per chat + sound (ChatNotifier.channelFor makes it and deletes the old one); Alert sound row in ui/ChatDetails.kt opens the ringtone picker; Mute and Silent alerts still win.
 - data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
 - data/SettingsExport.kt: settings export and restore sealed with a passphrase (PBKDF2 + AES-GCM); no board key (AII-349).
 - data/Mute.kt: mute a chat for 1 hour, 8 hours or until unmuted (AII-157); timed mutes end by themselves.
