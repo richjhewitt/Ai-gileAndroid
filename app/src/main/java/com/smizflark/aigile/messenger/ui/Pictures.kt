@@ -3,6 +3,7 @@ package com.smizflark.aigile.messenger.ui
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -125,6 +126,7 @@ fun PickedPictures(files: List<String>, onEdit: ((String) -> Unit)? = null, onRe
                     modifier = Modifier.size(72.dp).clip(RoundedCornerShape(10.dp))
                         .then(if (onEdit != null) Modifier.clickable(onClickLabel = stringResource(R.string.pic_edit)) { onEdit(f) } else Modifier).testTag("picked"),   // AII-385
                     error = { Missing(Pic(f, File(f).name)) },
+                    success = { Image(painter = it.painter, contentDescription = stringResource(R.string.picture_to_send), contentScale = ContentScale.Crop, modifier = Modifier.testTag("picked-loaded")) },   // tag only once the thumbnail is drawn (tests wait for it)
                 )
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.inverseSurface,
                     modifier = Modifier.align(Alignment.TopEnd).padding(2.dp).size(24.dp).clickable { onRemove(f) }) {

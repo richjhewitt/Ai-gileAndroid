@@ -133,7 +133,10 @@ class OtherShotTest : ShotBase() {
             .let { b -> f.outputStream().use { b.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) } }
         var sentTo: String? = null
         val davy = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
-        shot("new_message_shared_picture", true) { NewMessageScreen(repo, pics = listOf(f.path), onBack = {}, onSent = { sentTo = it.key }) }
+        show(true) { NewMessageScreen(repo, pics = listOf(f.path), onBack = {}, onSent = { sentTo = it.key }) }
+        // the thumbnail loads off the main thread, so wait for it rather than for idle (flaky otherwise)
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("picked-loaded").fetchSemanticsNodes().isNotEmpty() }
+        rule.onRoot().captureRoboImage("../docs/shots/new_message_shared_picture_dark.png")
         rule.onNodeWithTag("to:${davy.key}").performClick()
         rule.onNodeWithTag("send").performClick()
         rule.waitUntil(5_000) { sentTo != null }
