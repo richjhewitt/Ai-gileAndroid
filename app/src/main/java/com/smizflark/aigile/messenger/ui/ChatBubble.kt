@@ -138,7 +138,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null, onReact: ((Bubble, String) -> Unit)? = null) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null, onReact: ((Bubble, String) -> Unit)? = null, pinned: Boolean = false, onPin: (() -> Unit)? = null) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -245,7 +245,8 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             HoldMenu(menu, { menu = false }, b, shown, starred, onStar, onReply, onForward, onRemind = { remindMenu = true }, onSelect = { selecting = true },
                 onEdit = if (ownLine && onEditMsg != null) { { editing = true } } else null,
                 onDelete = if (ownLine && onDeleteMsg != null) { { deleting = true } } else null,
-                onReact = if (ref.kind == Kind.FRIEND && b.id != null && b.state == SendState.SENT && !b.deleted && !b.unverified && onReact != null) { e -> onReact(b, e) } else null)
+                onReact = if (ref.kind == Kind.FRIEND && b.id != null && b.state == SendState.SENT && !b.deleted && !b.unverified && onReact != null) { e -> onReact(b, e) } else null,
+                pinned = pinned, onPin = onPin)
             if (editing) EditMessageDialog(Quote.split(b.text).second, onSave = { editing = false; onEditMsg?.invoke(b, it) }, onDismiss = { editing = false })
             if (deleting) DeleteMessageDialog(onConfirm = { deleting = false; onDeleteMsg?.invoke(b) }, onDismiss = { deleting = false })
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {

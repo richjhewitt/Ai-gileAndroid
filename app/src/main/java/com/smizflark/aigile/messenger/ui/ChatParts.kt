@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material3.AssistChip
@@ -128,6 +129,20 @@ internal sealed interface Row {
     data object New : Row { override val id = "new" }
 }
 
+
+/** AII-339: the pinned bar under the top bar: the shown pin's first line, "1 of N" when several; tap jumps to it (or shows the next), X unpins it. */
+@Composable
+internal fun PinnedBar(text: String, index: Int, count: Int, onTap: () -> Unit, onUnpin: () -> Unit) {
+    val on = MaterialTheme.colorScheme.onSecondaryContainer
+    Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer).clickable(onClick = onTap).padding(start = 14.dp, end = 4.dp).testTag("pinned-bar"),
+        verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.PushPin, null, Modifier.size(16.dp), tint = on)
+        Text(text, Modifier.weight(1f).padding(horizontal = 8.dp, vertical = 6.dp), maxLines = 1, overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodySmall, color = on)
+        if (count > 1) Text(stringResource(R.string.pinned_of, index + 1, count), style = MaterialTheme.typography.labelSmall, color = on, modifier = Modifier.testTag("pinned-count"))
+        IconButton(onClick = onUnpin, Modifier.size(36.dp).testTag("pinned-x")) { Icon(Icons.Default.Close, stringResource(R.string.unpin_message), Modifier.size(18.dp), tint = on) }
+    }
+}
 
 /** AII-78: the find bar: a text field, "2 of 5", previous / next match and close. */
 @Composable
