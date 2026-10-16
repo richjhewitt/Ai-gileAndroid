@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import com.smizflark.aigile.messenger.R
+import com.smizflark.aigile.messenger.data.Kind
+import com.smizflark.aigile.messenger.data.PasteContent
 import com.smizflark.aigile.messenger.data.Repo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,5 +42,21 @@ internal fun pasteCopiedPicture(copied: CopiedPicture, repo: Repo, scope: Corout
     scope.launch {
         val kept = withContext(Dispatchers.IO) { repo.keepPicture(uri) }
         if (kept == null) setNote(res.getString(R.string.pic_read_copied)) else { setPics((pics() + kept).take(MAX_PICS)); setNote(null) }
+    }
+}
+
+/** A GIF or sticker from the keyboard (AII-370): in a friend chat it joins the pictures like a picked one; a team chat says no. */
+internal fun receivePictures(kind: Kind, uris: List<Uri>, mimes: List<String?>, repo: Repo, scope: CoroutineScope, ctx: android.content.Context, pics: () -> List<String>, setPics: (List<String>) -> Unit, setNote: (String?) -> Unit) {
+    when (PasteContent.verdict(kind, mimes)) {
+        PasteContent.Verdict.IGNORE -> return
+        PasteContent.Verdict.NOT_IN_TEAM -> { android.widget.Toast.makeText(ctx, R.string.pictures_friend_only, android.widget.Toast.LENGTH_SHORT).show(); return }
+        PasteContent.Verdict.ADD -> {}
+    }
+    if (uris.isEmpty()) return
+    scope.launch {
+        setNote(ctx.resources.getQuantityString(R.plurals.adding_pictures, uris.size, uris.size))
+        val kept = withContext(Dispatchers.IO) { uris.map { repo.keepPicture(it) } }
+        setPics((pics() + kept.filterNotNull()).take(MAX_PICS))
+        setNote(if (kept.any { it == null }) ctx.resources.getString(R.string.pic_read_one) else null)
     }
 }

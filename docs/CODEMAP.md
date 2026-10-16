@@ -73,7 +73,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ChatScreenParts.kt: small pieces of ChatScreen: KeepDraft, WatchWorking, rememberFloatingDay, ErrorLine, ClearChatHost (AII-366 split).
 - ui/ChatGestures.kt: the pinch-to-zoom text size (AII-259) and the next unread chat lookup (AII-204) for ui/ChatScreen.kt.
 - ui/ChatScroll.kt: remembered scroll place and New messages opening (AII-72, AII-102), Go to date scroll (AII-193), day and new-line rows, share/save the chat as text (AII-139, AII-229).
-- ui/ChatPictures.kt: the photo picker and pasting a copied picture into the message box (AII-27, AII-56).
+- ui/ChatPictures.kt: the photo picker and pasting a copied picture into the message box (AII-27, AII-56). A GIF or sticker from the keyboard (AII-370): ui/MessageField.kt (state-based field + contentReceiver) -> receivePictures; data/PasteContent.kt decides friend vs team.
 - ui/ChatUndoSend.kt: Undo send hold helpers (AII-202): the Undo bar and sending a held message on leaving the chat.
 - ui/ChatTopBar.kt: the chat's top bar (name, 'working on', find, Mute; menu: Go to date, My last message AII-242).
 - ui/ChatRows.kt: builds the chat's rows (days, card headers, messages, waiting sends) and counts unread below.
