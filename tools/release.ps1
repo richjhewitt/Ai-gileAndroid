@@ -4,10 +4,11 @@
 #   powershell -ExecutionPolicy Bypass -File tools\release.ps1          # build, copy to dist\, print the file and SHA-256
 #   powershell -ExecutionPolicy Bypass -File tools\release.ps1 -Serve   # same, then share dist\ at https://<this PC>.ts.net/messenger/
 #   powershell -ExecutionPolicy Bypass -File tools\release.ps1 -Stop    # stop sharing
+#   powershell -ExecutionPolicy Bypass -File tools\release.ps1 -Board   # same, then copy it to the board (AII-314: the app asks the board first)
 #
 # Signed with keystore\messenger.jks (kept out of git; see app\build.gradle.kts). Without it the build uses the debug key
 # and the script stops: an APK signed with another key can't update the one on the phone.
-param([switch]$Serve, [switch]$Stop, [switch]$GitHub)
+param([switch]$Serve, [switch]$Stop, [switch]$GitHub, [switch]$Board, [string]$BoardData = (Join-Path (Split-Path $PSScriptRoot -Parent | Split-Path -Parent) 'AI-gile\data'))
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $tailscale = 'C:\Program Files\Tailscale\tailscale.exe'
@@ -54,6 +55,16 @@ if ($GitHub) {
     & gh release create "build-$build" $copy --repo richjhewitt/Ai-gileAndroid --target main --title "Messenger $version (build $build)" --notes "Install: tap aigile-messenger.apk on the phone."
     if ($LASTEXITCODE -ne 0) { throw 'gh release create failed: run gh auth login first, and push master to main' }
     Write-Host "Released build-$build" -ForegroundColor Green
+}
+
+if ($Board) {
+    # The board's GET /api/messenger/latest (AII-313) reads these two files; the phone downloads the APK over its board link.
+    $to = Join-Path $BoardData 'messenger'
+    New-Item -ItemType Directory -Force $to | Out-Null
+    Copy-Item $named (Join-Path $to 'aigile-messenger.apk') -Force
+    # No BOM (Set-Content utf8 adds one on Windows PowerShell): the board reads it with JSON.parse.
+    [IO.File]::WriteAllText((Join-Path $to 'latest.json'), (@{ build = [int]$build; version = $version; sha256 = $sha } | ConvertTo-Json))
+    Write-Host "On the board: build $build in $to" -ForegroundColor Green
 }
 
 if ($Serve) {

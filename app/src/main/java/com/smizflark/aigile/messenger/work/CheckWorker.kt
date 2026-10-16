@@ -53,6 +53,8 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         const val CHANNEL = "messages"
         const val EXTRA_CHAT = "chat"
         const val EXTRA_MSG = "msg"
+        /** AII-314: opened from the update alert, install the board build. */
+        const val EXTRA_UPDATE = "update"
         private const val GROUP = "messages"
         private const val SUMMARY = ChatNotifier.SUMMARY
 
@@ -96,16 +98,19 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         }
 
         /** AII-305: a new build on GitHub (asked every few hours) gets one 'Update ready, tap to install' notification. */
-        private fun updateAlert(context: Context) {
+        private suspend fun updateAlert(context: Context) {
             val store = (context.applicationContext as App).repo.store
             val now = System.currentTimeMillis()
             if (Update.due(now, store.updateChecked, Update.EVERY)) {
                 store.updateChecked = now
-                Update.fetch()?.let { store.release = it }
+                Update.check((context.applicationContext as App).repo.source, BuildConfig.VERSION_CODE)?.let { store.release = it }
             }
             val r = store.release?.takeIf { Update.newer(it, BuildConfig.VERSION_CODE) && it.build > store.updateTold } ?: return
             if (!allowed(context)) return
-            val open = PendingIntent.getActivity(context, 0, Intent(Intent.ACTION_VIEW, Uri.parse(r.url)),
+            // A board build (AII-314) needs the app to fetch it over the board link: the tap opens the app, which installs it.
+            val tap = if (r.board) Intent(context, MainActivity::class.java).putExtra(EXTRA_UPDATE, true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                else Intent(Intent.ACTION_VIEW, Uri.parse(r.url))
+            val open = PendingIntent.getActivity(context, UPDATE_ID, tap,
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
             NotificationManagerCompat.from(context).notify(UPDATE_ID, base(context)
                 .setContentTitle(context.getString(R.string.update_ready)).setContentText(context.getString(R.string.update_ready_text))

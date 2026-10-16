@@ -13,6 +13,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import okhttp3.MediaType.Companion.toMediaType
@@ -253,5 +254,22 @@ class BoardSource(
     }
 
     /** Full URL for a board picture path like /api/avatars/x.png. */
+    /** AII-314: the board's newest Messenger build, or null on an older board (404) or before a release. */
+    suspend fun latest(): Release? = try { Update.parseBoard(call("GET", "/api/messenger/latest")) }
+        catch (e: BoardError) { if (e.code == 404) null else throw e }
+
+    /** A file from the board as bytes; over the sealed link it comes back as {ct, data: base64}. */
+    suspend fun fileBytes(path: String): ByteArray =
+        if (sealed()) java.util.Base64.getDecoder().decode(json.parseToJsonElement(sealedCall("GET", path, null)).jsonObject["data"]?.jsonPrimitive?.content ?: "")
+        else withContext(Dispatchers.IO) {
+            val rb = Request.Builder().url(base + path)
+            if (key.isNotBlank()) rb.header("Authorization", "Bearer $key")
+            hostHeader?.let { rb.header("Host", it) }
+            http.newCall(rb.build()).execute().use { r ->
+                if (!r.isSuccessful) throw BoardError(explain(r.code, r.body?.string() ?: ""), r.code)
+                r.body?.bytes() ?: ByteArray(0)
+            }
+        }
+
     fun url(path: String) = if (path.startsWith("http")) path else base + path
 }

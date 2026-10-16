@@ -37,6 +37,9 @@ import com.smizflark.aigile.messenger.ui.StarredScreen
 import com.smizflark.aigile.messenger.ui.WaitingScreen
 import com.smizflark.aigile.messenger.ui.Shortcuts
 import com.smizflark.aigile.messenger.work.CheckWorker
+import com.smizflark.aigile.messenger.ui.installUpdate
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 /** The Connect screen's route; out=true after Sign out puts Scan QR code first (AII-289). */
 private const val CONNECT = "connect?out={out}"
@@ -163,6 +166,11 @@ class MainActivity : FragmentActivity() {
         if (intent?.action == Intent.ACTION_SEND)
             Share.text(intent.getStringExtra(Intent.EXTRA_SUBJECT), intent.getStringExtra(Intent.EXTRA_TEXT))?.let { shared = it }
         if (intent?.action == Shortcuts.ACTION_NEW) openNew = true
+        if (intent?.getBooleanExtra(CheckWorker.EXTRA_UPDATE, false) == true) {
+            intent.removeExtra(CheckWorker.EXTRA_UPDATE)
+            val repo = (application as App).repo
+            repo.store.release?.let { r -> lifecycleScope.launch { installUpdate(this@MainActivity, repo, r) } }
+        }
     }
 
     private fun unlock() = Lock.ask(this) { unlocked = true; locked = false }

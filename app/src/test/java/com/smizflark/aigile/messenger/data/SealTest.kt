@@ -107,6 +107,45 @@ class SealTest {
         assertEquals(listOf("GET /api/meta", "GET /api/meta", "GET /api/chats/x"), seen)
     }
 
+    /** AII-314: the board's newest build and its APK over the sealed link (the file comes back as {ct, data: base64}). */
+    @Test fun updateComesOverTheSealedLink() = runTest {
+        val apk = ByteArray(3000) { (it * 7).toByte() }
+        val board = Interceptor { chain ->
+            val r = chain.request()
+            val inner = json.parseToJsonElement(link.openRequest(Buffer().also { r.body!!.writeTo(it) }.readUtf8())) as JsonObject
+            val answer = when (inner["p"]!!.jsonPrimitive.content) {
+                "/api/meta" -> link.sealResponse(200, json.parseToJsonElement("""{"owner":"Rich","sealed":1}"""))
+                "/api/messenger/latest" -> link.sealResponse(200, json.parseToJsonElement("""{"build":400,"version":"0.1.0","url":"/api/messenger/apk"}"""))
+                "/api/messenger/apk" -> link.sealResponse(200, json.parseToJsonElement("""{"ct":"application/octet-stream","data":"${java.util.Base64.getEncoder().encodeToString(apk)}"}"""))
+                else -> link.sealResponse(404, json.parseToJsonElement("""{"error":"nope"}"""))
+            }
+            Response.Builder().request(r).protocol(Protocol.HTTP_1_1).code(200).message("OK")
+                .body(answer.toResponseBody("application/json".toMediaType())).build()
+        }
+        val src = BoardSource("https://pc.ts.net", kB64, OkHttpClient.Builder().addInterceptor(board).build(), deviceId = d)
+        assertEquals(Release(400, "/api/messenger/apk", board = true), src.latest())
+        assertTrue(apk.contentEquals(src.fileBytes("/api/messenger/apk")))
+    }
+
+    /** AII-314: an older board (no route, 404) has no latest build; a plain link gets the APK bytes as they are. */
+    @Test fun updateOverAPlainLink() = runTest {
+        val apk = ByteArray(2000) { (it * 3).toByte() }
+        var hasRoute = false
+        val board = Interceptor { chain ->
+            val r = chain.request()
+            assertEquals("Bearer oldkey", r.header("Authorization"))
+            val (code, body) = when {
+                r.url.encodedPath == "/api/messenger/apk" && hasRoute -> 200 to apk.toResponseBody("application/octet-stream".toMediaType())
+                else -> 404 to """{"error":"no such endpoint"}""".toResponseBody("application/json".toMediaType())
+            }
+            Response.Builder().request(r).protocol(Protocol.HTTP_1_1).code(code).message("x").body(body).build()
+        }
+        val src = BoardSource("https://pc.ts.net", "oldkey", OkHttpClient.Builder().addInterceptor(board).build())
+        assertNull(src.latest())
+        hasRoute = true
+        assertTrue(apk.contentEquals(src.fileBytes("/api/messenger/apk")))
+    }
+
     private fun cOf(envelope: String) = (json.parseToJsonElement(envelope) as JsonObject)["c"]!!.jsonPrimitive.content
     private fun hex(s: String) = ByteArray(s.length / 2) { s.substring(it * 2, it * 2 + 2).toInt(16).toByte() }
     private fun expectBadTag(block: () -> Unit) {

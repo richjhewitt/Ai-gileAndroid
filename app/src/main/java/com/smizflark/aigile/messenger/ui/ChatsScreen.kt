@@ -156,13 +156,14 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
         }
     }
 
-    // AII-132: ask GitHub for the latest release at most once a day; the bar shows while it is newer than this app.
+    // AII-132: ask for the latest build at most once a day (the board first, then GitHub, AII-314); the bar shows while it is newer than this app.
     var release by remember { mutableStateOf(repo.store.release) }
+    var downloading by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         val now = Now.millis()
         if (Update.due(now, repo.store.updateChecked)) {
             repo.store.updateChecked = now
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Update.fetch() }?.let { repo.store.release = it; release = it }
+            Update.check(repo.source, BuildConfig.VERSION_CODE)?.let { repo.store.release = it; release = it }
         }
     }
 
@@ -251,9 +252,9 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 }
                 release?.takeIf { Update.newer(it, BuildConfig.VERSION_CODE) }?.let { r ->
                     item {
-                        Text(stringResource(R.string.new_version), Modifier.fillMaxWidth()
+                        Text(stringResource(if (downloading) R.string.update_downloading else R.string.new_version), Modifier.fillMaxWidth()
                             .background(MaterialTheme.colorScheme.primaryContainer)
-                            .clickable { runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(r.url))) } }
+                            .clickable(enabled = !downloading) { scope.launch { downloading = true; installUpdate(context, repo, r); downloading = false } }
                             .padding(horizontal = 16.dp, vertical = 12.dp).testTag("newVersion"),
                             color = MaterialTheme.colorScheme.onPrimaryContainer, style = MaterialTheme.typography.bodyMedium)
                     }

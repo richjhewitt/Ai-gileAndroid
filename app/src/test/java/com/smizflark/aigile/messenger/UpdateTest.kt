@@ -43,4 +43,31 @@ class UpdateTest {
         assertFalse(Update.newer(Release(10, "u"), 10))
         assertFalse(Update.newer(null, 10))
     }
+
+    /* ---------- AII-314: the board first ---------- */
+
+    @Test fun parseBoardReadsTheBoardsLatest() {
+        assertEquals(Release(330, "/api/messenger/apk", board = true),
+            Update.parseBoard("""{"build":330,"version":"0.1.0","size":5,"sha256":"ab","url":"/api/messenger/apk"}"""))
+        assertNull(Update.parseBoard("""{"error":"no Messenger build on this board yet"}"""))
+        assertNull(Update.parseBoard("""{"build":330,"url":"https://elsewhere/x.apk"}"""))
+        assertNull(Update.parseBoard("not json"))
+    }
+
+    @Test fun aNewerBoardBuildSkipsGitHub() {
+        val board = Release(12, "/api/messenger/apk", board = true)
+        assertEquals(board, Update.pick(board, 10) { error("GitHub asked") })
+    }
+
+    @Test fun noBoardOrOlderBoardAsksGitHub() {
+        val gh = Release(13, "https://x/a.apk")
+        assertEquals(gh, Update.pick(null, 10) { gh })
+        assertEquals(gh, Update.pick(Release(10, "/api/messenger/apk", board = true), 10) { gh })
+        assertNull(Update.pick(null, 10) { null })
+    }
+
+    @Test fun onATieTheBoardWins() {
+        val board = Release(9, "/api/messenger/apk", board = true)
+        assertEquals(board, Update.pick(board, 10) { Release(9, "https://x/a.apk") })
+    }
 }

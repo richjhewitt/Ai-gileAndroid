@@ -137,6 +137,7 @@
     <string name="whats_new_bar">What\'s new</string>
     <string name="whats_new_close">Close What\'s new</string>
     <string name="new_version">New version: tap to install</string>
+    <string name="update_downloading">Downloading the new version…</string>
     <string name="update_ready">Update ready</string>
     <string name="update_ready_text">Tap to install the new version</string>
     <string name="mark_read">Mark as read</string>
