@@ -18,6 +18,14 @@
             <action android:name="android.intent.action.INSERT" />
             <data android:mimeType="vnd.android.cursor.dir/event" />
         </intent>
+        <!-- AII-395: Translate needs to see translate apps. -->
+        <intent>
+            <action android:name="android.intent.action.TRANSLATE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
+        </intent>
     </queries>
 
     <application

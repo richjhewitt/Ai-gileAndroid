@@ -33,6 +33,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/ChatColour.kt: a chat's colour (AII-375): Default + 6, light and dark tints, contrast check; Store chatColours; Colour row in ui/ChatDetails.kt tints your bubbles (ui/ChatBubble.kt) and the top bar (ui/ChatTopBar.kt); shots chatColourLight / chatColourDark.
 - data/ChatSound.kt: a chat's own alert sound (AII-373): Store chatSounds, channel id per chat + sound (ChatNotifier.channelFor makes it and deletes the old one); Alert sound row in ui/ChatDetails.kt opens the ringtone picker; Mute and Silent alerts still win.
 - data/EventGuess.kt: Add to calendar in the hold menu (AII-394): title = first line (80 chars), a simple day/time (EN + NL) becomes a 1-hour start time; item hidden when no app takes ACTION_INSERT (ui/BubbleMenu.kt, <queries> in the manifest).
+- data/TranslateIntent.kt: Translate in the hold menu (AII-395): route = ACTION_TRANSLATE (API 29+) else PROCESS_TEXT with Google Translate, else item hidden.
 - data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
 - data/SettingsExport.kt: settings export and restore sealed with a passphrase (PBKDF2 + AES-GCM); no board key (AII-349).
 - data/Mute.kt: mute a chat for 1 hour, 8 hours or until unmuted (AII-157); timed mutes end by themselves.

@@ -22,6 +22,7 @@ import com.smizflark.aigile.messenger.data.Bubble
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.SendState
+import com.smizflark.aigile.messenger.data.TranslateIntent.Route as TranslateRoute
 
 /* ---------- remind me menu ---------- */
 
@@ -200,6 +201,15 @@ internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown
             val cal = com.smizflark.aigile.messenger.data.EventGuess.intent(plain, com.smizflark.aigile.messenger.data.Now.millis())
             if (ctx.packageManager.queryIntentActivities(cal, 0).isNotEmpty()) DropdownMenuItem(text = { Text(stringResource(R.string.add_to_calendar)) },
                 modifier = Modifier.testTag("add-calendar"), onClick = { onDismiss(); runCatching { ctx.startActivity(cal) } })
+        }
+        // AII-395: hand the text to a translate app; hidden when none is there.
+        if (plain.isNotBlank()) {
+            val td = com.smizflark.aigile.messenger.data.TranslateIntent
+            val pm = ctx.packageManager
+            val route = td.route(Build.VERSION.SDK_INT, pm.queryIntentActivities(td.translate(plain), 0).isNotEmpty(),
+                pm.queryIntentActivities(td.processText(plain), 0).isNotEmpty())
+            if (route != TranslateRoute.NONE) DropdownMenuItem(text = { Text(stringResource(R.string.translate)) }, modifier = Modifier.testTag("translate"),
+                onClick = { onDismiss(); runCatching { ctx.startActivity(if (route == TranslateRoute.TRANSLATE) td.translate(plain) else td.processText(plain)) } })
         }
         // AII-185: the phone reads the message out; the same item stops it.
         if (shown.text.isNotBlank()) {
