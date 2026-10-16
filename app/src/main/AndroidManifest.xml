@@ -72,6 +72,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="image/*" />
             </intent-filter>
+            <!-- AII-398: top chats as direct targets in the share sheet -->
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
 
         <!-- Chat heads (AII-381): the floating bubble shows one chat -->

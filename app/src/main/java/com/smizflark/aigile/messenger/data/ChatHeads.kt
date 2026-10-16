@@ -17,7 +17,7 @@ object ChatHeads {
     fun enabled(switchOn: Boolean, sdk: Int) = switchOn && sdk >= 30
 
     /** The chat's own long-lived shortcut; not "home:" so a pinned launcher shortcut is never replaced. */
-    fun shortcutId(chat: String) = "chat:$chat"
+    fun shortcutId(chat: String) = ShareTargets.id(chat)
 
     /** What the bubble opens: the one-chat activity. */
     fun intent(context: Context, chat: String): Intent =
@@ -30,5 +30,6 @@ object ChatHeads {
             .setIcon(IconCompat.createWithResource(context, R.mipmap.ic_launcher)).setIntent(intent(context, chat))
             .setLongLived(true).setPerson(person).setLocusId(LocusIdCompat(shortcutId(chat))).build()
         runCatching { ShortcutManagerCompat.pushDynamicShortcut(context, info) }
+        com.smizflark.aigile.messenger.ui.Shortcuts.forget()   // AII-398: the share-target version comes back on the next refresh
     }
 }
