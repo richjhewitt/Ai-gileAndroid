@@ -91,6 +91,9 @@
     <string name="every_week">Elke week</string>
     <string name="edit">Bewerken</string>
     <string name="info">Info</string>
+    <string name="select_message">Selecteren</string>
+    <string name="n_selected">%1$d geselecteerd</string>
+    <string name="leave_select">Stoppen met selecteren</string>
     <string name="info_title">Berichtinfo</string>
     <string name="info_sent">Verzonden</string>
     <string name="info_edited">Bewerkt</string>

@@ -135,7 +135,7 @@ internal fun MessageInfoDialog(b: Bubble, onDismiss: () -> Unit) {
 @Composable
 internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown: AnnotatedString, starred: Boolean, onStar: (() -> Unit)?,
                       onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, onRemind: () -> Unit, onSelect: () -> Unit, onEdit: (() -> Unit)? = null, onDelete: (() -> Unit)? = null, onReact: ((String) -> Unit)? = null,
-                      pinned: Boolean = false, onPin: (() -> Unit)? = null, onInfo: (() -> Unit)? = null) {
+                      pinned: Boolean = false, onPin: (() -> Unit)? = null, onInfo: (() -> Unit)? = null, onPick: (() -> Unit)? = null) {
     val ctx = LocalContext.current
     val clipboard = LocalClipboardManager.current
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
@@ -163,6 +163,8 @@ internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown
             modifier = Modifier.testTag("pin"), onClick = { onDismiss(); onPin() })
         // AII-372: when it was sent and edited.
         if (onInfo != null && b.at.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.info)) }, modifier = Modifier.testTag("info"), onClick = { onDismiss(); onInfo() })
+        // AII-371: pick this message and more, to copy, share or star together.
+        if (onPick != null) DropdownMenuItem(text = { Text(stringResource(R.string.select_message)) }, modifier = Modifier.testTag("select-msg"), onClick = { onDismiss(); onPick() })
         DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
             onDismiss()
             clipboard.setText(AnnotatedString(Markdown.plain(shown)))

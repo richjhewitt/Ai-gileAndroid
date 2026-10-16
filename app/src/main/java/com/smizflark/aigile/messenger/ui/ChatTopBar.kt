@@ -13,6 +13,9 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -107,6 +110,21 @@ internal fun ChatTopBar(
                     modifier = Modifier.testTag("add-home"),
                 )
             }
+        },
+    )
+}
+
+/** AII-371: the top bar while several messages are being picked: leave, how many, and Copy, Share, Star for them. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun SelectTopBar(count: Int, onLeave: () -> Unit, onCopy: () -> Unit, onShare: () -> Unit, onStar: () -> Unit) {
+    TopAppBar(
+        navigationIcon = { IconButton(onClick = onLeave, modifier = Modifier.testTag("select-leave")) { Icon(Icons.Default.Close, stringResource(R.string.leave_select)) } },
+        title = { Text(stringResource(R.string.n_selected, count), modifier = Modifier.testTag("select-count")) },
+        actions = {
+            IconButton(onClick = onCopy, modifier = Modifier.testTag("select-copy")) { Icon(Icons.Default.ContentCopy, stringResource(R.string.copy)) }
+            IconButton(onClick = onShare, modifier = Modifier.testTag("select-share")) { Icon(Icons.Default.Share, stringResource(R.string.share)) }
+            IconButton(onClick = onStar, modifier = Modifier.testTag("select-star")) { Icon(Icons.Default.Star, stringResource(R.string.star)) }
         },
     )
 }
