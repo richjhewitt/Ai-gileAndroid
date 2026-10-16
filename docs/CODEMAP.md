@@ -119,6 +119,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - work/RemindReceiver.kt: the Remind me in 1 hour button on message alerts (AII-210) and Again in 1 hour on the reminder alert itself (AII-224, extra remind_notify = that alert's id, which it dismisses); the alert keeps its newest message's key and text in its extras (work/ChatNotifier.kt).
 - widget/LatestWidget.kt: home screen widget with the newest chats.
 - widget/LatestWidget.kt: home screen widget with the newest chats. Colours follow the app's look (AII-230): WidgetLook picks light, dark or black backgrounds (res/drawable/widget_bg_*.xml); Settings refreshes it on a look change.
+- widget/ChatWidget.kt + ChatWidgetConfig.kt + ChatWidgetLogic.kt: One chat widget (AII-380): pick a chat when adding it (per appWidgetId, ChatWidgetPicks), shows its newest 3 messages from the cache, tap opens that chat; refreshed by LatestWidget.refresh; lines / trimming / id mapping in ChatWidgetLogic (ChatWidgetLogicTest).
 
 ## work/ (background)
 - work/ChatNotifier.kt: builds and shows message alerts (quick replies as chips on Reply, AII-181).

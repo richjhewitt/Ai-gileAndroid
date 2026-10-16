@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widget: one chat and its newest 3 messages (filled in by widget/ChatWidget.kt) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:padding="12dp" android:background="@drawable/widget_bg_light" android:id="@+id/root">
+    <TextView android:id="@+id/header" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:maxLines="1" android:ellipsize="end" android:textColor="@color/brand" android:textSize="14sp" android:textStyle="bold"
+        android:paddingBottom="6dp" />
+    <TextView android:id="@+id/empty" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:paddingTop="8dp" android:textColor="#FF6B7280" android:textSize="14sp" android:visibility="gone" />
+    <TextView android:id="@+id/line0" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:maxLines="1" android:ellipsize="end" android:paddingTop="3dp" android:paddingBottom="3dp" android:textColor="#FF1F2937" android:textSize="13sp" />
+    <TextView android:id="@+id/line1" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:maxLines="1" android:ellipsize="end" android:paddingTop="3dp" android:paddingBottom="3dp" android:textColor="#FF1F2937" android:textSize="13sp" />
+    <TextView android:id="@+id/line2" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:maxLines="1" android:ellipsize="end" android:paddingTop="3dp" android:paddingBottom="3dp" android:textColor="#FF1F2937" android:textSize="13sp" />
+</LinearLayout>

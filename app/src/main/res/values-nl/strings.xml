@@ -4,6 +4,11 @@
     <string name="widget_description">Je laatste chats</string>
     <string name="widget_connect">Open de app om verbinding met je bord te maken</string>
     <string name="widget_no_chats">Nog geen chats</string>
+    <string name="widget_chat_description">Eén chat met de nieuwste berichten</string>
+    <string name="widget_pick_chat">Kies een chat voor de widget</string>
+    <string name="widget_no_messages">Nog geen berichten</string>
+    <string name="widget_chat_gone">Deze chat staat niet meer in de lijst</string>
+    <string name="widget_you">Jij</string>
     <string name="copy">Kopiëren</string>
     <string name="select_text">Tekst selecteren</string>
     <string name="copy_link">Link kopiëren</string>

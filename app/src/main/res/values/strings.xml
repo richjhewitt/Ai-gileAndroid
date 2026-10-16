@@ -4,6 +4,11 @@
     <string name="widget_description">Your latest chats</string>
     <string name="widget_connect">Open the app to connect to your board</string>
     <string name="widget_no_chats">No chats yet</string>
+    <string name="widget_chat_description">One chat and its newest messages</string>
+    <string name="widget_pick_chat">Pick a chat for the widget</string>
+    <string name="widget_no_messages">No messages yet</string>
+    <string name="widget_chat_gone">This chat is not on the list any more</string>
+    <string name="widget_you">You</string>
     <string name="copy">Copy</string>
     <string name="select_text">Select text</string>
     <string name="copy_link">Copy link</string>
