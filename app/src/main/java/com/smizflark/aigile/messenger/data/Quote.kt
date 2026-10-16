@@ -16,6 +16,14 @@ object Quote {
         return "> " + (if (author.isNotBlank()) "**$author:** " else "") + cut
     }
 
+    /** The line a reply quotes when only some words of a message were picked (AII-409); blank when nothing is picked. */
+    fun part(author: String, picked: String): String {
+        val line = picked.trim().lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" ").replace("**", "")
+        if (line.isEmpty()) return ""
+        val cut = if (line.length > MAX) line.take(MAX).trimEnd() + "…" else line
+        return "> " + (if (author.isNotBlank()) "**$author:** " else "") + cut
+    }
+
     /** A whole message as markdown quote lines ("> " before each line), then a blank line (AII-236). */
     fun copy(plain: String) = plain.trim('\n').lines().joinToString("\n") { "> $it" } + "\n\n"
 
@@ -32,6 +40,9 @@ object Quote {
         val older = msgs.indices.filter { it > from && msgs[it] != null }
         val quotes = older.associateWith { i -> msgs[i]!!.let { of(if (it.mine) owner else it.author, it.text, it.pics.size).removePrefix("> ") } }
         return older.firstOrNull { quotes[it] == quoted } ?: older.firstOrNull { line(quotes[it]!!) == line(quoted) }
+            ?: line(quoted).removeSuffix("…").trim().takeIf { it.isNotEmpty() }?.let { part ->   // AII-409: a quote of some words
+                older.firstOrNull { split(msgs[it]!!.text).second.replace("**", "").replace(Regex("\\s+"), " ").contains(part) }
+            }
     }
 
     /** A message as quote (the leading "> " lines, without the marks) and the rest; quote is null when there is none. */

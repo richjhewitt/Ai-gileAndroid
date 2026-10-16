@@ -11,6 +11,7 @@
     <string name="widget_you">You</string>
     <string name="copy">Copy</string>
     <string name="select_text">Select text</string>
+    <string name="quote_selected">Quote</string>
     <string name="copy_link">Copy link</string>
     <string name="copy_link_named">Copy %1$s</string>
     <string name="done">Done</string>

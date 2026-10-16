@@ -50,6 +50,7 @@ import com.smizflark.aigile.messenger.data.Outbox
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
+import com.smizflark.aigile.messenger.data.Bubble
 import com.smizflark.aigile.messenger.data.Quote
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.PinnedMsgs
@@ -267,6 +268,13 @@ fun ChatScreen(repo: Repo, listed: ChatRef, onBack: () -> Unit, focus: String? =
         if (!Appearance.nextUnread) return@remember null   // AII-254
         nextUnreadChat(repo, ref.key)
     }
+    // Reply (whole line) or Quote (picked words, AII-409): same reply id, same card as answering it on the board.
+    fun startReply(q: Bubble, quote: String) {
+        quoting = quote
+        replyId = q.id.takeIf { ref.kind == Kind.FRIEND }   // AII-324
+        // A reply to a team message goes to its card, like answering it on the board.
+        if (ref.kind == Kind.LEAD && focus == null && q.card != null && targets.any { it.id == q.card }) { target = q.card; picked = true }
+    }
     // AII-99: tap a quote, the chat scrolls to the quoted message and outlines it for a moment.
     var flash by remember { mutableStateOf<String?>(null) }
     fun jumpToQuote(quoted: String, from: String) {
@@ -369,12 +377,8 @@ fun ChatScreen(repo: Repo, listed: ChatRef, onBack: () -> Unit, focus: String? =
                                 onOpen = if (focus == null && ref.kind == Kind.LEAD) { { onOpenCard(r.card) } } else null) {
                                 if (targets.any { it.id == r.card }) { target = r.card; picked = true }
                             }
-                            is Row.Msg -> MessageBubble(r, ref, repo, chatColour = colour, mark = if (r.id == flash) 2 else if (r.id !in hitIds) 0 else if (hitIds.getOrNull(current) == r.id) 2 else 1, onReply = { q ->
-                                quoting = Quote.of(if (q.mine) owner else q.author, q.text, q.pics.size)
-                                replyId = q.id.takeIf { ref.kind == Kind.FRIEND }   // AII-324
-                                // A reply to a team message goes to its card, like answering it on the board.
-                                if (ref.kind == Kind.LEAD && focus == null && q.card != null && targets.any { it.id == q.card }) { target = q.card; picked = true }
-                            }, onForward = { forwarding = it.text }, cards = if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onCard = onOpenCard,
+                            is Row.Msg -> MessageBubble(r, ref, repo, chatColour = colour, mark = if (r.id == flash) 2 else if (r.id !in hitIds) 0 else if (hitIds.getOrNull(current) == r.id) 2 else 1, onReply = { q -> startReply(q, Quote.of(if (q.mine) owner else q.author, q.text, q.pics.size)) },
+                                onQuotePart = { q, words -> startReply(q, Quote.part(if (q.mine) owner else q.author, words)) }, onForward = { forwarding = it.text }, cards = if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onCard = onOpenCard,
                                 onOption = { send(it, r.b.card) },
                                 onRetry = { p -> deliver(p) },
                                 onSendNow = { p -> pending = repo.pendingFor(ref.key); scope.launch { repo.sendNow(ref, p).onSuccess { load() }.onFailure { error = it.message }; pending = repo.pendingFor(ref.key) } },

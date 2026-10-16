@@ -11,6 +11,7 @@
     <string name="widget_you">Jij</string>
     <string name="copy">Kopiëren</string>
     <string name="select_text">Tekst selecteren</string>
+    <string name="quote_selected">Citeren</string>
     <string name="copy_link">Link kopiëren</string>
     <string name="copy_link_named">%1$s kopiëren</string>
     <string name="done">Klaar</string>

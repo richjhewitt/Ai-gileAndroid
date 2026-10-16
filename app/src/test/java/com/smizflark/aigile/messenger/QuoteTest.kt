@@ -55,4 +55,18 @@ class QuoteTest {
         assertEquals("> hi\n> there\n> \n> bye\n\n", Quote.copy("hi\nthere\n\nbye"))
         assertEquals("> one\n\n", Quote.copy("one\n"))
     }
+
+    // AII-409: quote only some words
+    @Test fun quotesJustThePickedWords() = assertEquals("> **Lead:** is fixed", Quote.part("Lead", " is fixed "))
+
+    @Test fun pickedWordsOnSeveralLinesJoinIntoOne() = assertEquals("> **Lead:** one two", Quote.part("Lead", "one\n\ntwo"))
+
+    @Test fun nothingPickedQuotesNothing() = assertEquals("", Quote.part("Lead", "  "))
+
+    @Test fun longPickedWordsAreCut() = assertEquals('…', Quote.part("Lead", "x".repeat(300)).last())
+
+    @Test fun partialQuoteStillJumpsToTheOriginal() {
+        val all = listOf(Bubble("r", "Rich", "> **Lead:** is fixed\n\nok", "", true), Bubble("b", "Lead", "Menu is fixed today", "", false))
+        assertEquals(1, Quote.source("**Lead:** is fixed", 0, all, "Rich"))
+    }
 }

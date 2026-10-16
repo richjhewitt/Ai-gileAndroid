@@ -14,6 +14,10 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
@@ -215,11 +219,29 @@ class ChatShotTest : ShotBase() {
         rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
         rule.onAllNodesWithTag("theirs").onLast().performTouchInput { longClick() }
         rule.onNodeWithTag("select").performClick()
+        rule.mainClock.autoAdvance = false; rule.mainClock.advanceTimeBy(500)   // the read-only field may be focused: its cursor blink never stops
         rule.onNodeWithTag("select-text").assertExists()
         rule.waitForIdle()
         com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chat_select_text_light.png")   // the dialog is its own window
-        rule.onNodeWithText("Done").performClick()
+        rule.onNodeWithText("Done").performClick(); rule.mainClock.advanceTimeBy(500)
         rule.onAllNodesWithTag("select-text").assertCountEquals(0)
+    }
+    /** AII-409: pick some words in Select text, Quote: the reply quotes just those words. */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    @Test fun quotePartOfAMessage() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onAllNodesWithTag("theirs").onLast().performTouchInput { longClick() }
+        rule.onNodeWithTag("select").performClick()
+        rule.mainClock.autoAdvance = false; rule.mainClock.advanceTimeBy(500)   // the read-only field may be focused: its cursor blink never stops
+        rule.onNodeWithTag("select-quote").assertIsNotEnabled()
+        rule.onNodeWithTag("select-text").performTextInputSelection(androidx.compose.ui.text.TextRange(3, 6)); rule.mainClock.advanceTimeBy(500)
+        rule.mainClock.advanceTimeByFrame(); rule.waitForIdle(); rule.mainClock.advanceTimeBy(500)
+        rule.onNodeWithTag("select-quote").assertIsEnabled().performClick(); rule.mainClock.advanceTimeBy(500)
+        rule.onAllNodesWithTag("select-text").assertCountEquals(0)
+        val inQuote = androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.hasTestTag("quoting"))
+        rule.onNode(inQuote and androidx.compose.ui.test.hasText("Yes", substring = true)).assertExists()
+        rule.onAllNodes(inQuote and androidx.compose.ui.test.hasText("looking", substring = true)).assertCountEquals(0)
     }
     /** AII-126: with Enter key sends on, the keyboard's Send key sends the message; off, it doesn't. */
     @Test fun enterSends() {
