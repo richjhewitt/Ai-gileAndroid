@@ -549,4 +549,7 @@
     <string name="key_back">Back</string>
     <string name="key_next_chat">Next chat</string>
     <string name="key_prev_chat">Previous chat</string>
+    <string name="pic_discard_title">Discard changes?</string>
+    <string name="pic_discard">Discard</string>
+    <string name="pic_keep_editing">Keep editing</string>
 </resources>

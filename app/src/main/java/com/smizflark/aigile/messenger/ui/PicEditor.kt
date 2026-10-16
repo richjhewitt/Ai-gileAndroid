@@ -103,13 +103,22 @@ internal fun saveEdited(src: String, base: Bitmap, quarters: Int, crop: PicEdit.
 /** The full-screen editor in its own window; [onDone] gets the path of the edited copy. */
 @Composable
 internal fun PicEditorDialog(path: String, onCancel: () -> Unit, onDone: (String) -> Unit) {
-    Dialog(onDismissRequest = onCancel, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-        PicEditor(path, onCancel, onDone)
+    var changed by remember { mutableStateOf(false) }   // AII-411: rotated or cropped
+    var ask by remember { mutableStateOf(false) }
+    val leave = { if (changed) ask = true else onCancel() }
+    Dialog(onDismissRequest = leave, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        PicEditor(path, leave, onDone, onChanged = { changed = it })
+        if (ask) androidx.compose.material3.AlertDialog(
+            onDismissRequest = { ask = false },
+            title = { Text(stringResource(R.string.pic_discard_title)) },
+            confirmButton = { TextButton(onClick = onCancel, modifier = Modifier.testTag("pic-discard")) { Text(stringResource(R.string.pic_discard)) } },
+            dismissButton = { TextButton(onClick = { ask = false }, modifier = Modifier.testTag("pic-keep")) { Text(stringResource(R.string.pic_keep_editing)) } },
+        )
     }
 }
 
 @Composable
-internal fun PicEditor(path: String, onCancel: () -> Unit, onDone: (String) -> Unit, preloaded: Bitmap? = null) {
+internal fun PicEditor(path: String, onCancel: () -> Unit, onDone: (String) -> Unit, preloaded: Bitmap? = null, onChanged: (Boolean) -> Unit = {}) {
     var base by remember { mutableStateOf(preloaded) }
     var failed by remember { mutableStateOf(false) }
     var quarters by remember { mutableStateOf(0) }
@@ -117,6 +126,7 @@ internal fun PicEditor(path: String, onCancel: () -> Unit, onDone: (String) -> U
     var saving by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(path) { if (base == null) { base = withContext(Dispatchers.IO) { loadForEdit(path) }; failed = base == null } }
+    LaunchedEffect(quarters, crop) { onChanged(Math.floorMod(quarters, 4) != 0 || crop != PicEdit.FULL) }
     val shown = remember(base, quarters) { base?.let { turned(it, quarters) } }
     Surface(Modifier.fillMaxSize().testTag("pic-editor"), color = Color.Black) {
         Column(Modifier.fillMaxSize().padding(12.dp)) {

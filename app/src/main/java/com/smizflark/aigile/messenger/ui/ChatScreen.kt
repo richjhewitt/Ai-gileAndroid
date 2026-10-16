@@ -354,7 +354,7 @@ fun ChatScreen(repo: Repo, listed: ChatRef, onBack: () -> Unit, focus: String? =
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {
             error?.let { ErrorLine(it) }
             // AII-339: the pinned bar; tap jumps to the message and the next tap shows the next pin.
-            val chatPins = PinnedMsgs.inChat(pins, ref.key)
+            val chatPins = PinnedMsgs.shown(pins, ref.key, convo?.bubbles.orEmpty(), clearedAt)
             if (chatPins.isNotEmpty()) {
                 val sh = PinnedMsgs.clamp(pinShown, chatPins.size); val p = chatPins[sh]
                 val pinColors = MaterialTheme.colorScheme

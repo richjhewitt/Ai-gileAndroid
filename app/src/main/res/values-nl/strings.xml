@@ -549,4 +549,7 @@
     <string name="key_back">Terug</string>
     <string name="key_next_chat">Volgende chat</string>
     <string name="key_prev_chat">Vorige chat</string>
+    <string name="pic_discard_title">Wijzigingen weggooien?</string>
+    <string name="pic_discard">Weggooien</string>
+    <string name="pic_keep_editing">Verder bewerken</string>
 </resources>
