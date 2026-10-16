@@ -43,6 +43,10 @@
     <string name="search_pictures">Foto’s</string>
     <string name="search_links">Links</string>
     <string name="search_last7">Laatste 7 dagen</string>
+    <string name="search_from">Van</string>
+    <string name="search_from_named">Van: %1$s</string>
+    <string name="search_from_you">Jij</string>
+    <string name="search_from_clear">Van-filter wissen</string>
     <string name="search_files">Bestanden</string>
     <string name="search_none_filtered">Niets met een foto of link gevonden</string>
     <string name="search_hint">Typ minstens 2 letters om in alle chats te zoeken</string>

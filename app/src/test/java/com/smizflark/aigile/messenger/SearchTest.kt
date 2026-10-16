@@ -147,4 +147,21 @@ class SearchTest {
             assertEquals(listOf("AIG-3"), Search.run("fresh", listOf(gile), convs, last7 = true).map { it.bubble?.card })
         } finally { com.smizflark.aigile.messenger.data.Now.clock = old }
     }
+
+    @Test fun authorsListsYouFirstThenNamesAToZDistinct() {   // AII-386
+        val c = listOf(Conversation(ann, listOf(b("a", "2026-10-01T10:00:00Z", author = "Rich"), b("b", "2026-10-02T10:00:00Z", author = "Zed"),
+            b("c", "2026-10-03T10:00:00Z", author = "ann"), b("d", "2026-10-04T10:00:00Z", author = "Zed"), b("e", "2026-10-05T10:00:00Z", author = "Bob"))))
+        assertEquals(listOf(Search.YOU, "ann", "Bob", "Zed"), Search.authors(c))
+        assertEquals(listOf("Bob"), Search.authors(listOf(Conversation(ann, listOf(b("x", "2026-10-01T10:00:00Z", author = "Bob"))))))
+    }
+
+    @Test fun fromKeepsOnlyThatPersonAndCombinesWithWords() {   // AII-386
+        val all = listOf(gile, radio, ann)
+        val c = convs + Conversation(ann, listOf(b("cafe from me", "2026-10-05T10:00:00Z", author = "Rich")))
+        assertEquals(listOf("See you at the cafe"), Search.run("", all, c, from = "Ann").map { it.bubble?.text })
+        assertEquals(listOf("cafe from me"), Search.run("", all, c, from = Search.YOU).map { it.bubble?.text })
+        assertEquals(listOf("Café menu is next"), Search.run("cafe", all, c, from = "Lead").map { it.bubble?.text })
+        assertTrue(Search.run("radio", all, c, from = "Ann").isEmpty())
+        assertTrue(Search.run("", all, c, pictures = true, from = "Ann").isEmpty())
+    }
 }
