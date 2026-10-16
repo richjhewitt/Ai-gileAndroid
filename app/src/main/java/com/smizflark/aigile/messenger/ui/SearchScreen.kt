@@ -94,7 +94,7 @@ fun SearchScreen(repo: Repo, onOpen: (ChatRef, String?) -> Unit, onBack: () -> U
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            TopAppBar(expandedHeight = barHeight(),
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
                 title = {
                     TextField(

@@ -176,7 +176,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     val list = androidx.compose.foundation.lazy.rememberLazyListState()
     Scaffold(
         topBar = {
-            TopAppBar(
+            TopAppBar(expandedHeight = barHeight(),
                 title = {
                     // AII-84: one line, so the four buttons never push it onto two; the demo note sits small underneath.
                     // AII-122: tap the title to jump back to the first chat.
