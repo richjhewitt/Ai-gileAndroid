@@ -77,7 +77,9 @@ import androidx.compose.ui.platform.LocalView
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}, openAt: String? = null, onOpenChat: (ChatRef) -> Unit = {}, onEditReplies: () -> Unit = {}) {
+fun ChatScreen(repo: Repo, listed: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}, openAt: String? = null, onOpenChat: (ChatRef) -> Unit = {}, onEditReplies: () -> Unit = {}) {
+    var nameRev by remember { mutableStateOf(0) }   // AII-365: bumped when the chat is renamed in its details
+    val ref = remember(listed, nameRev) { com.smizflark.aigile.messenger.data.ChatNames.on(listed, repo.store.chatNames) }
     /* ---------- state ---------- */
     var convo by remember { mutableStateOf(repo.store.cachedConversation(ref.key)) }
     val seenAtOpen = rememberSaveable(ref.key) { mutableStateOf(repo.store.seen()[ref.key]) }.value   // AII-100: the "New messages" line stays put while you read
@@ -289,7 +291,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
 
     androidx.compose.runtime.LaunchedEffect(details) { reminders = repo.store.reminders() }   // a reminder cancelled in the details
-    if (details) ChatDetails(live, repo, chatInfo(convo), onColour = { colour = it }, onChecked = if (ref.kind == Kind.FRIEND) { { scope.launch { runCatching { repo.acceptSafety(live) }.onFailure { error = it.message }; safetyOk++ } } } else null,
+    if (details) ChatDetails(live, repo, chatInfo(convo), onColour = { colour = it }, onRenamed = { nameRev++ }, onChecked = if (ref.kind == Kind.FRIEND) { { scope.launch { runCatching { repo.acceptSafety(live) }.onFailure { error = it.message }; safetyOk++ } } } else null,
  onFind = { details = false; finding = true },
         starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
         onClear = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { { details = false; clearAsk = true } },

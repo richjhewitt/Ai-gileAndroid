@@ -230,6 +230,14 @@ class Store(context: Context) : StoreFiles(context) {
         get() = settings.getStringSet("chatColours", emptySet())?.toSet() ?: emptySet()
         set(v) = settings.edit().putStringSet("chatColours", v).apply()
 
+    /** Chats with their own name on this phone (AII-365), see [ChatNames]. */
+    var chatNames: Set<String>
+        get() = settings.getStringSet("chatNames", emptySet())?.toSet() ?: emptySet()
+        set(v) = settings.edit().putStringSet("chatNames", v).apply()
+
+    /** The cache keeps the board's names; every reader gets the local ones. */
+    override fun cachedChats(): List<ChatRef>? = super.cachedChats()?.let { ChatNames.apply(it, chatNames) }
+
     /* ---------- muted chats: no alerts from them (AII-48) ---------- */
 
     /** Muted now: a mute for a while (AII-157) ends by itself. */
@@ -259,7 +267,7 @@ class Store(context: Context) : StoreFiles(context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "loadPictures", "linkPreviews", "showTyping", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "chatColours", "showTimes", "swipeRight", "swipeLeft", "nextUnread")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "loadPictures", "linkPreviews", "showTyping", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "chatColours", "chatNames", "showTimes", "swipeRight", "swipeLeft", "nextUnread")
 
         /** What "Reset settings" clears (AII-217): every backed-up setting except the ones that are your data. */
         val KEPT_ON_RESET = setOf("pinned", "muted", "silent")

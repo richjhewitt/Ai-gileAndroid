@@ -487,6 +487,16 @@ class ChatShotTest : ShotBase() {
         rule.waitForIdle()
         rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_links_light.png")
     }
+    /** AII-365: a chat renamed on this phone, with Reset name. */
+    @Test fun chatDetailsRenamedLight() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        repo.store.chatNames = com.smizflark.aigile.messenger.data.ChatNames.put(emptySet(), lead().key, "Our build team")
+        val named = com.smizflark.aigile.messenger.data.ChatNames.on(lead(), repo.store.chatNames)
+        rule.setContent { MessengerTheme { com.smizflark.aigile.messenger.ui.ChatDetails(named, repo, com.smizflark.aigile.messenger.data.ChatInfo(emptyList(), emptyList(), emptyList()), onClose = {}) } }
+        rule.waitForIdle()
+        rule.onNodeWithTag("details-reset-name").assertExists()
+        rule.onAllNodes(androidx.compose.ui.test.isRoot()).onLast().captureRoboImage("../docs/shots/chat_details_renamed_light.png")
+    }
     /** AII-197: the Files list in the chat details. */
     @Test fun chatDetailsFilesLight() {
         RuntimeEnvironment.setQualifiers("+notnight")

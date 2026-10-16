@@ -5,6 +5,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.foundation.clickable
@@ -47,6 +48,7 @@ import com.smizflark.aigile.messenger.data.CardDetail
 import com.smizflark.aigile.messenger.data.ChatSound
 import com.smizflark.aigile.messenger.data.ChatInfo
 import com.smizflark.aigile.messenger.data.ChatRef
+import com.smizflark.aigile.messenger.data.ChatNames
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.Star
 import androidx.compose.ui.text.style.TextOverflow
@@ -76,8 +78,33 @@ internal fun saveTextFile(ctx: android.content.Context, name: String, text: Stri
 /** Tap the chat name (AII-80): the team, its open cards, the pictures sent here, and the Mute and Pin switches. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onSave: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onChecked: (() -> Unit)? = null, onClear: (() -> Unit)? = null, onColour: (String) -> Unit = {}, onClose: () -> Unit) {
+fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onSave: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onChecked: (() -> Unit)? = null, onClear: (() -> Unit)? = null, onColour: (String) -> Unit = {}, onRenamed: () -> Unit = {}, onClose: () -> Unit) {
     var checked by remember { mutableStateOf(ref.checked) }   // AII-324: safety code checked together
+    // AII-365: this phone's own name for the chat; the board's name stays for Reset.
+    var shownName by remember { mutableStateOf(ref.name) }
+    var renamed by remember { mutableStateOf(ChatNames.of(repo.store.chatNames, ref.key) != null) }
+    var renameAsk by remember { mutableStateOf(false) }
+    val appCtx = androidx.compose.ui.platform.LocalContext.current
+    fun rename(to: String) {
+        repo.store.chatNames = ChatNames.put(repo.store.chatNames, ref.key, to)
+        renamed = ChatNames.of(repo.store.chatNames, ref.key) != null
+        shownName = ChatNames.of(repo.store.chatNames, ref.key) ?: ChatNames.boardName(ref)
+        com.smizflark.aigile.messenger.widget.LatestWidget.refresh(appCtx)
+        onRenamed()
+    }
+    if (renameAsk) {
+        var t by remember { mutableStateOf(shownName) }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { renameAsk = false },
+            title = { Text(stringResource(R.string.rename_chat_title)) },
+            text = { Column {
+                androidx.compose.material3.OutlinedTextField(t, { t = it.take(ChatNames.MAX) }, singleLine = true, modifier = Modifier.testTag("rename-text"))
+                Text(stringResource(R.string.rename_chat_hint), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+            } },
+            confirmButton = { androidx.compose.material3.TextButton(onClick = { rename(t); renameAsk = false }, modifier = Modifier.testTag("rename-save")) { Text(stringResource(R.string.save)) } },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { renameAsk = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var silent by remember { mutableStateOf(ref.key in repo.store.silent) }
     var pinned by remember { mutableStateOf(ref.key in repo.store.pinned) }
@@ -120,7 +147,7 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 Avatar(ref, repo, 56.dp)
                 Spacer(Modifier.size(14.dp))
                 Column {
-                    Text(ref.name, style = MaterialTheme.typography.titleLarge)
+                    Text(shownName, style = MaterialTheme.typography.titleLarge, modifier = Modifier.testTag("details-name"))
                     Text(ref.subtitle, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -143,6 +170,11 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
             }
             // AII-128: straight to the find bar from here.
             FlowRow(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // AII-365: a name of your own for this chat, on this phone only.
+                OutlinedButton(onClick = { renameAsk = true }, modifier = Modifier.testTag("details-rename")) {
+                    Icon(Icons.Default.Edit, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.rename_chat))
+                }
+                if (renamed) OutlinedButton(onClick = { rename("") }, modifier = Modifier.testTag("details-reset-name")) { Text(stringResource(R.string.reset_name)) }
                 if (onFind != null) OutlinedButton(onClick = onFind, modifier = Modifier.testTag("details-find")) {
                     Icon(Icons.Default.Search, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.find_in_chat))
                 }
