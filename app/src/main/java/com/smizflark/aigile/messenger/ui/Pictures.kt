@@ -49,6 +49,8 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.Pic
+import com.smizflark.aigile.messenger.data.PicLoad
+import androidx.compose.material.icons.filled.Image
 import com.smizflark.aigile.messenger.data.Repo
 import java.io.File
 
@@ -69,8 +71,11 @@ internal fun request(pic: Pic, repo: Repo): ImageRequest {
 /** The pictures on a message, inside its bubble. Tap one to see it full screen, hold it to save or share (AII-104); other files show as a 📎 line. */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun MessagePictures(pics: List<Pic>, repo: Repo, onOpened: () -> Unit = {}) {
+fun MessagePictures(pics: List<Pic>, repo: Repo, onOpened: () -> Unit = {}, mine: Boolean = false) {
     val show = LocalShowPicture.current
+    val ctx = LocalContext.current
+    val metered = remember(Appearance.loadPictures) { Appearance.loadPictures == PicLoad.WIFI && PicLoad.metered(ctx) }   // AII-391
+    var tapped by remember { mutableStateOf(emptySet<String>()) }
     val images = pics.filter { it.image }
     val actions = rememberPictureActions()
     var held by remember { mutableStateOf<Pic?>(null) }
@@ -79,7 +84,17 @@ fun MessagePictures(pics: List<Pic>, repo: Repo, onOpened: () -> Unit = {}) {
         modifier = Modifier.padding(bottom = 6.dp)) {
         pics.forEach { p ->
             if (p.path in failed) Unit
-            else if (p.image) Box {
+            else if (p.image && p.path !in tapped && !PicLoad.shouldLoad(Appearance.loadPictures, metered, p.local || mine || PicLoad.cachedOnDisk(ctx, request(p, repo).data.toString()), p.local || mine, false)) {
+                // AII-391: Wi-Fi only on mobile data: a box where the picture goes; a tap loads this one.
+                val single = pics.size == 1
+                Column(Modifier.size(width = if (single) 220.dp else 126.dp, height = if (single) 160.dp else 126.dp)
+                    .clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable(onClickLabel = stringResource(R.string.tap_to_load)) { tapped = tapped + p.path }.testTag("pic-blocked"),
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Icon(Icons.Default.Image, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.tap_to_load), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else if (p.image) Box {
                 val req = request(p, repo)
                 SubcomposeAsyncImage(
                     model = req, contentDescription = p.name.ifEmpty { stringResource(R.string.picture) },

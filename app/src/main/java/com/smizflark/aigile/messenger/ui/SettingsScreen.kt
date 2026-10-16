@@ -140,6 +140,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
             Toggle(stringResource(R.string.play_gifs), stringResource(R.string.play_gifs_sub), Appearance.gifs, Modifier.testTag("gifs")) {
                 Appearance.gifs = it; s.gifs = it
             }
+            LoadPicturesPick(Appearance.loadPictures) { Appearance.loadPictures = it; s.loadPictures = it }
             Toggle(stringResource(R.string.compact_list), stringResource(R.string.compact_list_sub), Appearance.compact, Modifier.testTag("compact")) {
                 Appearance.compact = it; s.compact = it
             }

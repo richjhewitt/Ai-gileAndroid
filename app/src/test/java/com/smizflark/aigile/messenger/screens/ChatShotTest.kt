@@ -42,6 +42,9 @@ import com.smizflark.aigile.messenger.ui.NewMessageScreen
 import com.smizflark.aigile.messenger.ui.EmptyState
 import com.smizflark.aigile.messenger.ui.LockedScreen
 import com.smizflark.aigile.messenger.ui.SettingsScreen
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.runBlocking
@@ -64,6 +67,27 @@ class ChatShotTest : ShotBase() {
     /** AII-375: a chat with its own colour (purple) tints your bubbles and the top bar. */
     @Test fun chatColourLight() { prime(lead()); repo.store.chatColours = com.smizflark.aigile.messenger.data.ChatColour.put(emptySet(), lead().key, "purple"); shot("chat_colour", false) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatColourDark() { prime(lead()); repo.store.chatColours = com.smizflark.aigile.messenger.data.ChatColour.put(emptySet(), lead().key, "purple"); shot("chat_colour", true) { ChatScreen(repo, lead(), onBack = {}) } }
+    /** AII-391: Wi-Fi only on mobile data: a picture waits behind a "Tap to load" box (light); a tap loads it. */
+    @Test fun tapToLoadLight() {
+        com.smizflark.aigile.messenger.data.PicLoad.meteredOverride = true
+        Appearance.loadPictures = com.smizflark.aigile.messenger.data.PicLoad.WIFI; repo.store.loadPictures = Appearance.loadPictures
+        try {
+            val a = com.smizflark.aigile.messenger.data.Bubble("p1", "Lead", "Here is the new logo https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif", "2026-10-14T09:00:00Z", mine = false)
+            val b = com.smizflark.aigile.messenger.data.Bubble("p2", "Me", "Nice, thanks!", "2026-10-14T09:01:00Z", mine = true)
+            shot("chat_tap_to_load", false) {
+                androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.fillMaxSize().padding(top = 48.dp)) {
+                    listOf(a, b).forEach { m ->
+                        com.smizflark.aigile.messenger.ui.MessageBubble(com.smizflark.aigile.messenger.ui.Row.Msg(m.key, m), lead(), repo, 0, onReply = {}, onForward = {}, cards = emptySet(), onCard = {},
+                            onOption = {}, onRetry = {}, onDiscard = {})
+                    }
+                }
+            }
+            rule.onNodeWithTag("pic-blocked").assertIsDisplayed()
+            rule.onNodeWithTag("pic-blocked").performClick()
+            rule.waitForIdle()
+            rule.onAllNodesWithTag("pic-blocked").assertCountEquals(0)
+        } finally { com.smizflark.aigile.messenger.data.PicLoad.meteredOverride = null; Appearance.loadPictures = "always" }
+    }
     @Test fun codeBoxDark() { val t = chats.first { it.id == "tunio" }; prime(t); shot("chat_code", true) { ChatScreen(repo, t, onBack = {}) } }   // AII-115
     @Test fun chatShowTimes() {   // AII-211
         prime(lead()); Appearance.showTimes = true

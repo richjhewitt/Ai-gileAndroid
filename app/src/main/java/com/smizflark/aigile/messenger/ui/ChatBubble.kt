@@ -265,7 +265,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 if (b.deleted) Text(stringResource(R.string.msg_deleted), style = MaterialTheme.typography.bodyLarge,
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, color = fg.copy(alpha = 0.6f), modifier = Modifier.testTag("deleted"))
                 val pics = remember(b.pics, b.text, b.unverified, Appearance.gifs) { if (b.unverified || !Appearance.gifs) b.pics else b.pics + Gif.pics(b.text) }
-                if (pics.isNotEmpty()) MessagePictures(pics, repo)
+                if (pics.isNotEmpty()) MessagePictures(pics, repo, mine = b.mine)
                 val (forwarded, body) = Forward.split(b.text)
                 if (forwarded) Text(stringResource(R.string.forwarded_label), style = MaterialTheme.typography.labelSmall, color = fg.copy(alpha = 0.6f), modifier = Modifier.testTag("forwarded"))
                 val (quoted, rest) = Quote.split(body)

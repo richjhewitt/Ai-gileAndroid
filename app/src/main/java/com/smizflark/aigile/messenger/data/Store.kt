@@ -116,6 +116,10 @@ class Store(context: Context) : StoreFiles(context) {
     var linkPreviews: Boolean
         get() = settings.getBoolean("linkPreviews", false)
         set(v) = settings.edit().putBoolean("linkPreviews", v).apply()
+    /** AII-391: "always" or "wifi": on mobile data pictures wait for a tap. */
+    var loadPictures: String
+        get() = settings.getString("loadPictures", PicLoad.ALWAYS) ?: PicLoad.ALWAYS
+        set(v) = settings.edit().putString("loadPictures", v).apply()
     var gifs: Boolean
         get() = settings.getBoolean("gifs", true)
         set(v) = settings.edit().putBoolean("gifs", v).apply()
@@ -245,7 +249,7 @@ class Store(context: Context) : StoreFiles(context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "linkPreviews", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "chatColours", "showTimes", "swipeRight", "swipeLeft", "nextUnread")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "loadPictures", "linkPreviews", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "chatColours", "showTimes", "swipeRight", "swipeLeft", "nextUnread")
 
         /** What "Reset settings" clears (AII-217): every backed-up setting except the ones that are your data. */
         val KEPT_ON_RESET = setOf("pinned", "muted", "silent")

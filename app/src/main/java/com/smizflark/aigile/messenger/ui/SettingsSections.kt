@@ -188,3 +188,28 @@ internal fun SortPick(az: Boolean, onPick: (Boolean) -> Unit) {
             }
         }, confirmButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.cancel)) } })
 }
+
+/** Load pictures (AII-391): Always, or Wi-Fi only (on mobile data a picture waits for a tap). */
+@Composable
+internal fun LoadPicturesPick(current: String, onPick: (String) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    val title = stringResource(R.string.load_pictures)
+    val choices = listOf(com.smizflark.aigile.messenger.data.PicLoad.ALWAYS to R.string.load_pics_always, com.smizflark.aigile.messenger.data.PicLoad.WIFI to R.string.load_pics_wifi)
+    Column(Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(role = androidx.compose.ui.semantics.Role.Button) { open = true }.testTag("loadPictures"),
+        verticalArrangement = Arrangement.Center) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(choices.firstOrNull { it.first == current }?.second ?: R.string.load_pics_always), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    if (open) AlertDialog(onDismissRequest = { open = false }, title = { Text(title) },
+        text = {
+            Column(Modifier.selectableGroup()) {
+                choices.forEach { (v, label) ->
+                    Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected = v == current, role = androidx.compose.ui.semantics.Role.RadioButton) { onPick(v); open = false }
+                        .testTag("loadPictures:$v"), verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = v == current, onClick = null)
+                        Text(stringResource(label), Modifier.padding(start = 16.dp), style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+        }, confirmButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.cancel)) } })
+}
