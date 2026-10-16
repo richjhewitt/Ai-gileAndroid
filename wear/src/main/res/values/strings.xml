@@ -6,4 +6,12 @@
     <string name="not_yet">Not on the watch yet</string>
     <string name="last_updated">Last updated %1$s</string>
     <string name="unread">New messages</string>
+    <string name="reply">Reply</string>
+    <string name="speak">Speak</string>
+    <string name="speak_label">Your reply</string>
+    <string name="sending">Sending…</string>
+    <string name="sent">Sent</string>
+    <string name="saved_offline">Saved, sends when your phone is online</string>
+    <string name="no_chat">Chat not on your phone</string>
+    <string name="send_failed">Not sent</string>
 </resources>

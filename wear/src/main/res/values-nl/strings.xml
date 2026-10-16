@@ -6,4 +6,12 @@
     <string name="not_yet">Nog niet op het horloge</string>
     <string name="last_updated">Laatst bijgewerkt %1$s</string>
     <string name="unread">Nieuwe berichten</string>
+    <string name="reply">Antwoord</string>
+    <string name="speak">Spreek</string>
+    <string name="speak_label">Je antwoord</string>
+    <string name="sending">Versturen…</string>
+    <string name="sent">Verstuurd</string>
+    <string name="saved_offline">Bewaard, wordt verstuurd zodra je telefoon online is</string>
+    <string name="no_chat">Chat staat niet op je telefoon</string>
+    <string name="send_failed">Niet verstuurd</string>
 </resources>

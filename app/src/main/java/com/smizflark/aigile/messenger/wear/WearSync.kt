@@ -66,6 +66,7 @@ object WearSync {
                 return
             }
             put(ctx, LOCKED, "0".toByteArray())
+            WearReply.sendReplies(ctx, store)   // AII-414
             val cleared = store.cleared()
             put(ctx, PATH, payload(chats, cleared).toByteArray())
             // The top chats' lines, from what this phone has kept; a chat opened on the phone refreshes its own (updateChat).
