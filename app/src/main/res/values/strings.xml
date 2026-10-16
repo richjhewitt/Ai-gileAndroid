@@ -423,6 +423,10 @@
     <string name="remind_hour">In 1 hour</string>
     <string name="remind_evening">This evening (18:00)</string>
     <string name="remind_tomorrow">Tomorrow 9:00</string>
+    <string name="exact_title">Let reminders go off on time?</string>
+    <string name="exact_body">Android can hold reminders back by a few minutes to save battery. Allow exact alarms and they go off on the minute.</string>
+    <string name="exact_allow">Allow</string>
+    <string name="exact_not_now">Not now</string>
     <string name="remind_set">Reminder set for %1$s</string>
     <string name="notify_remind">Reminder: %1$s</string>
     <string name="reminders">Reminders</string>

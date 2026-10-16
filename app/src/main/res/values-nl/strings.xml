@@ -423,6 +423,10 @@
     <string name="remind_hour">Over 1 uur</string>
     <string name="remind_evening">Vanavond (18:00)</string>
     <string name="remind_tomorrow">Morgen 9:00</string>
+    <string name="exact_title">Herinneringen op tijd laten afgaan?</string>
+    <string name="exact_body">Android kan herinneringen een paar minuten uitstellen om accu te sparen. Sta exacte alarmen toe en ze gaan precies op de minuut af.</string>
+    <string name="exact_allow">Toestaan</string>
+    <string name="exact_not_now">Niet nu</string>
     <string name="remind_set">Herinnering ingesteld voor %1$s</string>
     <string name="notify_remind">Herinnering: %1$s</string>
     <string name="reminders">Herinneringen</string>

@@ -181,6 +181,11 @@ class Store(context: Context) : StoreFiles(context) {
         set(v) = settings.edit().putInt("lastSeenVersion", v).apply()
 
     /** Demo welcome tips (AII-276): true once Got it was tapped. */
+    /** AII-396: we already asked "Let reminders go off on time?" (Not now is remembered). Not backed up: the permission is per phone. */
+    var exactAsked: Boolean
+        get() = settings.getBoolean("exactAsked", false)
+        set(v) = settings.edit().putBoolean("exactAsked", v).apply()
+
     var tipsSeen: Boolean
         get() = settings.getBoolean("tipsSeen", false)
         set(v) = settings.edit().putBoolean("tipsSeen", v).apply()

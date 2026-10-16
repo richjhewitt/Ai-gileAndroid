@@ -55,6 +55,19 @@ internal fun RemindMenu(expanded: Boolean, onDismiss: () -> Unit, setRemind: (Lo
     }
 }
 
+/** AII-396: once, when exact alarms are not allowed, offer to allow them so reminders go off on the minute. */
+private fun askExactOnce(ctx: android.content.Context, repo: Repo) {
+    if (!com.smizflark.aigile.messenger.data.RemindAlarm.shouldAsk(Build.VERSION.SDK_INT, com.smizflark.aigile.messenger.work.RemindWorker.canExact(ctx), repo.store.exactAsked)) return
+    repo.store.exactAsked = true
+    if (ctx !is android.app.Activity) return
+    android.app.AlertDialog.Builder(ctx).setTitle(R.string.exact_title).setMessage(R.string.exact_body)
+        .setPositiveButton(R.string.exact_allow) { _, _ ->
+            if (Build.VERSION.SDK_INT >= 31) runCatching {
+                ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, android.net.Uri.parse("package:" + ctx.packageName)))
+            }
+        }.setNegativeButton(R.string.exact_not_now, null).show()
+}
+
 /* ---------- remind me note dialog ---------- */
 
 // AII-244: a chosen time [at] waits for its optional note, then the reminder is saved.
@@ -67,6 +80,7 @@ internal fun RemindNoteDialog(at: Long, ref: ChatRef, b: Bubble, shown: Annotate
             Markdown.plain(shown).trim(), at, note)
         repo.store.setReminders(com.smizflark.aigile.messenger.data.Remind.add(repo.store.reminders(), r))
         com.smizflark.aigile.messenger.work.RemindWorker.schedule(ctx, r)
+        askExactOnce(ctx, repo)   // AII-396
         onSaved()   // the bubble shows its bell line straight away (AII-251)
         Toast.makeText(ctx, ctx.getString(R.string.remind_set, com.smizflark.aigile.messenger.data.Mute.endTime(at)), Toast.LENGTH_SHORT).show()
     }
