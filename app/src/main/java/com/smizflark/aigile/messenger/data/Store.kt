@@ -102,6 +102,11 @@ class Store(context: Context) : StoreFiles(context) {
         set(v) = settings.edit().putString("textSize", v).apply()
 
     /** A Sent alert when a Send later message goes by itself (AII-175). */
+    /** Chat heads (AII-381): a floating bubble per chat alert; off by default. */
+    var chatHeads: Boolean
+        get() = settings.getBoolean("chatHeads", false)
+        set(v) = settings.edit().putBoolean("chatHeads", v).apply()
+
     var sentAlerts: Boolean
         get() = settings.getBoolean("sentAlerts", true)
         set(v) = settings.edit().putBoolean("sentAlerts", v).apply()

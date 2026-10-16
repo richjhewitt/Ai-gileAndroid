@@ -313,6 +313,8 @@
         <item>👉 any update?</item>
     </string-array>
     <string name="alerts_new">New message alerts</string>
+    <string name="alerts_chat_heads">Chat heads</string>
+    <string name="alerts_chat_heads_sub">A floating bubble for each chat alert</string>
     <string name="alerts_sent_later">Say when a Send later message goes</string>
     <string name="alerts_sent_later_sub">One short alert as it is sent</string>
     <string name="alerts_new_sub">Checks about every 15 minutes, one alert per batch</string>

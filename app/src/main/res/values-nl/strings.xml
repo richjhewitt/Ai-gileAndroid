@@ -313,6 +313,8 @@
         <item>👉 al nieuws?</item>
     </string-array>
     <string name="alerts_new">Meldingen bij nieuwe berichten</string>
+    <string name="alerts_chat_heads">Chatbubbels</string>
+    <string name="alerts_chat_heads_sub">Een zwevende bubbel bij elke chatmelding</string>
     <string name="alerts_sent_later">Melden als een later bericht verstuurd is</string>
     <string name="alerts_sent_later_sub">Eén korte melding bij het versturen</string>
     <string name="alerts_new_sub">Kijkt ongeveer elke 15 minuten, één melding per keer</string>

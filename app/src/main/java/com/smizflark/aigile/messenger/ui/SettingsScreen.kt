@@ -87,6 +87,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
     var lockOn by remember { mutableStateOf(s.lock) }
     var lockAfter by remember { mutableStateOf(s.lockAfter) }   // AII-234
     var quietOn by remember { mutableStateOf(s.quietOn) }
+    var chatHeads by remember { mutableStateOf(s.chatHeads) }   // AII-381
     var sentAlerts by remember { mutableStateOf(s.sentAlerts) }   // AII-175
     var from by remember { mutableStateOf(s.quietFrom) }
     var to by remember { mutableStateOf(s.quietTo) }
@@ -200,6 +201,8 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
                 } else CheckWorker.cancel(ctx)
             }
             Toggle(stringResource(R.string.alerts_sent_later), stringResource(R.string.alerts_sent_later_sub), sentAlerts, Modifier.testTag("sentAlerts")) { sentAlerts = it; s.sentAlerts = it }
+            if (Build.VERSION.SDK_INT >= 30)
+                Toggle(stringResource(R.string.alerts_chat_heads), stringResource(R.string.alerts_chat_heads_sub), chatHeads, Modifier.testTag("chatHeads")) { chatHeads = it; s.chatHeads = it }
             Stepper(stringResource(R.string.morning_time), morning) { morning = it; s.morning = it; Appearance.morning = it }
             Toggle(stringResource(R.string.quiet_hours), stringResource(R.string.quiet_sub, hour(from), hour(to)), quietOn) { quietOn = it; s.quietOn = it }
             if (quietOn) {

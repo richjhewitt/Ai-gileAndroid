@@ -58,6 +58,15 @@
             </intent-filter>
         </activity>
 
+        <!-- Chat heads (AII-381): the floating bubble shows one chat -->
+        <activity
+            android:name=".BubbleActivity"
+            android:exported="false"
+            android:allowEmbedded="true"
+            android:resizeableActivity="true"
+            android:documentLaunchMode="always"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- Reply button on message alerts (AII-24) -->
         <receiver android:name=".work.ReplyReceiver" android:exported="false" />
         <!-- Mark as read button on message alerts (AII-116) -->

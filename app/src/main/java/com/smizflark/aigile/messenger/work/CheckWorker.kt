@@ -70,7 +70,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
 
         fun channel(context: Context) {
             val ch = NotificationChannel(CHANNEL, context.getString(R.string.channel_name), NotificationManager.IMPORTANCE_DEFAULT)
-                .apply { description = context.getString(R.string.channel_desc) }
+                .apply { description = context.getString(R.string.channel_desc); if (android.os.Build.VERSION.SDK_INT >= 29) setAllowBubbles(true) }
             context.getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
         }
 
