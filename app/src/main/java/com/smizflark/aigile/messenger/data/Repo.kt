@@ -65,6 +65,7 @@ class Repo(context: Context) {
         l.filter { it.kind == Kind.WATCHMAN && it.unread == 0 }.forEach { store.markSeen(it.key, it.last) }
         LatestWidget.refresh(app)
         Shortcuts.update(app, l)   // hold the app icon: your newest chats (AII-53)
+        com.smizflark.aigile.messenger.wear.WearSync.update(app, l)   // the watch app (AII-412)
         // ...and so are lead chats (AII-44): the board keeps one read mark per chat, set by the PC or this phone.
         l.filter { it.kind == Kind.LEAD }.forEach { store.markSeen(it.key, it.seen) }
         // Closed chats (AII-131): the board's list, so the PC and this phone agree; offline, the last one kept here.

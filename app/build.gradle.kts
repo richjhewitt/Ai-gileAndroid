@@ -72,6 +72,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("io.coil-kt:coil-gif:2.7.0")   // AII-188: GIF links play in the chat
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("com.google.android.gms:play-services-wearable:18.2.0")   // AII-412: chats to the watch over the Data Layer
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
