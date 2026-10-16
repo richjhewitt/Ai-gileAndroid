@@ -30,6 +30,7 @@ class ChatWidgetConfig : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val id = intent?.extras?.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+        com.smizflark.aigile.messenger.data.Secure.apply(window, Store(this).blockShots)
         setResult(Activity.RESULT_CANCELED)
         if (id == AppWidgetManager.INVALID_APPWIDGET_ID) { finish(); return }
         val store = Store(this)

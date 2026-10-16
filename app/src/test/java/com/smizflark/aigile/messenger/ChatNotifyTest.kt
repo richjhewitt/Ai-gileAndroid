@@ -124,4 +124,25 @@ class ChatNotifyTest {
         ChatNotifier.sent(context, "lead:a", "AI-gile", "my answer")
         assertEquals(listOf("question", "my answer"), lines("lead:a"))
     }
+
+    /** AII-401: with Hide message text on the lock screen on, the lock screen version has the chat name and "New message" only. */
+    @Test fun hiddenOnLockScreenWhenSwitchedOn() {
+        val store = com.smizflark.aigile.messenger.data.Store(context)
+        try {
+            store.hideOnLock = true
+            ChatNotifier.post(context, item("lead:a", "AI-gile", "secret plan"))
+            ChatNotifier.post(context, item("lead:b", "Tunio", "other secret"))
+            for (n in nm.activeNotifications.map { it.notification }) {
+                val pub = n.publicVersion!!
+                assertEquals(Notification.VISIBILITY_PRIVATE, n.visibility)
+                assertEquals("New message", pub.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+                assertTrue(pub.actions == null || pub.actions.isEmpty())
+                assertTrue(!pub.extras.keySet().any { pub.extras.get(it)?.toString()?.contains("secret") == true })
+            }
+            assertEquals("AI-gile", nm.activeNotifications.first { it.id == QuickReply.notificationId("lead:a") }.notification.publicVersion.extras.getString(Notification.EXTRA_TITLE))
+            store.hideOnLock = false
+            ChatNotifier.post(context, item("lead:c", "Neo", "plain"))
+            assertNull(nm.activeNotifications.first { it.id == QuickReply.notificationId("lead:c") }.notification.publicVersion)
+        } finally { store.hideOnLock = false }
+    }
 }

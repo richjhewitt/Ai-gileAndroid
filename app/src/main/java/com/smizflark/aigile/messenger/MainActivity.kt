@@ -222,6 +222,7 @@ class MainActivity : FragmentActivity() {
     override fun onStart() {
         super.onStart()
         App.inForeground = true
+        com.smizflark.aigile.messenger.data.Secure.apply(window, (application as App).repo.store.blockShots)
         val lockOn = (application as App).repo.store.lock
         // No chat preview in the recent apps list while the lock is on.
         if (Build.VERSION.SDK_INT >= 33) setRecentsScreenshotEnabled(!lockOn)

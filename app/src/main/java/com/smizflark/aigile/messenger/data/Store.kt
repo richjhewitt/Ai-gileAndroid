@@ -118,6 +118,16 @@ class Store(context: Context) : StoreFiles(context) {
         get() = settings.getBoolean("showTyping", true)
         set(v) = settings.edit().putBoolean("showTyping", v).apply()
 
+    /** AII-401: lock screen alerts show only the chat name and "New message". */
+    var hideOnLock: Boolean
+        get() = settings.getBoolean("hideOnLock", false)
+        set(v) = settings.edit().putBoolean("hideOnLock", v).apply()
+
+    /** AII-402: FLAG_SECURE on the app's windows: no screenshots, blank recents. */
+    var blockShots: Boolean
+        get() = settings.getBoolean("blockShots", false)
+        set(v) = settings.edit().putBoolean("blockShots", v).apply()
+
     var linkPreviews: Boolean
         get() = settings.getBoolean("linkPreviews", false)
         set(v) = settings.edit().putBoolean("linkPreviews", v).apply()
@@ -267,7 +277,7 @@ class Store(context: Context) : StoreFiles(context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "loadPictures", "linkPreviews", "showTyping", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "chatColours", "chatNames", "showTimes", "swipeRight", "swipeLeft", "nextUnread")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "loadPictures", "linkPreviews", "showTyping", "hideOnLock", "blockShots", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "chatColours", "chatNames", "showTimes", "swipeRight", "swipeLeft", "nextUnread")
 
         /** What "Reset settings" clears (AII-217): every backed-up setting except the ones that are your data. */
         val KEPT_ON_RESET = setOf("pinned", "muted", "silent")
