@@ -14,6 +14,12 @@ import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.Voice
+import com.smizflark.aigile.messenger.data.VoiceLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -53,6 +60,14 @@ class VoiceController internal constructor(
     var elapsed by mutableLongStateOf(0L); private set
     /** The finger has slid off the button: letting go now drops the note. */
     var cancelling by mutableStateOf(false)
+    /** AII-384: slid up past the lock; letting go no longer ends the note. */
+    var state by mutableStateOf(VoiceLock.State.HOLD); private set
+    val locked get() = recording && state == VoiceLock.State.LOCKED
+    fun slide(upDp: Float) { state = VoiceLock.onMove(state, upDp) }
+    /** The finger came up: ends the note unless it is locked. */
+    fun release() { if (VoiceLock.onRelease(state, cancelling) != VoiceLock.State.LOCKED) end(cancel = cancelling) }
+    fun sendLocked() { if (locked) end(cancel = false) }
+    fun deleteLocked() { if (locked) end(cancel = true) }
     private var rec: MediaRecorder? = null
     private var file: File? = null
     private var startedAt = 0L
@@ -76,7 +91,7 @@ class VoiceController internal constructor(
             runCatching { r.release() }; out.delete()
             Toast.makeText(ctx, R.string.voice_failed, Toast.LENGTH_SHORT).show(); return
         }
-        rec = r; file = out; startedAt = System.currentTimeMillis(); elapsed = 0; cancelling = false; recording = true
+        rec = r; file = out; startedAt = System.currentTimeMillis(); elapsed = 0; cancelling = false; state = VoiceLock.State.HOLD; recording = true
         ticker = scope.launch {
             while (recording) {
                 delay(100)
@@ -91,7 +106,7 @@ class VoiceController internal constructor(
         val r = rec ?: return
         val out = file
         val ms = System.currentTimeMillis() - startedAt
-        rec = null; file = null; recording = false; ticker?.cancel()
+        rec = null; file = null; recording = false; state = VoiceLock.State.HOLD; ticker?.cancel()
         val stopped = runCatching { r.stop() }.isSuccess
         runCatching { r.release() }
         if (cancel || !stopped || Voice.tooShort(ms) || out == null) {
@@ -104,7 +119,7 @@ class VoiceController internal constructor(
 
     internal companion object {
         /** For screenshots: a recording line with no recorder behind it. */
-        fun preview(ctx: Context, scope: CoroutineScope, ms: Long) = VoiceController(ctx, scope, {}, {}).apply { recording = true; elapsed = ms }
+        fun preview(ctx: Context, scope: CoroutineScope, ms: Long, locked: Boolean = false) = VoiceController(ctx, scope, {}, {}).apply { recording = true; elapsed = ms; if (locked) slide(VoiceLock.LOCK_DP) }
     }
 }
 
@@ -127,6 +142,7 @@ internal fun rememberVoiceController(onNote: (String) -> Unit): VoiceController 
  */
 internal fun Modifier.holdToRecord(voice: VoiceController, onTap: () -> Unit): Modifier = pointerInput(voice) {
     val margin = 40.dp.toPx()
+    val lockPx = VoiceLock.LOCK_DP.dp.toPx()
     awaitEachGesture {
         awaitFirstDown()
         var released = false
@@ -137,20 +153,33 @@ internal fun Modifier.holdToRecord(voice: VoiceController, onTap: () -> Unit): M
         while (true) {
             val c = awaitPointerEvent().changes.first()
             c.consume()
-            if (!c.pressed) { voice.end(cancel = voice.cancelling); return@awaitEachGesture }
+            if (!c.pressed) { voice.release(); return@awaitEachGesture }
             val p = c.position
-            voice.cancelling = p.x < -margin || p.y < -margin || p.x > size.width + margin || p.y > size.height + margin
+            voice.slide(-p.y / lockPx * VoiceLock.LOCK_DP)   // up is negative y
+            voice.cancelling = !voice.locked && (p.x < -margin || p.x > size.width + margin || p.y > size.height + margin)
         }
     }
 }
 
-/** "Recording… 0:07 · slide away to cancel" above the message box while the mic is held. */
+/** "Recording… 0:07 · slide away to cancel" above the message box while the mic is held; locked: timer, Delete and Send. */
 @Composable
 internal fun RecordingLine(voice: VoiceController) {
     val cs = MaterialTheme.colorScheme
     Row(Modifier.fillMaxWidth().padding(bottom = 6.dp).testTag("recording"), verticalAlignment = Alignment.CenterVertically) {
-        Text("●", color = cs.error, modifier = Modifier.padding(end = 6.dp))
-        Text(stringResource(R.string.voice_recording, Voice.label(voice.elapsed)), style = MaterialTheme.typography.bodyMedium,
-            color = if (voice.cancelling) cs.error else cs.onSurface)
+        if (voice.locked) {
+            IconButton(onClick = { voice.deleteLocked() }, modifier = Modifier.testTag("voice-delete")) {
+                Icon(Icons.Default.Delete, stringResource(R.string.voice_delete), tint = cs.error)
+            }
+            Text("●", color = cs.error, modifier = Modifier.padding(end = 6.dp))
+            Text(Voice.label(voice.elapsed), style = MaterialTheme.typography.bodyMedium, color = cs.onSurface, modifier = Modifier.weight(1f))
+            IconButton(onClick = { voice.sendLocked() }, modifier = Modifier.testTag("voice-send")) {
+                Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.voice_send), tint = cs.primary)
+            }
+        } else {
+            Text("●", color = cs.error, modifier = Modifier.padding(end = 6.dp))
+            Text(stringResource(R.string.voice_recording, Voice.label(voice.elapsed)), style = MaterialTheme.typography.bodyMedium,
+                color = if (voice.cancelling) cs.error else cs.onSurface, modifier = Modifier.weight(1f))
+            Icon(Icons.Default.Lock, stringResource(R.string.voice_lock_hint), Modifier.testTag("voice-lock-hint"), tint = cs.onSurfaceVariant)
+        }
     }
 }

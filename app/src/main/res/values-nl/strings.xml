@@ -232,6 +232,9 @@
     <string name="voice_hold_label">Houd ingedrukt om een spraakbericht op te nemen</string>
     <string name="voice_denied">Geef toegang tot de microfoon om spraakberichten op te nemen.</string>
     <string name="voice_failed">Opnemen lukte niet.</string>
+    <string name="voice_delete">Spraakbericht verwijderen</string>
+    <string name="voice_send">Spraakbericht versturen</string>
+    <string name="voice_lock_hint">Veeg omhoog om te vergrendelen</string>
     <string name="voice_too_short">Houd de microfoon ingedrukt om op te nemen, laat los om te versturen.</string>
     <string name="voice_play_len">Spraakbericht afspelen, %1$s</string>
     <string name="voice_play">Spraakbericht afspelen</string>
