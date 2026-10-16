@@ -94,6 +94,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
@@ -139,15 +140,17 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null, onReact: ((Bubble, String) -> Unit)? = null, pinned: Boolean = false, onPin: (() -> Unit)? = null, selectMode: Boolean = false, picked: Boolean = false, onToggle: () -> Unit = {}, onPick: (() -> Unit)? = null) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null, onReact: ((Bubble, String) -> Unit)? = null, pinned: Boolean = false, onPin: (() -> Unit)? = null, selectMode: Boolean = false, picked: Boolean = false, onToggle: () -> Unit = {}, onPick: (() -> Unit)? = null, chatColour: String = "") {
     val b = r.b
     val cs = MaterialTheme.colorScheme
+    val tint = if (b.mine && !b.unverified) com.smizflark.aigile.messenger.data.ChatColour.tint(chatColour, cs.surface.luminance() < 0.5f) else null   // AII-375
     val bg = when {
         b.unverified -> cs.errorContainer
+        tint != null -> androidx.compose.ui.graphics.Color(tint.fill)
         b.mine -> cs.primaryContainer
         else -> cs.surfaceContainerHigh
     }
-    val fg = if (b.mine) cs.onPrimaryContainer else cs.onSurface
+    val fg = if (tint != null) androidx.compose.ui.graphics.Color(tint.text) else if (b.mine) cs.onPrimaryContainer else cs.onSurface
     val copy = rememberCopy()   // AII-115: tap a ``` block to copy it
     val shown = Markdown.render(b.text, cs.surfaceVariant, cs.primary, cards, onCard, copy)
     // AII-43: long-press a bubble to copy what it shows (without the ** marks).

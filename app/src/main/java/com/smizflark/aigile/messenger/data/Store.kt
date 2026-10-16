@@ -202,6 +202,11 @@ class Store(context: Context) : StoreFiles(context) {
         get() = settings.getStringSet("chatSounds", emptySet())?.toSet() ?: emptySet()
         set(v) = settings.edit().putStringSet("chatSounds", v).apply()
 
+    /** Chats with their own colour (AII-375), see [ChatColour]. */
+    var chatColours: Set<String>
+        get() = settings.getStringSet("chatColours", emptySet())?.toSet() ?: emptySet()
+        set(v) = settings.edit().putStringSet("chatColours", v).apply()
+
     /* ---------- muted chats: no alerts from them (AII-48) ---------- */
 
     /** Muted now: a mute for a while (AII-157) ends by itself. */
@@ -231,7 +236,7 @@ class Store(context: Context) : StoreFiles(context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "linkPreviews", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft", "nextUnread")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "linkPreviews", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "chatColours", "showTimes", "swipeRight", "swipeLeft", "nextUnread")
 
         /** What "Reset settings" clears (AII-217): every backed-up setting except the ones that are your data. */
         val KEPT_ON_RESET = setOf("pinned", "muted", "silent")

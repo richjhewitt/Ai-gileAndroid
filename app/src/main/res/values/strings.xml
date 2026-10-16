@@ -107,6 +107,14 @@
     <string name="alert_sound_default">Default</string>
     <string name="alert_sound_none">Silent</string>
     <string name="silent_alerts">Silent alerts</string>
+    <string name="chat_colour">Colour</string>
+    <string name="colour_default">Default</string>
+    <string name="colour_blue">Blue</string>
+    <string name="colour_green">Green</string>
+    <string name="colour_teal">Teal</string>
+    <string name="colour_purple">Purple</string>
+    <string name="colour_pink">Pink</string>
+    <string name="colour_orange">Orange</string>
     <string name="silent_alerts_off">Alerts with sound</string>
     <string name="jump_unread">%1$d new</string>
     <string name="next_unread">Next unread: %1$s →</string>
