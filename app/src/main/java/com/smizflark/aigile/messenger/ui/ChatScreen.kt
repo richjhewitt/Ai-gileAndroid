@@ -97,6 +97,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var details by remember { mutableStateOf(false) }   // AII-80: the chat details sheet
     var stars by remember { mutableStateOf(repo.store.stars()) }   // AII-138: starred messages
     var pins by remember { mutableStateOf(repo.store.pinnedMsgs()) }   // AII-339: pinned messages, this phone only
+    var clearedAt by remember(ref.key) { mutableStateOf(repo.store.cleared()[ref.key]) }   // AII-363: Clear chat for me, this phone only
+    var clearAsk by remember { mutableStateOf(false) }
     var pinShown by remember { mutableStateOf(0) }   // AII-339: which pin the bar shows
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
@@ -224,7 +226,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val live = rememberLiveRef(repo, ref, text)   // AII-324 (ChatFriend.kt)
     var safetyOk by remember(ref.key) { mutableStateOf(0) }   // AII-333: bumped when you accept new safety words
     val safetyChanged = remember(live.safety, safetyOk) { repo.learnSafety(listOf(live)); repo.safetyChanged(live) }
-    val items = remember(convo, pending, owner, focus) { rows(convo, pending, owner, focus, seenAtOpen).asReversed() }
+    val items = remember(convo, pending, owner, focus, clearedAt) { rows(convo, pending, owner, focus, seenAtOpen, clearedAt).asReversed() }
     val hits = remember(items, query, finding) { if (finding) Find.matches(items.map { (it as? Row.Msg)?.b?.text.orEmpty() }, query) else emptyList() }
     val hitIds = remember(hits, items) { hits.map { items[it].id } }
     LaunchedEffect(query) { at = 0 }
@@ -288,8 +290,22 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     if (details) ChatDetails(live, repo, chatInfo(convo), onChecked = if (ref.kind == Kind.FRIEND) { { scope.launch { runCatching { repo.acceptSafety(live) }.onFailure { error = it.message }; safetyOk++ } } } else null,
  onFind = { details = false; finding = true },
         starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
+        onClear = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { { details = false; clearAsk = true } },
         onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { shareTranscript(view.context, ref.name, c, owner) } },   // AII-139
         onSave = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { saveTranscript(view.context, ref.name, c, owner) } }) { details = false; muted = ref.key in repo.store.muted() }   // AII-229
+    // AII-363: Clear chat for me asks first, hides everything so far on this phone, and offers Undo for a few seconds.
+    if (clearAsk) ClearChatDialog(onDismiss = { clearAsk = false }, onConfirm = {
+        clearAsk = false
+        val before = clearedAt
+        val mark = com.smizflark.aigile.messenger.data.Cleared.mark(convo?.bubbles.orEmpty(), com.smizflark.aigile.messenger.data.Now.instant())
+        clearedAt = mark; repo.store.setCleared(com.smizflark.aigile.messenger.data.Cleared.with(repo.store.cleared(), ref.key, mark))
+        scope.launch {
+            snack.currentSnackbarData?.dismiss()
+            if (snack.showSnackbar(res.getString(R.string.chat_cleared), res.getString(R.string.undo), duration = androidx.compose.material3.SnackbarDuration.Long) == SnackbarResult.ActionPerformed) {
+                clearedAt = before; repo.store.setCleared(com.smizflark.aigile.messenger.data.Cleared.with(repo.store.cleared(), ref.key, before))
+            }
+        }
+    })
     if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false },
         onDismiss = { muteAsk = false })
     // AII-193: Go to date lands on that day's day row, else the next later day with messages, else the newest.
@@ -302,7 +318,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true },
                 onGoToDate = { goToDate = true }, onMyLast = { jumpToMine() }, onOpenCard = onOpenCard, silent = silent,
                 onSilent = { repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent },
-                typing = live.typing)
+                typing = live.typing, onClear = { clearAsk = true })
         },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {

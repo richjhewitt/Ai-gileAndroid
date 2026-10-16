@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Notifications
@@ -49,7 +50,7 @@ import com.smizflark.aigile.messenger.data.Repo
 @Composable
 internal fun ChatTopBar(
     ref: ChatRef, repo: Repo, focus: String?, focusBubble: Bubble?, working: Boolean, workingOn: String?, muted: Boolean,
-    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {}, onMyLast: () -> Unit = {}, onOpenCard: (String) -> Unit = {}, silent: Boolean = false, onSilent: () -> Unit = {}, typing: Boolean = false,
+    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {}, onMyLast: () -> Unit = {}, onOpenCard: (String) -> Unit = {}, silent: Boolean = false, onSilent: () -> Unit = {}, typing: Boolean = false, onClear: () -> Unit = {},
 ) {
     TopAppBar(
         navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
@@ -91,6 +92,12 @@ internal fun ChatTopBar(
                     leadingIcon = { Icon(Icons.Default.NotificationsOff, null) },
                     onClick = { onSilent(); menu = false },
                     modifier = Modifier.testTag("silent"),
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.clear_chat)) },
+                    leadingIcon = { Icon(Icons.Default.Close, null) },
+                    onClick = { menu = false; onClear() },
+                    modifier = Modifier.testTag("clear-chat"),
                 )
             }
         },

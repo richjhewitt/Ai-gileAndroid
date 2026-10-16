@@ -1,6 +1,7 @@
 package com.smizflark.aigile.messenger.ui
 
 import com.smizflark.aigile.messenger.data.Bubble
+import com.smizflark.aigile.messenger.data.Cleared
 import com.smizflark.aigile.messenger.data.Conversation
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.News
@@ -20,9 +21,9 @@ internal fun unreadBelow(bubbles: List<Bubble>, seen: String?): Int {
 }
 
 /** Bubbles, pending messages, day lines and card headers, oldest first. */
-internal fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus: String? = null, seenAtOpen: String? = null): List<Row> {
+internal fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus: String? = null, seenAtOpen: String? = null, clearedAt: String? = null): List<Row> {
     val out = mutableListOf<Row>()
-    val bubbles = c?.bubbles.orEmpty().filter { focus == null || it.card == focus }
+    val bubbles = Cleared.visible(c?.bubbles.orEmpty(), clearedAt).filter { focus == null || it.card == focus }
     // Answer buttons only under the newest message of a card still waiting on you.
     val optionsAt = bubbles.withIndex().filter { it.value.options.isNotEmpty() && it.value.waiting }
         .groupBy { it.value.card }.mapNotNull { (_, l) -> l.maxOf { it.index } }.toSet()

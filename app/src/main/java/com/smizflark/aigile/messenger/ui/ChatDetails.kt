@@ -67,7 +67,7 @@ internal fun saveTextFile(ctx: android.content.Context, name: String, text: Stri
 /** Tap the chat name (AII-80): the team, its open cards, the pictures sent here, and the Mute and Pin switches. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onSave: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onChecked: (() -> Unit)? = null, onClose: () -> Unit) {
+fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onSave: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onChecked: (() -> Unit)? = null, onClear: (() -> Unit)? = null, onClose: () -> Unit) {
     var checked by remember { mutableStateOf(ref.checked) }   // AII-324: safety code checked together
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var silent by remember { mutableStateOf(ref.key in repo.store.silent) }
@@ -120,6 +120,10 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 // AII-229: the same text as a .txt in Downloads.
                 if (onSave != null) OutlinedButton(onClick = onSave, modifier = Modifier.testTag("details-save")) {
                     Icon(Icons.Default.Done, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.save_chat))
+                }
+                // AII-363: hide the messages so far, this phone only.
+                if (onClear != null) OutlinedButton(onClick = onClear, modifier = Modifier.testTag("details-clear")) {
+                    Icon(Icons.Default.Close, null, Modifier.size(18.dp)); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.clear_chat))
                 }
             }
             // AII-245: Mute and Silent alerts side by side.

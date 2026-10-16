@@ -453,4 +453,8 @@
     <string name="restore_done">%1$d instellingen teruggezet</string>
     <string name="restore_bad">Verkeerde wachtwoordzin, of geen instellingenbestand</string>
     <string name="backup_failed">Dat lukte niet</string>
+    <string name="clear_chat">Chat wissen</string>
+    <string name="clear_chat_title">Dit gesprek wissen?</string>
+    <string name="clear_chat_body">Verbergt alle berichten tot nu, alleen op deze telefoon. Het bord en je vriend houden hun berichten, en nieuwere berichten zie je gewoon.</string>
+    <string name="chat_cleared">Gesprek gewist</string>
 </resources>

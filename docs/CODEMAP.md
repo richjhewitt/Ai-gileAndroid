@@ -31,6 +31,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Outbox.kt: outbox state changes (retry / delete failed messages, change time) and the list of every waiting Send later message (AII-166).
 - data/Pace.kt: pacing of sends / checks.
 - data/Closed.kt: Close chat, hidden until a newer message (board's dmclosed list).
+- data/Cleared.kt: Clear chat for me (AII-363): per chat a cleared-before time (Store cleared), messages up to it are hidden on this phone only (Cleared.visible, applied in ui/ChatRows.kt rows); Clear chat in the chat details and top bar menu, confirm dialog, Undo snackbar in ui/ChatScreen.kt.
 - data/Pause.kt: pause alerts for a while.
 - data/Pins.kt: pinned chats first; sortChats = Newest first / A to Z (AII-241, Settings, Store sortChats) applied before pins and muted-last.
 - data/NextUnread.kt: which chat the Next unread button at the bottom of a chat goes to (AII-204); button in ui/ChatParts.kt.

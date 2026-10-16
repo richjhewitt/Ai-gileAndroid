@@ -91,6 +91,16 @@ internal fun EditMessageDialog(initial: String, onSave: (String) -> Unit, onDism
         dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss, modifier = Modifier.testTag("edit-cancel")) { Text(stringResource(R.string.cancel)) } })
 }
 
+/** Clear chat for me asks first (AII-363). */
+@Composable
+internal fun ClearChatDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    androidx.compose.material3.AlertDialog(onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.clear_chat_title)) },
+        text = { Text(stringResource(R.string.clear_chat_body)) },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = onConfirm, modifier = Modifier.testTag("clear-confirm")) { Text(stringResource(R.string.clear_chat)) } },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss, modifier = Modifier.testTag("clear-cancel")) { Text(stringResource(R.string.cancel)) } })
+}
+
 /** Delete asks first. */
 @Composable
 internal fun DeleteMessageDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {

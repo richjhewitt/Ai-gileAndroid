@@ -275,6 +275,11 @@ class Store(context: Context) {
     fun closed(): Map<String, String> = read("closed.json") ?: emptyMap()
     fun setClosed(all: Map<String, String>) = write("closed.json", all)
 
+    /* ---------- cleared chats (AII-363): chat key -> hide messages up to this time, this phone only ---------- */
+
+    fun cleared(): Map<String, String> = read("cleared.json") ?: emptyMap()
+    fun setCleared(all: Map<String, String>) = write("cleared.json", all)
+
     /* ---------- recent searches (AII-155), per board ---------- */
 
     fun recentSearches(): List<String> = read("recent_searches.json") ?: emptyList()
