@@ -1,5 +1,7 @@
 package com.smizflark.aigile.messenger.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.smizflark.aigile.messenger.work.waitingToSend
 import java.time.Instant
 import androidx.activity.result.PickVisualMediaRequest
@@ -31,8 +33,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.smizflark.aigile.messenger.data.chatInfo
 import com.smizflark.aigile.messenger.data.CardDetail
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Outbox
@@ -53,19 +52,12 @@ import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Bubble
 import com.smizflark.aigile.messenger.data.Quote
 import com.smizflark.aigile.messenger.data.Repo
-import com.smizflark.aigile.messenger.data.PinnedMsgs
-import com.smizflark.aigile.messenger.data.Stars
-import com.smizflark.aigile.messenger.data.Selection
-import com.smizflark.aigile.messenger.data.SendState
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import androidx.compose.ui.res.stringResource
 import com.smizflark.aigile.messenger.R
 import android.os.Build
-import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import android.view.HapticFeedbackConstants
 import com.smizflark.aigile.messenger.data.ScrollPlaces
@@ -285,82 +277,40 @@ fun ChatScreen(repo: Repo, listed: ChatRef, onBack: () -> Unit, focus: String? =
     OpenAtEffect(openAt, list, { latestItems }) { flash = it }   // AII-105 (ChatScroll.kt)
 
     /* ---------- jumps ---------- */
-    // AII-138: tap a starred message in the details, the chat scrolls to it and outlines it.
-    fun jumpToStar(key: String) {
-        val i = items.indexOfFirst { it.id == key }
-        if (i < 0) { Toast.makeText(view.context, R.string.star_not_loaded, Toast.LENGTH_SHORT).show(); return }
-        scope.launch { list.animateScrollToItem(i + 1); flash = key; delay(1500); if (flash == key) flash = null }   // +1: the spacer at the bottom
-    }
-
-    // AII-242: My last message scrolls to your newest sent message (the list is newest first), same jump as a starred one.
-    fun jumpToMine() {
-        val m = items.firstOrNull { it is Row.Msg && it.b.mine }
-        if (m == null) Toast.makeText(view.context, R.string.no_my_message, Toast.LENGTH_SHORT).show() else jumpToStar(m.id)
-    }
+    // AII-138: tap a starred message in the details, the chat scrolls to it and outlines it. AII-242: My last message (ChatMenuActions.kt).
+    fun jumpToStar(key: String) = jumpToRow(key, items, list, scope, view.context, { flash }, { flash = it })
+    fun jumpToMine() = jumpToMyLast(items, list, scope, view.context, { flash }, { flash = it })
 
     androidx.compose.runtime.LaunchedEffect(details) { reminders = repo.store.reminders() }   // a reminder cancelled in the details
-    if (details) ChatDetails(live, repo, chatInfo(convo), onColour = { colour = it }, onRenamed = { nameRev++ }, onChecked = if (ref.kind == Kind.FRIEND) { { scope.launch { runCatching { repo.acceptSafety(live) }.onFailure { error = it.message }; safetyOk++ } } } else null,
- onFind = { details = false; finding = true },
-        starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
-        onClear = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { { details = false; clearAsk = true } },
-        onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { shareTranscript(view.context, ref.name, c, owner) } },   // AII-139
-        onSave = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { saveTranscript(view.context, ref.name, c, owner) } }) { details = false; muted = ref.key in repo.store.muted() }   // AII-229
+    if (details) ChatDetailsHost(live, ref, repo, convo, owner, stars, onColour = { colour = it }, onRenamed = { nameRev++ },   // ChatHosts.kt
+        onChecked = if (ref.kind == Kind.FRIEND) { { scope.launch { runCatching { repo.acceptSafety(live) }.onFailure { error = it.message }; safetyOk++ } } } else null,
+        onFind = { details = false; finding = true }, onJump = { details = false; jumpToStar(it) }, onClear = { details = false; clearAsk = true },
+        onClose = { details = false; muted = ref.key in repo.store.muted() })
     // AII-363: Clear chat for me asks first, hides everything so far on this phone, and offers Undo for a few seconds.
     if (clearAsk) ClearChatHost(repo, ref, convo, clearedAt, snack, scope, onDismiss = { clearAsk = false }, onCleared = { clearedAt = it })
-    if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false },
+    if (muteAsk) MuteFor(onPick = { f -> muteChatFor(repo, ref, f); muted = true; muteAsk = false },
         onDismiss = { muteAsk = false })
     // AII-193: Go to date lands on that day's day row, else the next later day with messages, else the newest.
     var goToDate by remember { mutableStateOf(false) }
     if (goToDate) GoToDateHost(items, list, scope) { goToDate = false }   // ChatScroll.kt
     /* ---------- select several messages (AII-371) ---------- */
-    val selColors = MaterialTheme.colorScheme
-    val selClipboard = LocalClipboardManager.current
     fun leaveSelect() { selectMode = false; selPicked = emptySet() }
-    fun pickedText() = Selection.text(items.mapNotNull { (it as? Row.Msg)?.takeIf { m -> m.pending == null }?.b }, selPicked, ref.name, owner, { fullTime(it) },
-        plain = { b -> Markdown.plain(Markdown.render(b.text, selColors.surfaceVariant, selColors.primary)) })
     /* ---------- screen ---------- */
     Scaffold(
         snackbarHost = { SnackbarHost(snack, Modifier.testTag("snack")) },
         topBar = {
-            if (selectMode) SelectTopBar(selPicked.size, onLeave = { leaveSelect() },
-                onCopy = {
-                    selClipboard.setText(AnnotatedString(pickedText()))
-                    if (Build.VERSION.SDK_INT < 33) Toast.makeText(view.context, R.string.copied, Toast.LENGTH_SHORT).show()
-                    leaveSelect()
-                },
-                onShare = {
-                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, pickedText())
-                    runCatching { view.context.startActivity(android.content.Intent.createChooser(send, null)) }
-                    leaveSelect()
-                },
-                onStar = {
-                    // Stars the picked ones that have no star yet, as the single Star does (also on the board).
-                    items.forEach { r ->
-                        if (r is Row.Msg && r.pending == null && r.b.key in selPicked && !Stars.has(stars, ref.key, r.b.key)) {
-                            val s = Stars.of(ref.key, r.b)
-                            stars = Stars.toggle(stars, s); scope.launch { repo.setStar(ref, s, true) }
-                        }
-                    }
-                    leaveSelect()
-                })
+            if (selectMode) ChatSelectBar(ref, repo, items, selPicked, stars, owner, scope, onStars = { stars = it }, onLeave = { leaveSelect() })   // ChatSelect.kt
             else ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
                 onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true },
                 onGoToDate = { goToDate = true }, onMyLast = { jumpToMine() }, onOpenCard = onOpenCard, silent = silent,
-                onAddHome = { if (!com.smizflark.aigile.messenger.data.HomeShortcut.pin(homeCtx, ref.key, ref.name)) Toast.makeText(homeCtx, homeCtx.getString(R.string.add_to_home_unsupported), Toast.LENGTH_SHORT).show() },
-                onSilent = { repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent },
+                onAddHome = { addChatToHome(homeCtx, ref) },   // ChatMenuActions.kt
+                onSilent = { silent = toggleChatSilent(repo, ref) },
                 typing = live.typing, onClear = { clearAsk = true }, chatColour = colour)
         },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {
             error?.let { ErrorLine(it) }
-            // AII-339: the pinned bar; tap jumps to the message and the next tap shows the next pin.
-            val chatPins = PinnedMsgs.shown(pins, ref.key, convo?.bubbles.orEmpty(), clearedAt)
-            if (chatPins.isNotEmpty()) {
-                val sh = PinnedMsgs.clamp(pinShown, chatPins.size); val p = chatPins[sh]
-                val pinColors = MaterialTheme.colorScheme
-                PinnedBar(Markdown.render(p.text, pinColors.surfaceVariant, pinColors.primary).text, sh, chatPins.size, onTap = { jumpToStar(p.key); pinShown = PinnedMsgs.next(sh, chatPins.size) },
-                    onUnpin = { pins = PinnedMsgs.remove(pins, ref.key, p.key); repo.store.setPinnedMsgs(pins) })
-            }
+            ChatPinnedBar(repo, ref, convo, pins, clearedAt, pinShown, { pinShown = it }, { jumpToStar(it) }, { pins = it })   // AII-339 (ChatHosts.kt)
             if (finding) FindBar(query, { query = it }, hits.size, current,
                 onUp = { if (hits.isNotEmpty()) at = (current + 1) % hits.size },   // older
                 onDown = { if (hits.isNotEmpty()) at = (current - 1 + hits.size) % hits.size },   // newer
@@ -377,36 +327,22 @@ fun ChatScreen(repo: Repo, listed: ChatRef, onBack: () -> Unit, focus: String? =
                                 onOpen = if (focus == null && ref.kind == Kind.LEAD) { { onOpenCard(r.card) } } else null) {
                                 if (targets.any { it.id == r.card }) { target = r.card; picked = true }
                             }
-                            is Row.Msg -> MessageBubble(r, ref, repo, chatColour = colour, mark = if (r.id == flash) 2 else if (r.id !in hitIds) 0 else if (hitIds.getOrNull(current) == r.id) 2 else 1, onReply = { q -> startReply(q, Quote.of(if (q.mine) owner else q.author, q.text, q.pics.size)) },
-                                onQuotePart = { q, words -> startReply(q, Quote.part(if (q.mine) owner else q.author, words)) }, onForward = { forwarding = it.text }, cards = if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onCard = onOpenCard,
+                            is Row.Msg -> ChatMessageRow(r, ref, repo, scope, colour, mark = if (r.id == flash) 2 else if (r.id !in hitIds) 0 else if (hitIds.getOrNull(current) == r.id) 2 else 1,   // ChatMessageRow.kt
+                                cards = if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(),
+                                onReply = { q -> startReply(q, Quote.of(if (q.mine) owner else q.author, q.text, q.pics.size)) },
+                                onQuotePart = { q, words -> startReply(q, Quote.part(if (q.mine) owner else q.author, words)) }, onForward = { forwarding = it.text }, onCard = onOpenCard,
                                 onOption = { send(it, r.b.card) },
                                 onRetry = { p -> deliver(p) },
-                                onSendNow = { p -> pending = repo.pendingFor(ref.key); scope.launch { repo.sendNow(ref, p).onSuccess { load() }.onFailure { error = it.message }; pending = repo.pendingFor(ref.key) } },
-                                onDiscard = { p -> repo.discard(p.id); pending = repo.pendingFor(ref.key) },
-                                onMoveLater = { p, at -> repo.moveLater(p.id, at); pending = repo.pendingFor(ref.key) },
-                                onRepeat = { p, r -> repo.setRepeat(p.id, r); pending = repo.pendingFor(ref.key) },
                                 onEdit = { p ->   // AII-150: back in the box, with its card and pictures
                                     repo.takeBack(p.id); pending = repo.pendingFor(ref.key)
                                     text = Outbox.editBack(p, text); pics = p.files + pics
                                     if (p.target != null && targets.any { it.id == p.target }) { target = p.target; picked = true }
                                 },
                                 onQuote = { q -> jumpToQuote(q, r.id) },
-                                onEditMsg = if (ref.kind == Kind.FRIEND) { { b, t -> friendEdit(scope, repo, ref, b, t, { error = it }, ::load) } } else null,   // AII-324
-                                onReact = if (ref.kind == Kind.FRIEND) { { b, e -> friendReact(scope, repo, ref, b, e, { error = it }, ::load) } } else null,   // AII-326
-                                onDeleteMsg = if (ref.kind == Kind.FRIEND) { { b -> friendDelete(scope, repo, ref, b, { error = it }, ::load) } } else null,
-                                remindAt = com.smizflark.aigile.messenger.data.Remind.forMessage(reminders, ref.key, r.b.key), onReminded = { reminders = repo.store.reminders() },
-                                starred = Stars.has(stars, ref.key, r.b.key),
-                                onStar = if (r.pending == null) { {
-                                    val s = Stars.of(ref.key, r.b); val on = !Stars.has(stars, s.chat, s.key)
-                                    stars = Stars.toggle(stars, s); scope.launch { repo.setStar(ref, s, on) }   // AII-141: on the board too
-                                } } else null,
-                                selectMode = selectMode, picked = r.b.key in selPicked,
-                                onToggle = if (r.pending == null) { { selPicked = Selection.toggle(selPicked, r.b.key); if (selPicked.isEmpty()) selectMode = false } } else ({}),
-                                onPick = if (r.pending == null && r.b.state == SendState.SENT && !r.b.unverified) { { selectMode = true; selPicked = setOf(r.b.key) } } else null,
-                                pinned = PinnedMsgs.has(pins, ref.key, r.b.key),
-                                onPin = if (r.pending == null) { {
-                                    pins = PinnedMsgs.toggle(pins, PinnedMsgs.of(ref.key, r.b, com.smizflark.aigile.messenger.data.Now.millis())); repo.store.setPinnedMsgs(pins)
-                                } } else null)
+                                load = ::load, onError = { error = it }, onPending = { pending = repo.pendingFor(ref.key) },
+                                reminders = reminders, onReminders = { reminders = repo.store.reminders() },
+                                stars = { stars }, setStars = { stars = it }, pins = { pins }, setPins = { pins = it },
+                                selectMode = selectMode, selPicked = { selPicked }, setPicked = { selPicked = it }, setSelectMode = { selectMode = it })
                         }
                     }
                     if (convo == null && error == null) item { Text(stringResource(R.string.loading), Modifier.padding(24.dp)) }
