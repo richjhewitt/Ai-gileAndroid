@@ -32,5 +32,12 @@ class FilterTest {
         assertEquals(true, ChatFilter.REMINDERS in ChatFilter.shown(false, ChatFilter.ALL, true))
         assertEquals(true, ChatFilter.REMINDERS in ChatFilter.shown(false, ChatFilter.REMINDERS, false))
     }
+    @Test fun draftsOnlyWhereADraftWaits() = assertEquals(listOf(lead), all.filter { ChatFilter.DRAFTS.keep(it, drafted = it == lead) })
+    @Test fun draftKeysSkipBlankDrafts() = assertEquals(setOf("a"), com.smizflark.aigile.messenger.data.Drafts.chatKeys(mapOf("a" to "hi", "b" to "  ")))
+    @Test fun draftsChipOnlyWhenNeeded() {
+        assertEquals(false, ChatFilter.DRAFTS in ChatFilter.shown(false, ChatFilter.ALL))
+        assertEquals(true, ChatFilter.DRAFTS in ChatFilter.shown(false, ChatFilter.ALL, anyDraft = true))
+        assertEquals(true, ChatFilter.DRAFTS in ChatFilter.shown(false, ChatFilter.DRAFTS))
+    }
     @Test fun unreadComesRightAfterAll() = assertEquals(ChatFilter.UNREAD, ChatFilter.entries[1])
 }

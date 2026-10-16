@@ -5,4 +5,7 @@ object Drafts {
     /** The drafts with this chat's text set; blank text drops the chat. */
     fun put(all: Map<String, String>, chat: String, text: String): Map<String, String> =
         if (text.isBlank()) all - chat else all + (chat to text)
+
+    /** AII-369: the chats with a non-blank draft, for the Drafts chip. */
+    fun chatKeys(all: Map<String, String>): Set<String> = all.filterValues { it.isNotBlank() }.keys
 }
