@@ -410,4 +410,5 @@
     <string name="new_starred">Lijst met sterren: filter op chat, alles delen als tekst</string>
     <string name="new_widget">Widget toont ongelezen aantallen en volgt de stijl van de app</string>
     <string name="new_build">build %1$d</string>
+    <string name="pick_a_chat">Kies een chat</string>
 </resources>

@@ -410,4 +410,5 @@
     <string name="new_starred">Starred list: filter by chat, share all as text</string>
     <string name="new_widget">Widget shows unread counts and follows the app\'s look</string>
     <string name="new_build">build %1$d</string>
+    <string name="pick_a_chat">Pick a chat</string>
 </resources>

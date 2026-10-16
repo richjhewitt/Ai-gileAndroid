@@ -68,6 +68,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/ChatComposer.kt: the message input with pictures, reply, dictation and quick replies (AII-179); hold a quick reply to edit them in Settings (AII-255).
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
 - ui/ChatsScreen.kt: every chat in one list.
+- ui/TwoPane.kt: wide screens (840dp, or 600dp in landscape) show the chats list (360dp) and the open chat side by side, "Pick a chat" when none (AII-350); MainActivity keeps the selected chat across turning and folding.
 - ui/ChatRow.kt: one row of the chats list (swipe, hold menu, badges, a bell when the chat has a reminder AII-226; Remind me in 1 hour on its newest cached message, AII-240) and its preview, draft and unsent labels.
 - ui/ConnectScreen.kt: connect the phone to a board, or try the demo; after Sign out (route connect?out=true) Scan QR code comes first (AII-289).
 - ui/Dictate.kt: voice to text with the phone's recogniser.
