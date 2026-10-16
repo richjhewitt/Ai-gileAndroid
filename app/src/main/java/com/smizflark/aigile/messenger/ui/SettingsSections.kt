@@ -3,6 +3,8 @@ package com.smizflark.aigile.messenger.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import com.smizflark.aigile.messenger.data.SettingsFind
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -44,10 +46,22 @@ import kotlinx.coroutines.launch
 
 /** A small heading over a group of rows in Settings (AII-232); [first] skips the line above. */
 @Composable
-internal fun SectionHeader(title: String, first: Boolean = false) {
+internal fun SectionHeader(title: String, first: Boolean = false, rows: List<List<String>>? = null) {
+    val q = LocalSettingsQuery.current
+    if (rows != null && !rows.any { SettingsFind.matches(q, it) }) return   // AII-403: nothing under it matches
     if (!first) HorizontalDivider(Modifier.padding(top = 8.dp))
     Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.testTag("section"))
+}
+
+/** The Settings search text (AII-403); empty shows everything. */
+internal val LocalSettingsQuery = androidx.compose.runtime.compositionLocalOf { "" }
+
+/** One Settings row (or row with its extras) that hides itself when the search does not match its visible [labels]. */
+@Composable
+internal fun ColumnScope.SettingRow(labels: List<String>, content: @Composable ColumnScope.() -> Unit) {
+    if (SettingsFind.matches(LocalSettingsQuery.current, labels))
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
 }
 
 /* ---------- change the board address or key without signing out ---------- */

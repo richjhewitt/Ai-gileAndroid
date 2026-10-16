@@ -40,6 +40,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/TranslateIntent.kt: Translate in the hold menu (AII-395): route = ACTION_TRANSLATE (API 29+) else PROCESS_TEXT with Google Translate, else item hidden.
 - data/Now.kt: the app's clock (fixed in screenshot tests so shots never drift).
 - data/SettingsExport.kt: settings export and restore sealed with a passphrase (PBKDF2 + AES-GCM); no board key (AII-349).
+- data/SettingsFind.kt: Settings search (AII-403): accent- and case-insensitive word-start match; ui/SettingsScreen.kt wraps each row in SettingRow(labels) (ui/SettingsSections.kt), headings hide with no match; extra words kw_* in strings.
 - data/Mute.kt: mute a chat for 1 hour, 8 hours or until unmuted (AII-157); timed mutes end by themselves.
 - data/Outbox.kt: outbox state changes (retry / delete failed messages, change time) and the list of every waiting Send later message (AII-166).
 - data/Pace.kt: pacing of sends / checks.

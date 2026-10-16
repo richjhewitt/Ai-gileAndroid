@@ -533,4 +533,14 @@
     <string name="format_bold">Bold</string>
     <string name="format_italic">Italic</string>
     <string name="format_code">Code</string>
+    <string name="find_settings">Search settings</string>
+    <string name="find_settings_clear">Clear search</string>
+    <string name="find_settings_none">No settings match</string>
+    <string name="kw_connection">server address url key account login</string>
+    <string name="kw_look">dark light night theme colour color font size appearance</string>
+    <string name="kw_alerts">sound notification notifications vibrate buzz ringtone</string>
+    <string name="kw_lock">fingerprint biometric pin password secure</string>
+    <string name="kw_privacy">private hide screenshot</string>
+    <string name="kw_storage">cache pictures space clean up delete</string>
+    <string name="kw_backup">backup save copy</string>
 </resources>

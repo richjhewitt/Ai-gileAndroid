@@ -533,4 +533,14 @@
     <string name="format_bold">Vet</string>
     <string name="format_italic">Cursief</string>
     <string name="format_code">Code</string>
+    <string name="find_settings">Zoek in instellingen</string>
+    <string name="find_settings_clear">Zoekopdracht wissen</string>
+    <string name="find_settings_none">Geen instellingen gevonden</string>
+    <string name="kw_connection">server adres url sleutel account inloggen</string>
+    <string name="kw_look">donker licht nacht thema kleur kleuren lettertype grootte uiterlijk</string>
+    <string name="kw_alerts">geluid melding notificatie notificaties trillen ringtone</string>
+    <string name="kw_lock">vingerafdruk biometrisch pincode wachtwoord beveiliging slot</string>
+    <string name="kw_privacy">privé verbergen schermafbeelding screenshot</string>
+    <string name="kw_storage">cache plaatjes foto\'s ruimte opruimen verwijderen</string>
+    <string name="kw_backup">back-up backup bewaren kopie</string>
 </resources>

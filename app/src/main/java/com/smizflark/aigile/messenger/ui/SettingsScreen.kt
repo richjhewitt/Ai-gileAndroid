@@ -24,6 +24,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import com.smizflark.aigile.messenger.data.SettingsFind
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -112,60 +115,115 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
         if (!ok) note = ctx.getString(R.string.alerts_permission)
     }
 
+    // AII-403: the visible strings of each row, so the search can find it (plus a few extra words people may try).
+    var query by remember { mutableStateOf("") }
+    fun r(vararg l: String) = l.toList()
+    val signOutLabel = stringResource(if (s.demo) R.string.leave_demo else R.string.sign_out)
+    val rConn = r(stringResource(R.string.connection), signOutLabel, stringResource(R.string.kw_connection))
+    val rBoard = r(stringResource(if (s.demo) R.string.connect_to_board else R.string.change_board), stringResource(R.string.board_address), stringResource(R.string.phone_key), stringResource(R.string.kw_connection))
+    val rLook = r(stringResource(R.string.look), stringResource(R.string.text_size), stringResource(R.string.phone_colours), stringResource(R.string.phone_colours_sub), stringResource(R.string.kw_look)) +
+        Look.entries.map { stringResource(it.res) } + TextSize.entries.map { stringResource(it.res) }
+    val rTimes = r(stringResource(R.string.show_times), stringResource(R.string.show_times_sub))
+    val rGifs = r(stringResource(R.string.play_gifs), stringResource(R.string.play_gifs_sub))
+    val rPics = r(stringResource(R.string.load_pictures), stringResource(R.string.load_pics_always), stringResource(R.string.load_pics_wifi))
+    val rCompact = r(stringResource(R.string.compact_list), stringResource(R.string.compact_list_sub))
+    val rMuted = r(stringResource(R.string.muted_last), stringResource(R.string.muted_last_sub))
+    val rSort = r(stringResource(R.string.sort_chats), stringResource(R.string.sort_newest), stringResource(R.string.sort_az), stringResource(R.string.sort_unread))
+    val rSwipeR = r(stringResource(R.string.swipe_right), swipeLabel(Appearance.swipeRight))
+    val rSwipeL = r(stringResource(R.string.swipe_left), swipeLabel(Appearance.swipeLeft))
+    val rEnter = r(stringResource(R.string.enter_sends), stringResource(R.string.enter_sends_sub))
+    val rNext = r(stringResource(R.string.next_unread_setting), stringResource(R.string.next_unread_setting_sub))
+    val reminderCount = remember { s.reminders().size }   // AII-209: only when there are any
+    val rRemind = r(stringResource(R.string.reminders))
+    val rUndo = r(stringResource(R.string.undo_send), stringResource(R.string.undo_send_sub), stringResource(R.string.undo_seconds))
+    val rQuick = r(stringResource(R.string.quick_replies), stringResource(R.string.quick_replies_sub), stringResource(R.string.quick_replies_mine))
+    val kwAlerts = stringResource(R.string.kw_alerts)
+    val rAlerts = r(stringResource(R.string.alerts), stringResource(R.string.alerts_new), stringResource(R.string.alerts_new_sub), kwAlerts)
+    val rSent = r(stringResource(R.string.alerts_sent_later), stringResource(R.string.alerts_sent_later_sub))
+    val rHeads = r(stringResource(R.string.alerts_chat_heads), stringResource(R.string.alerts_chat_heads_sub))
+    val rMorning = r(stringResource(R.string.morning_time))
+    val rQuiet = r(stringResource(R.string.quiet_hours), stringResource(R.string.quiet_sub, hour(from), hour(to)), stringResource(R.string.quiet_from), stringResource(R.string.quiet_to))
+    val rCheck = r(stringResource(R.string.check_now), stringResource(R.string.sound_vibration), kwAlerts)
+    val rBuzz = r(stringResource(R.string.buzz), stringResource(R.string.buzz_sub), kwAlerts)
+    val rPrev = r(stringResource(R.string.link_previews), stringResource(R.string.link_previews_sub))
+    val rTyping = r(stringResource(R.string.show_typing), stringResource(R.string.show_typing_sub))
+    val rHide = r(stringResource(R.string.hide_on_lock), stringResource(R.string.hide_on_lock_sub), stringResource(R.string.kw_privacy))
+    val rShots = r(stringResource(R.string.block_shots), stringResource(R.string.block_shots_sub), stringResource(R.string.kw_privacy))
+    val rLock = r(stringResource(R.string.lock), stringResource(R.string.lock_sub), stringResource(R.string.lock_after), stringResource(R.string.kw_lock))
+    val rStorage = r(stringResource(R.string.storage), stringResource(R.string.clear), stringResource(R.string.kw_storage))
+    val rBug = r(stringResource(R.string.report_bug), stringResource(R.string.bug_hint), stringResource(R.string.bug_send))
+    val rBackup = r(stringResource(R.string.export_settings), stringResource(R.string.restore_settings), stringResource(R.string.kw_backup))
+    val rReset = r(stringResource(R.string.reset_settings))
+    val rAbout = r(stringResource(R.string.about), stringResource(R.string.about_sub), stringResource(R.string.version, BuildConfig.VERSION_NAME))
+
     Scaffold(topBar = {
         TopAppBar(title = { Text(stringResource(R.string.settings)) },
             navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } })
     }) { pad ->
+      androidx.compose.runtime.CompositionLocalProvider(LocalSettingsQuery provides query) {
         Column(Modifier.fillMaxSize().padding(pad).imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            SectionHeader(stringResource(R.string.connection), first = true)
+            OutlinedTextField(query, { query = it }, Modifier.fillMaxWidth().testTag("settingsSearch"), singleLine = true,
+                placeholder = { Text(stringResource(R.string.find_settings)) },
+                leadingIcon = { Icon(Icons.Default.Search, null) },
+                trailingIcon = { if (query.isNotEmpty()) IconButton(onClick = { query = "" }, modifier = Modifier.testTag("settingsSearchClear")) {
+                    Icon(Icons.Default.Close, stringResource(R.string.find_settings_clear)) } })
+            val all = listOf(rConn, rBoard, rLook, rTimes, rGifs, rPics, rCompact, rMuted, rSort, rSwipeR, rSwipeL, rEnter, rNext, rUndo, rQuick,
+                rAlerts, rSent, rHeads, rMorning, rQuiet, rCheck, rBuzz, rPrev, rTyping, rHide, rShots, rLock, rStorage, rBug, rBackup, rReset, rAbout) +
+                (if (reminderCount > 0) listOf(rRemind) else emptyList())
+            if (SettingsFind.active(query) && all.none { SettingsFind.matches(query, it) })
+                Text(stringResource(R.string.find_settings_none), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("settingsNone"))
+            SectionHeader(stringResource(R.string.connection), first = true, rows = listOf(rConn, rBoard))
+            SettingRow(rConn) {
             key(saved) {
                 Text(if (s.demo) stringResource(R.string.demo_note)
                     else stringResource(R.string.board_info, s.url, s.owner, Mapper.maskKey(s.key)),
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("connection"))
             }
             OutlinedButton(onClick = { confirmSignOut = true }, modifier = Modifier.fillMaxWidth().testTag("signOut")) {   // AII-285: right under the connection, easy to see
-                Text(stringResource(if (s.demo) R.string.leave_demo else R.string.sign_out), color = MaterialTheme.colorScheme.error)
+                Text(signOutLabel, color = MaterialTheme.colorScheme.error)
             }
+            }
+            SettingRow(rBoard) {
             ChangeBoard(repo, onSaved = { owner ->
                 saved++; note = ctx.getString(R.string.saved_as, owner)
                 if (s.alerts) CheckWorker.schedule(ctx)
             })
+            }
 
-            SectionHeader(stringResource(R.string.look))
-            AppearanceSettings(s)
-            Toggle(stringResource(R.string.show_times), stringResource(R.string.show_times_sub), Appearance.showTimes, Modifier.testTag("showTimes")) {
+            SectionHeader(stringResource(R.string.look), rows = listOf(rLook, rTimes, rGifs, rPics, rCompact, rMuted, rSort, rSwipeR, rSwipeL))
+            SettingRow(rLook) { AppearanceSettings(s) }
+            SettingRow(rTimes) { Toggle(stringResource(R.string.show_times), stringResource(R.string.show_times_sub), Appearance.showTimes, Modifier.testTag("showTimes")) {
                 Appearance.showTimes = it; s.showTimes = it
-            }
-            Toggle(stringResource(R.string.play_gifs), stringResource(R.string.play_gifs_sub), Appearance.gifs, Modifier.testTag("gifs")) {
+            } }
+            SettingRow(rGifs) { Toggle(stringResource(R.string.play_gifs), stringResource(R.string.play_gifs_sub), Appearance.gifs, Modifier.testTag("gifs")) {
                 Appearance.gifs = it; s.gifs = it
-            }
-            LoadPicturesPick(Appearance.loadPictures) { Appearance.loadPictures = it; s.loadPictures = it }
-            Toggle(stringResource(R.string.compact_list), stringResource(R.string.compact_list_sub), Appearance.compact, Modifier.testTag("compact")) {
+            } }
+            SettingRow(rPics) { LoadPicturesPick(Appearance.loadPictures) { Appearance.loadPictures = it; s.loadPictures = it } }
+            SettingRow(rCompact) { Toggle(stringResource(R.string.compact_list), stringResource(R.string.compact_list_sub), Appearance.compact, Modifier.testTag("compact")) {
                 Appearance.compact = it; s.compact = it
-            }
-            Toggle(stringResource(R.string.muted_last), stringResource(R.string.muted_last_sub), Appearance.mutedLast, Modifier.testTag("mutedLast")) {
+            } }
+            SettingRow(rMuted) { Toggle(stringResource(R.string.muted_last), stringResource(R.string.muted_last_sub), Appearance.mutedLast, Modifier.testTag("mutedLast")) {
                 Appearance.mutedLast = it; s.mutedLast = it
-            }
-            SortPick(Appearance.sort) { Appearance.sort = it; s.sortChats = it }
-            SwipePick(stringResource(R.string.swipe_right), Appearance.swipeRight, "swipeRight") { Appearance.swipeRight = it; s.swipeRight = it.id }
-            SwipePick(stringResource(R.string.swipe_left), Appearance.swipeLeft, "swipeLeft") { Appearance.swipeLeft = it; s.swipeLeft = it.id }
+            } }
+            SettingRow(rSort) { SortPick(Appearance.sort) { Appearance.sort = it; s.sortChats = it } }
+            SettingRow(rSwipeR) { SwipePick(stringResource(R.string.swipe_right), Appearance.swipeRight, "swipeRight") { Appearance.swipeRight = it; s.swipeRight = it.id } }
+            SettingRow(rSwipeL) { SwipePick(stringResource(R.string.swipe_left), Appearance.swipeLeft, "swipeLeft") { Appearance.swipeLeft = it; s.swipeLeft = it.id } }
 
-            SectionHeader(stringResource(R.string.chats))
-            Toggle(stringResource(R.string.enter_sends), stringResource(R.string.enter_sends_sub), Appearance.enterSends, Modifier.testTag("enterSends")) {
+            SectionHeader(stringResource(R.string.chats), rows = listOf(rEnter, rNext, rUndo, rQuick) + (if (reminderCount > 0) listOf(rRemind) else emptyList()))
+            SettingRow(rEnter) { Toggle(stringResource(R.string.enter_sends), stringResource(R.string.enter_sends_sub), Appearance.enterSends, Modifier.testTag("enterSends")) {
                 Appearance.enterSends = it; s.enterSends = it
-            }
-            Toggle(stringResource(R.string.next_unread_setting), stringResource(R.string.next_unread_setting_sub), Appearance.nextUnread, Modifier.testTag("nextUnread")) {
+            } }
+            SettingRow(rNext) { Toggle(stringResource(R.string.next_unread_setting), stringResource(R.string.next_unread_setting_sub), Appearance.nextUnread, Modifier.testTag("nextUnread")) {
                 Appearance.nextUnread = it; s.nextUnread = it
-            }
-            // AII-209: only when there are any.
-            val reminderCount = remember { s.reminders().size }
-            if (reminderCount > 0) {
+            } }
+            if (reminderCount > 0) SettingRow(rRemind) {
                 Row(Modifier.fillMaxWidth().clickable(onClick = onReminders).padding(vertical = 8.dp).testTag("remindersRow"), verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.reminders), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
                     Text(reminderCount.toString(), color = MaterialTheme.colorScheme.primary)
                 }
             }
+            SettingRow(rUndo) {
             Toggle(stringResource(R.string.undo_send), stringResource(R.string.undo_send_sub), Appearance.undoSend, Modifier.testTag("undoSend")) {
                 Appearance.undoSend = it; s.undoSend = it
             }
@@ -179,6 +237,8 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
                     }
                 }
             }
+            }
+            SettingRow(rQuick) {
             Toggle(stringResource(R.string.quick_replies), stringResource(R.string.quick_replies_sub), Appearance.quickReplies, Modifier.testTag("quickReplies")) {
                 Appearance.quickReplies = it; s.quickReplies = it
             }
@@ -192,24 +252,29 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
                 OutlinedTextField(mine, { mine = it; s.quickReplyText = it; Appearance.replies = Replies.parse(it) },
                     Modifier.fillMaxWidth().bringIntoViewRequester(bring).testTag("quickReplyText"), label = { Text(stringResource(R.string.quick_replies_mine)) }, minLines = 2)
             }
+            }
 
-            SectionHeader(stringResource(R.string.alerts))
-            Toggle(stringResource(R.string.alerts_new), stringResource(R.string.alerts_new_sub), alerts) {
+            SectionHeader(stringResource(R.string.alerts), rows = listOf(rAlerts, rSent, rMorning, rQuiet, rCheck, rBuzz) + (if (Build.VERSION.SDK_INT >= 30) listOf(rHeads) else emptyList()))
+            SettingRow(rAlerts) { Toggle(stringResource(R.string.alerts_new), stringResource(R.string.alerts_new_sub), alerts) {
                 alerts = it; s.alerts = it
                 if (it) {
                     if (Build.VERSION.SDK_INT >= 33) askPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     if (!s.demo) CheckWorker.schedule(ctx)
                 } else CheckWorker.cancel(ctx)
-            }
-            Toggle(stringResource(R.string.alerts_sent_later), stringResource(R.string.alerts_sent_later_sub), sentAlerts, Modifier.testTag("sentAlerts")) { sentAlerts = it; s.sentAlerts = it }
-            if (Build.VERSION.SDK_INT >= 30)
+            } }
+            SettingRow(rSent) { Toggle(stringResource(R.string.alerts_sent_later), stringResource(R.string.alerts_sent_later_sub), sentAlerts, Modifier.testTag("sentAlerts")) { sentAlerts = it; s.sentAlerts = it } }
+            if (Build.VERSION.SDK_INT >= 30) SettingRow(rHeads) {
                 Toggle(stringResource(R.string.alerts_chat_heads), stringResource(R.string.alerts_chat_heads_sub), chatHeads, Modifier.testTag("chatHeads")) { chatHeads = it; s.chatHeads = it }
-            Stepper(stringResource(R.string.morning_time), morning) { morning = it; s.morning = it; Appearance.morning = it }
+            }
+            SettingRow(rMorning) { Stepper(stringResource(R.string.morning_time), morning) { morning = it; s.morning = it; Appearance.morning = it } }
+            SettingRow(rQuiet) {
             Toggle(stringResource(R.string.quiet_hours), stringResource(R.string.quiet_sub, hour(from), hour(to)), quietOn) { quietOn = it; s.quietOn = it }
             if (quietOn) {
                 Stepper(stringResource(R.string.quiet_from), from) { from = it; s.quietFrom = it }
                 Stepper(stringResource(R.string.quiet_to), to) { to = it; s.quietTo = it }
             }
+            }
+            SettingRow(rCheck) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!s.demo) OutlinedButton(onClick = {
                     scope.launch { note = runCatching { CheckWorker.check(ctx); ctx.getString(R.string.checked_ok) }.getOrElse { it.message } }
@@ -219,25 +284,27 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
                         .putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName))
                 }) { Text(stringResource(R.string.sound_vibration)) }
             }
+            }
             note?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("note")) }
-            Toggle(stringResource(R.string.buzz), stringResource(R.string.buzz_sub), Appearance.buzz, Modifier.testTag("buzz")) {
+            SettingRow(rBuzz) { Toggle(stringResource(R.string.buzz), stringResource(R.string.buzz_sub), Appearance.buzz, Modifier.testTag("buzz")) {
                 Appearance.buzz = it; s.buzz = it
-            }
+            } }
 
-            SectionHeader(stringResource(R.string.privacy))
-            Toggle(stringResource(R.string.link_previews), stringResource(R.string.link_previews_sub), Appearance.linkPreviews, Modifier.testTag("linkPreviews")) {
+            SectionHeader(stringResource(R.string.privacy), rows = listOf(rPrev, rTyping, rHide, rShots, rLock))
+            SettingRow(rPrev) { Toggle(stringResource(R.string.link_previews), stringResource(R.string.link_previews_sub), Appearance.linkPreviews, Modifier.testTag("linkPreviews")) {
                 Appearance.linkPreviews = it; s.linkPreviews = it
-            }
-            Toggle(stringResource(R.string.show_typing), stringResource(R.string.show_typing_sub), Appearance.showTyping, Modifier.testTag("showTyping")) {
+            } }
+            SettingRow(rTyping) { Toggle(stringResource(R.string.show_typing), stringResource(R.string.show_typing_sub), Appearance.showTyping, Modifier.testTag("showTyping")) {
                 Appearance.showTyping = it; s.showTyping = it
-            }
-            Toggle(stringResource(R.string.hide_on_lock), stringResource(R.string.hide_on_lock_sub), Appearance.hideOnLock, Modifier.testTag("hideOnLock")) {
+            } }
+            SettingRow(rHide) { Toggle(stringResource(R.string.hide_on_lock), stringResource(R.string.hide_on_lock_sub), Appearance.hideOnLock, Modifier.testTag("hideOnLock")) {
                 Appearance.hideOnLock = it; s.hideOnLock = it
-            }
-            Toggle(stringResource(R.string.block_shots), stringResource(R.string.block_shots_sub), Appearance.blockShots, Modifier.testTag("blockShots")) {
+            } }
+            SettingRow(rShots) { Toggle(stringResource(R.string.block_shots), stringResource(R.string.block_shots_sub), Appearance.blockShots, Modifier.testTag("blockShots")) {
                 Appearance.blockShots = it; s.blockShots = it
                 (ctx as? android.app.Activity)?.let { a -> com.smizflark.aigile.messenger.data.Secure.apply(a.window, it) }
-            }
+            } }
+            SettingRow(rLock) {
             Toggle(stringResource(R.string.lock), stringResource(R.string.lock_sub), lockOn) {
                 if (it && !Lock.available(ctx)) note = ctx.getString(R.string.lock_unavailable)
                 else { lockOn = it; s.lock = it }
@@ -253,16 +320,20 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
                     }
                 }
             }
+            }
 
-            SectionHeader(stringResource(R.string.storage))
+            SectionHeader(stringResource(R.string.storage), rows = listOf(rStorage))
+            SettingRow(rStorage) {
             // AII-215: pictures and opened files saved on the phone; they load again from the board.
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(stringResource(R.string.saved_pictures, savedBytes?.let { SavedPictures.format(it) } ?: "…"),
                     Modifier.testTag("savedPictures"))
                 OutlinedButton(onClick = { confirmClear = true }, modifier = Modifier.testTag("clearPictures")) { Text(stringResource(R.string.clear)) }
             }
+            }
 
-            SectionHeader(stringResource(R.string.about))
+            SectionHeader(stringResource(R.string.about), rows = listOf(rBug, rBackup, rReset, rAbout))
+            SettingRow(rBug) {
             Text(stringResource(R.string.report_bug), style = MaterialTheme.typography.titleSmall)
             if (crash != null) Text(stringResource(R.string.crash_note),
                 color = MaterialTheme.colorScheme.error)
@@ -281,16 +352,22 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
             }
             if (s.demo) Text(stringResource(R.string.demo_nothing_leaves), color = MaterialTheme.colorScheme.onSurfaceVariant)
             bugNote?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+            SettingRow(rBackup) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {   // AII-349
                 OutlinedButton(onClick = { pickExport.launch("messenger-settings.aigm") }, modifier = Modifier.weight(1f).testTag("exportSettings")) { Text(stringResource(R.string.export_settings)) }
                 OutlinedButton(onClick = { pickRestore.launch(arrayOf("*/*")) }, modifier = Modifier.weight(1f).testTag("restoreSettings")) { Text(stringResource(R.string.restore_settings)) }
             }
-            TextButton(onClick = { confirmReset = true }, modifier = Modifier.testTag("resetSettings")) { Text(stringResource(R.string.reset_settings)) }
+            }
+            SettingRow(rReset) { TextButton(onClick = { confirmReset = true }, modifier = Modifier.testTag("resetSettings")) { Text(stringResource(R.string.reset_settings)) } }
+            SettingRow(rAbout) {
             androidx.compose.material3.ListItem(headlineContent = { Text(stringResource(R.string.about)) }, supportingContent = { Text(stringResource(R.string.about_sub)) },
                 modifier = Modifier.clickable(onClick = onAbout).testTag("about"))
             Text(stringResource(R.string.version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
+      }
     }
 
     backupPass?.let { exporting ->

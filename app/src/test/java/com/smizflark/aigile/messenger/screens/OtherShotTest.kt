@@ -242,6 +242,31 @@ class OtherShotTest : ShotBase() {
         } finally { RuntimeEnvironment.setQualifiers("+en-rUS") }
     }
 
+    /** AII-403: the Settings search box; "lock" in English, "geluid" (sound) in Dutch. */
+    @Test fun settingsSearchLight() {
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { SettingsScreen(repo, {}, {}) } }
+        rule.onNodeWithTag("settingsSearch").performTextInput("lock")
+        rule.waitForIdle()
+        rule.onNodeWithTag("signOut").assertDoesNotExist()
+        rule.onNodeWithText("Lock with fingerprint").assertIsDisplayed()
+        rule.onRoot().captureRoboImage("../docs/shots/settings_search_light.png")
+        rule.onNodeWithContentDescription("Clear search").performClick()
+        rule.onNodeWithTag("signOut").assertIsDisplayed()
+    }
+    @Test fun settingsSearchDutch() {
+        RuntimeEnvironment.setQualifiers("+nl-rNL-notnight")
+        try {
+            rule.setContent { MessengerTheme { SettingsScreen(repo, {}, {}) } }
+            rule.onNodeWithTag("settingsSearch").performTextInput("geluid")
+            rule.waitForIdle()
+            rule.onNodeWithText("Geluid en trillen").assertIsDisplayed()
+            rule.onRoot().captureRoboImage("../docs/shots/settings_search_nl_light.png")
+            rule.onNodeWithTag("settingsSearch").performTextReplacement("zzzz")
+            rule.onNodeWithTag("settingsNone").assertIsDisplayed()
+        } finally { RuntimeEnvironment.setQualifiers("+en-rUS") }
+    }
+
     @Test fun chatsBlack() = black("chats") { ChatsScreen(repo, {}, {}, {}) }
     @Test fun chatBlack() { prime(lead()); black("chat") { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun newBlack() = black("new_message") { NewMessageScreen(repo, onBack = {}, onSent = {}) }
