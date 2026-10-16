@@ -228,6 +228,7 @@
     <string name="voice_too_short">Houd de microfoon ingedrukt om op te nemen, laat los om te versturen.</string>
     <string name="voice_play_len">Spraakbericht afspelen, %1$s</string>
     <string name="voice_play">Spraakbericht afspelen</string>
+    <string name="voice_speed">Afspeelsnelheid %1$s</string>
     <string name="voice_pause">Pauzeren</string>
     <string name="voice_cant_play">Kan dit niet afspelen</string>
     <string name="search_all">Zoek in alle chats</string>

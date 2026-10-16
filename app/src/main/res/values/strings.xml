@@ -228,6 +228,7 @@
     <string name="voice_too_short">Hold the mic to record, let go to send.</string>
     <string name="voice_play_len">Play voice note, %1$s</string>
     <string name="voice_play">Play voice note</string>
+    <string name="voice_speed">Playback speed %1$s</string>
     <string name="voice_pause">Pause</string>
     <string name="voice_cant_play">Can\'t play this</string>
     <string name="search_all">Search all chats</string>

@@ -26,4 +26,16 @@ object Voice {
 
     /** The file on the phone: the outbox keeps what follows the first dash as the name (Repo.upload), so this carries a prefix. */
     fun recordingFile(timeMs: Long) = "rec-" + fileName(timeMs)
+
+    /** Playback speeds (AII-378). */
+    val SPEEDS = listOf(1f, 1.5f, 2f)
+
+    /** 1 -> 1.5 -> 2 -> 1; anything unknown goes to 1. */
+    fun nextSpeed(cur: Float): Float = SPEEDS.indexOf(cur).let { if (it < 0) 1f else SPEEDS[(it + 1) % SPEEDS.size] }
+
+    /** 1f -> "1x", 1.5f -> "1.5x". */
+    fun speedLabel(s: Float) = (if (s == s.toInt().toFloat()) s.toInt().toString() else s.toString()) + "x"
+
+    /** A stored "1.5x" or "1.5" back to a speed; unknown or missing -> 1. */
+    fun parseSpeed(raw: String?): Float = raw?.trim()?.removeSuffix("x")?.toFloatOrNull()?.takeIf { it in SPEEDS } ?: 1f
 }
