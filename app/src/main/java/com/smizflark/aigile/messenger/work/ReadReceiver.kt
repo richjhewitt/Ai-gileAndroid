@@ -13,15 +13,21 @@ import kotlinx.coroutines.launch
 class ReadReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val chat = intent.getStringExtra(CheckWorker.EXTRA_CHAT) ?: return
         val app = context.applicationContext as App
-        ChatNotifier.clear(app, chat)
+        // AII-387: Mark all as read on the summary: every chat with an alert, the same way as one.
+        val chats = if (intent.action == ACTION_ALL) ChatNotifier.alertingChats(app)
+            else listOfNotNull(intent.getStringExtra(CheckWorker.EXTRA_CHAT))
+        if (chats.isEmpty()) { if (intent.action == ACTION_ALL) ChatNotifier.refreshSummary(app); return }
+        chats.forEach { ChatNotifier.clear(app, it) }
 
         val done = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                val ref = app.repo.store.cachedChats()?.firstOrNull { it.key == chat } ?: return@launch
-                runCatching { app.repo.markRead(ref) }   // offline: the alert is gone, the next look at the chat reads it
+                val known = app.repo.store.cachedChats() ?: return@launch
+                chats.forEach { chat ->
+                    val ref = known.firstOrNull { it.key == chat } ?: return@forEach
+                    runCatching { app.repo.markRead(ref) }   // offline: the alert is gone, the next look at the chat reads it
+                }
             } finally {
                 done.finish()
             }
@@ -30,5 +36,6 @@ class ReadReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION = "com.smizflark.aigile.messenger.READ"
+        const val ACTION_ALL = "com.smizflark.aigile.messenger.READ_ALL"
     }
 }

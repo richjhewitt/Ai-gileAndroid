@@ -107,6 +107,18 @@ class ChatNotifyTest {
         assertEquals(0, nm.activeNotifications.size)
     }
 
+    // AII-387
+    @Test fun summaryMarkAllAsReadClearsEveryAlert() {
+        ChatNotifier.post(context, item("lead:a", "AI-gile", "hi"))
+        ChatNotifier.post(context, item("lead:b", "Tunio", "yo"))
+        val summary = nm.activeNotifications.first { it.id == ChatNotifier.SUMMARY }.notification
+        assertEquals(listOf("Mark all as read"), summary.actions.map { it.title.toString() })
+        assertEquals(setOf("lead:a", "lead:b"), ChatNotifier.alertingChats(context).toSet())
+        summary.actions[0].actionIntent.send()
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+        assertEquals(0, nm.activeNotifications.size)
+    }
+
     @Test fun aSentQuickReplyAddsItsLine() {
         ChatNotifier.post(context, item("lead:a", "AI-gile", "question"))
         ChatNotifier.sent(context, "lead:a", "AI-gile", "my answer")

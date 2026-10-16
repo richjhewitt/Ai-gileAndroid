@@ -105,6 +105,7 @@ object ChatNotifier {
         val b = base(context, channelFor(context, chat, name)).setContentTitle(name).setStyle(style).setSilent(quiet || (ChatSound.isNone(own) && Build.VERSION.SDK_INT < 26))
         if (own.isNotEmpty() && !ChatSound.isNone(own) && !quiet && Build.VERSION.SDK_INT < 26) b.setSound(android.net.Uri.parse(own))
         b.setContentIntent(openChat(context, chat, id)).addAction(action).addAction(readAction).setGroup(GROUP)
+            .addExtras(Bundle().apply { putString(CheckWorker.EXTRA_CHAT, chat) })   // AII-387: Mark all as read finds the chats by this
         // AII-381: Chat heads: link the alert to the chat's long-lived shortcut and give it bubble metadata.
         if (ChatHeads.enabled(Store(context).chatHeads, Build.VERSION.SDK_INT)) {
             ChatHeads.pushShortcut(context, chat, name)
@@ -199,12 +200,25 @@ object ChatNotifier {
             .setContentIntent(openChat(context, r.chat, n, r.msg)).build())
     }
 
+    /** AII-387: the chats that have an alert now. */
+    fun alertingChats(context: Context): List<String> = context.getSystemService(NotificationManager::class.java)
+        .activeNotifications.filter { it.id != SUMMARY && it.notification.group == GROUP && it.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0 }
+        .mapNotNull { it.notification.extras.getString(CheckWorker.EXTRA_CHAT) }
+
     /** The summary shows only while two or more chats have a notification. */
     fun refreshSummary(context: Context) {
         val nm = NotificationManagerCompat.from(context)
         val n = chatCount(context)
         if (n < 2) { nm.cancel(SUMMARY); return }
+        // AII-387: Mark all as read, without opening the app.
+        val all = Intent(context, ReadReceiver::class.java).setAction(ReadReceiver.ACTION_ALL)
+        val allPi = PendingIntent.getBroadcast(context, SUMMARY, all, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val allAction = NotificationCompat.Action.Builder(R.drawable.ic_notify, context.getString(R.string.mark_all_read), allPi)
+            .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
+            .setShowsUserInterface(false)
+            .build()
         nm.notify(SUMMARY, base(context).setContentTitle(context.getString(R.string.notify_many, n))
+            .addAction(allAction)
             .setStyle(NotificationCompat.InboxStyle().setSummaryText(context.getString(R.string.notify_chats, n)))
             .setContentIntent(openChat(context, null, 0)).setGroup(GROUP).setGroupSummary(true).build())
     }
