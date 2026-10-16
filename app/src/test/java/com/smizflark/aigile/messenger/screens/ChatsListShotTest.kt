@@ -72,6 +72,17 @@ class ChatsListShotTest : ShotBase() {
         show(false) { com.smizflark.aigile.messenger.ui.ChatsPanes(repo, null, {}, {}, list = { ChatsScreen(repo, it, {}, {}) }, chat = {}) }
         rule.onNodeWithText("Pick a chat").assertExists()
     }
+    @Test fun phoneTapOpensTheChat() {   // AII-350 bug: on a phone a tap on a row did nothing
+        var opened: String? = null
+        show(false) {
+            var sel by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+            com.smizflark.aigile.messenger.ui.ChatsPanes(repo, sel, onSelect = { sel = it }, onWide = { w -> if (!w) sel?.let { opened = it; sel = null } },
+                list = { ChatsScreen(repo, it, {}, {}) }, chat = {})
+        }
+        rule.onNodeWithText(lead().name).performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertEquals(lead().key, opened)
+    }
     @Test fun compactLight() {   // AII-212
         com.smizflark.aigile.messenger.ui.Appearance.compact = true
         try { shot("chats_compact", false) { ChatsScreen(repo, {}, {}, {}) } } finally { com.smizflark.aigile.messenger.ui.Appearance.compact = false }

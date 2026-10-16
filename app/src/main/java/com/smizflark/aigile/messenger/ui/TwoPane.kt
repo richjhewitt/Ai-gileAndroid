@@ -31,7 +31,8 @@ fun ChatsPanes(
 ) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = isWide(maxWidth.value, maxHeight.value)
-        LaunchedEffect(wide) { onWide(wide) }
+        // Also on [selected]: on a phone a tap on a row sets it, and onWide(false) is what opens that chat full screen.
+        LaunchedEffect(wide, selected) { onWide(wide) }
         if (!wide) { list { onSelect(it.key) }; return@BoxWithConstraints }
         Row(Modifier.fillMaxSize()) {
             Box(Modifier.width(360.dp).fillMaxHeight()) { list { onSelect(it.key) } }
