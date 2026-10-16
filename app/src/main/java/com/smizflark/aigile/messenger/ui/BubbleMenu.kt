@@ -194,6 +194,13 @@ internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown
             val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, Markdown.plain(shown))
             runCatching { ctx.startActivity(android.content.Intent.createChooser(send, null)) }
         })
+        // AII-394: put it in the calendar app; hidden when no app takes it.
+        val plain = Markdown.plain(shown)
+        if (plain.isNotBlank()) {
+            val cal = com.smizflark.aigile.messenger.data.EventGuess.intent(plain, com.smizflark.aigile.messenger.data.Now.millis())
+            if (ctx.packageManager.queryIntentActivities(cal, 0).isNotEmpty()) DropdownMenuItem(text = { Text(stringResource(R.string.add_to_calendar)) },
+                modifier = Modifier.testTag("add-calendar"), onClick = { onDismiss(); runCatching { ctx.startActivity(cal) } })
+        }
         // AII-185: the phone reads the message out; the same item stops it.
         if (shown.text.isNotBlank()) {
             val reading = ReadAloud.speaking == b.key

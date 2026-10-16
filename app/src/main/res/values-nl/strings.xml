@@ -22,6 +22,7 @@
     <string name="to_top">Terug naar boven</string>
     <string name="share">Delen</string>
     <string name="read_aloud">Voorlezen</string>
+    <string name="add_to_calendar">Toevoegen aan agenda</string>
     <string name="stop_reading">Stoppen met voorlezen</string>
     <string name="forward_to">Doorsturen naar…</string>
     <string name="forward_search">Chats zoeken</string>
