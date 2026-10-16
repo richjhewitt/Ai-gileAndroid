@@ -54,6 +54,10 @@ import com.smizflark.aigile.messenger.data.Quote
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.PinnedMsgs
 import com.smizflark.aigile.messenger.data.Stars
+import com.smizflark.aigile.messenger.data.Selection
+import com.smizflark.aigile.messenger.data.SendState
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -99,6 +103,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var clearedAt by remember(ref.key) { mutableStateOf(repo.store.cleared()[ref.key]) }   // AII-363: Clear chat for me, this phone only
     var clearAsk by remember { mutableStateOf(false) }
     var pinShown by remember { mutableStateOf(0) }   // AII-339: which pin the bar shows
+    var selPicked by remember(ref.key) { mutableStateOf(emptySet<String>()) }   // AII-371: select several messages; none picked = not selecting
+    var selectMode by remember(ref.key) { mutableStateOf(false) }
+    androidx.activity.compose.BackHandler(enabled = selectMode) { selectMode = false; selPicked = emptySet() }
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
     var finding by rememberSaveable { mutableStateOf(false) }   // AII-78: the find bar
@@ -293,11 +300,38 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     // AII-193: Go to date lands on that day's day row, else the next later day with messages, else the newest.
     var goToDate by remember { mutableStateOf(false) }
     if (goToDate) GoToDateHost(items, list, scope) { goToDate = false }   // ChatScroll.kt
+    /* ---------- select several messages (AII-371) ---------- */
+    val selColors = MaterialTheme.colorScheme
+    val selClipboard = LocalClipboardManager.current
+    fun leaveSelect() { selectMode = false; selPicked = emptySet() }
+    fun pickedText() = Selection.text(items.mapNotNull { (it as? Row.Msg)?.takeIf { m -> m.pending == null }?.b }, selPicked, ref.name, owner, { fullTime(it) },
+        plain = { b -> Markdown.plain(Markdown.render(b.text, selColors.surfaceVariant, selColors.primary)) })
     /* ---------- screen ---------- */
     Scaffold(
         snackbarHost = { SnackbarHost(snack, Modifier.testTag("snack")) },
         topBar = {
-            ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
+            if (selectMode) SelectTopBar(selPicked.size, onLeave = { leaveSelect() },
+                onCopy = {
+                    selClipboard.setText(AnnotatedString(pickedText()))
+                    if (Build.VERSION.SDK_INT < 33) Toast.makeText(view.context, R.string.copied, Toast.LENGTH_SHORT).show()
+                    leaveSelect()
+                },
+                onShare = {
+                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, pickedText())
+                    runCatching { view.context.startActivity(android.content.Intent.createChooser(send, null)) }
+                    leaveSelect()
+                },
+                onStar = {
+                    // Stars the picked ones that have no star yet, as the single Star does (also on the board).
+                    items.forEach { r ->
+                        if (r is Row.Msg && r.pending == null && r.b.key in selPicked && !Stars.has(stars, ref.key, r.b.key)) {
+                            val s = Stars.of(ref.key, r.b)
+                            stars = Stars.toggle(stars, s); scope.launch { repo.setStar(ref, s, true) }
+                        }
+                    }
+                    leaveSelect()
+                })
+            else ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
                 onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true },
                 onGoToDate = { goToDate = true }, onMyLast = { jumpToMine() }, onOpenCard = onOpenCard, silent = silent,
                 onAddHome = { if (!com.smizflark.aigile.messenger.data.HomeShortcut.pin(homeCtx, ref.key, ref.name)) Toast.makeText(homeCtx, homeCtx.getString(R.string.add_to_home_unsupported), Toast.LENGTH_SHORT).show() },
@@ -357,6 +391,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                     val s = Stars.of(ref.key, r.b); val on = !Stars.has(stars, s.chat, s.key)
                                     stars = Stars.toggle(stars, s); scope.launch { repo.setStar(ref, s, on) }   // AII-141: on the board too
                                 } } else null,
+                                selectMode = selectMode, picked = r.b.key in selPicked,
+                                onToggle = if (r.pending == null) { { selPicked = Selection.toggle(selPicked, r.b.key); if (selPicked.isEmpty()) selectMode = false } } else ({}),
+                                onPick = if (r.pending == null && r.b.state == SendState.SENT && !r.b.unverified) { { selectMode = true; selPicked = setOf(r.b.key) } } else null,
                                 pinned = PinnedMsgs.has(pins, ref.key, r.b.key),
                                 onPin = if (r.pending == null) { {
                                     pins = PinnedMsgs.toggle(pins, PinnedMsgs.of(ref.key, r.b, com.smizflark.aigile.messenger.data.Now.millis())); repo.store.setPinnedMsgs(pins)

@@ -139,7 +139,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null, onReact: ((Bubble, String) -> Unit)? = null, pinned: Boolean = false, onPin: (() -> Unit)? = null) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null, onReact: ((Bubble, String) -> Unit)? = null, pinned: Boolean = false, onPin: (() -> Unit)? = null, selectMode: Boolean = false, picked: Boolean = false, onToggle: () -> Unit = {}, onPick: (() -> Unit)? = null) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -160,7 +160,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
     val clipboard = LocalClipboardManager.current
     val ctx = LocalContext.current
     // AII-101: drag a message to the right to reply to it; it springs back.
-    val canReply = b.state == SendState.SENT && !b.unverified && !b.deleted
+    val canReply = b.state == SendState.SENT && !b.unverified && !b.deleted && !selectMode
     // AII-324: Edit and Delete on my own friend lines, once the board has given the line an id.
     val ownLine = ref.kind == Kind.FRIEND && b.mine && b.id != null && b.state == SendState.SENT && !b.deleted && !b.unverified
     var editing by remember { mutableStateOf(false) }
@@ -170,7 +170,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
     val reach = with(LocalDensity.current) { SWIPE_REPLY.toPx() }
     val drag = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
-    Box(Modifier.fillMaxWidth()) {
+    Box(Modifier.fillMaxWidth().then(if (picked) Modifier.background(cs.primary.copy(alpha = 0.15f)) else Modifier)) {   // AII-371: picked messages are tinted
     if (drag.value > 0f) Icon(Icons.AutoMirrored.Filled.Reply, null, Modifier.align(Alignment.CenterStart).padding(start = 16.dp)
         .graphicsLayer { alpha = replyProgress(drag.value, reach) }, tint = cs.primary)
     Column(Modifier.fillMaxWidth().offset { IntOffset(drag.value.roundToInt(), 0) }
@@ -233,11 +233,12 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
         val bigEmoji = remember(b.text, b.pics) { if (b.pics.isEmpty()) bigEmojiCount(b.text) else 0 } > 0   // AII-364: only 1 to 3 emoji shows big, no bubble
         Surface(
             color = if (bigEmoji) androidx.compose.ui.graphics.Color.Transparent else bg,
-            border = when (mark) { 2 -> BorderStroke(3.dp, cs.tertiary); 1 -> BorderStroke(1.5.dp, cs.tertiary.copy(alpha = 0.6f)); else -> null },   // AII-78: find matches
+            border = if (picked) BorderStroke(2.dp, cs.primary) else when (mark) { 2 -> BorderStroke(3.dp, cs.tertiary); 1 -> BorderStroke(1.5.dp, cs.tertiary.copy(alpha = 0.6f)); else -> null },   // AII-78: find matches
             shape = RoundedCornerShape(18.dp, 18.dp, if (b.mine) 4.dp else 18.dp, if (b.mine) 18.dp else 4.dp),
             modifier = Modifier.widthIn(max = 320.dp).semantics(mergeDescendants = true) {}.testTag(if (b.mine) "mine" else "theirs")
-                .combinedClickable(onClick = { if (!Appearance.showTimes) showTime = !showTime }, onLongClick = { if (!b.deleted) menu = true },
-                    onDoubleClick = if (onStar != null && b.state == SendState.SENT && !b.unverified) { {
+                .combinedClickable(onClick = { if (selectMode) onToggle() else if (!Appearance.showTimes) showTime = !showTime },
+                    onLongClick = { if (selectMode) onToggle() else if (!b.deleted) menu = true },   // AII-371: in select mode taps pick and the hold menu stays shut
+                    onDoubleClick = if (!selectMode && onStar != null && b.state == SendState.SENT && !b.unverified) { {
                         if (!starred) scope.launch { pop.snapTo(0f); pop.animateTo(1f, tween(450)) }
                         onStar()
                     } } else null),
@@ -249,7 +250,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 onEdit = if (ownLine && onEditMsg != null) { { editing = true } } else null,
                 onDelete = if (ownLine && onDeleteMsg != null) { { deleting = true } } else null,
                 onReact = if (ref.kind == Kind.FRIEND && b.id != null && b.state == SendState.SENT && !b.deleted && !b.unverified && onReact != null) { e -> onReact(b, e) } else null,
-                pinned = pinned, onPin = onPin, onInfo = { info = true })
+                pinned = pinned, onPin = onPin, onInfo = { info = true }, onPick = onPick)
             if (info) MessageInfoDialog(b) { info = false }
             if (editing) EditMessageDialog(Quote.split(b.text).second, onSave = { editing = false; onEditMsg?.invoke(b, it) }, onDismiss = { editing = false })
             if (deleting) DeleteMessageDialog(onConfirm = { deleting = false; onDeleteMsg?.invoke(b) }, onDismiss = { deleting = false })
@@ -301,7 +302,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                         SendState.SENDING -> stringResource(R.string.sending)
                         SendState.FAILED -> stringResource(R.string.not_sent)
                         SendState.LATER -> stringResource(R.string.sends_at, sendTime(b.at)) + if (laterP?.repeat != null) " 🔁" else ""   // AII-174
-                        SendState.SENT -> (if (starred) "★ " else "") + (if (b.edited != null) stringResource(R.string.edited_time, clock(b.at)) else clock(b.at)) + if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
+                        SendState.SENT -> (if (picked) "✓ " else "") + (if (starred) "★ " else "") + (if (b.edited != null) stringResource(R.string.edited_time, clock(b.at)) else clock(b.at)) + if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = if (b.state == SendState.FAILED) cs.error else fg.copy(alpha = 0.6f),

@@ -171,6 +171,17 @@ class ChatShotTest : ShotBase() {
         rule.onRoot().captureRoboImage("../docs/shots/chat_quote_jump_light.png")
         rule.mainClock.autoAdvance = true
     }
+    /** AII-371: hold a message, Select, tap a second one: select mode with 2 picked. */
+    @Test fun selectModeLight() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onAllNodesWithTag("theirs").onLast().performTouchInput { longClick() }
+        rule.onNodeWithTag("select-msg").performClick()
+        rule.onAllNodesWithTag("mine").onLast().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("select-count").assertTextEquals("2 selected")
+        rule.onRoot().captureRoboImage("../docs/shots/chat_select_light.png")
+    }
     /** AII-127: hold a message, Select text: the message opens on its own, ready to select. */
     @Test fun selectTextLight() {
         prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
