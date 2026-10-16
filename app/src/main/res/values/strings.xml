@@ -133,6 +133,7 @@
     <string name="pause_4h">4 hours</string>
     <string name="pause_tomorrow">Until %1$d in the morning</string>
     <string name="paused_until">Alerts paused until %1$s</string>
+    <string name="tile_until">Until %1$s</string>
     <string name="resume">Resume</string>
     <string name="whats_new_bar">What\'s new</string>
     <string name="whats_new_close">Close What\'s new</string>

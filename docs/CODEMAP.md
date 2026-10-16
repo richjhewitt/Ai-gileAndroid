@@ -117,6 +117,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 ## work/ (background)
 - work/ChatNotifier.kt: builds and shows message alerts (quick replies as chips on Reply, AII-181).
 - work/CheckWorker.kt: looks for new messages about every 15 minutes.
+- work/PauseTile.kt: Quick Settings tile Pause alerts (AII-367): tap pauses 1 hour, tap again turns alerts back on; shows Until HH:MM on Android 10+; logic in PauseTileLogic.
 - work/ReadReceiver.kt: the Mark as read button on an alert.
 - work/ReplyReceiver.kt: the Reply button on an alert.
 - work/SendWorker.kt: sends queued messages from the outbox, and Send later ones at their time (AII-146).
