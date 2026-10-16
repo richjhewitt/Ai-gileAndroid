@@ -16,6 +16,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Gif.kt: GIF links in a message (giphy, tenor, .gif) shown as moving pictures in the bubble, like the board (AII-188).
 - data/Drafts.kt: half-typed replies, one per chat.
 - data/GoToDate.kt: Go to date in a chat (AII-193): which day to land on, and the picker's range (dialog: ui/GoToDateDialog.kt, with a First message button that picks the range start, AII-231).
+- data/HomeShortcut.kt: Add to home screen (AII-368, AII-376): pins a launcher shortcut that opens a chat (same EXTRA_CHAT route as alerts); menu items in ui/ChatTopBar.kt and the ui/ChatRow.kt hold menu.
 - data/Filter.kt: the chips above the chats list.
 - data/Forward.kt: forwarding a message to another chat.
 - data/Mapper.kt: turns the board's answers into what the screens show.

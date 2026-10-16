@@ -124,6 +124,8 @@
     <string name="remove_picture">Remove picture</string>
     <string name="chats_title">Messages</string>
     <string name="chats_title_unread">Messages (%1$d)</string>
+    <string name="add_to_home">Add to home screen</string>
+    <string name="add_to_home_unsupported">Your launcher can\'t add shortcuts</string>
     <string name="copy_name">Copy name</string>
     <string name="chats_title_demo">Demo</string>
     <string name="chats_offline">%1$s\nShowing chats from %2$s.</string>
