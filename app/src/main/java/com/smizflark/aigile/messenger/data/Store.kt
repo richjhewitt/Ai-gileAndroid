@@ -148,6 +148,9 @@ class Store(context: Context) {
 
     /** The keyboard's Enter key sends the message instead of starting a new line (AII-126). */
     /** AII-198: GIF links play in the chat (AII-188); off keeps them plain links. */
+    var linkPreviews: Boolean
+        get() = settings.getBoolean("linkPreviews", false)
+        set(v) = settings.edit().putBoolean("linkPreviews", v).apply()
     var gifs: Boolean
         get() = settings.getBoolean("gifs", true)
         set(v) = settings.edit().putBoolean("gifs", v).apply()
@@ -328,7 +331,7 @@ class Store(context: Context) {
     companion object {
         const val SETTINGS = "settings"
         /** The preferences that go into backup. Everything else stays in the "messenger" file. */
-        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft", "nextUnread")
+        val BACKED_UP = listOf("alerts", "quietFrom", "quietTo", "morning", "quietOn", "look", "phoneColours", "textSize", "compact", "mutedLast", "sortChats", "enterSends", "undoSend", "undoSeconds", "gifs", "linkPreviews", "buzz", "quickReplies", "quickReplyText", "pinned", "muted", "silent", "showTimes", "swipeRight", "swipeLeft", "nextUnread")
 
         /** What "Reset settings" clears (AII-217): every backed-up setting except the ones that are your data. */
         val KEPT_ON_RESET = setOf("pinned", "muted", "silent")

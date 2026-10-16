@@ -77,6 +77,8 @@ object Appearance {
     /** Enter sends (AII-126): read by the message box. */
     var enterSends by mutableStateOf(false)
     var gifs by mutableStateOf(true)
+    /** Link previews under bubbles (AII-341), off until switched on. */
+    var linkPreviews by mutableStateOf(false)
     /** Compact chats list (AII-212). */
     var compact by mutableStateOf(false)
     /** Muted chats sink to the bottom of the chats list (AII-221). */
@@ -104,7 +106,7 @@ object Appearance {
 
     /** Reads everything again, so the screen follows a reset at once (AII-217). */
     fun reload(store: Store) {
-        run { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; compact = store.compact; mutedLast = store.mutedLast; sortAz = store.sortChats == "az"; morning = store.morning; buzz = store.buzz; undoSend = store.undoSend; undoSeconds = store.undoSeconds; quickReplies = store.quickReplies; showTimes = store.showTimes; swipeRight = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeRight, com.smizflark.aigile.messenger.data.SWIPE_RIGHT_DEFAULT); swipeLeft = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeLeft, com.smizflark.aigile.messenger.data.SWIPE_LEFT_DEFAULT); nextUnread = store.nextUnread; replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
+        run { look = Look.of(store.look); phoneColours = store.phoneColours; textSize = TextSize.of(store.textSize); enterSends = store.enterSends; gifs = store.gifs; linkPreviews = store.linkPreviews; compact = store.compact; mutedLast = store.mutedLast; sortAz = store.sortChats == "az"; morning = store.morning; buzz = store.buzz; undoSend = store.undoSend; undoSeconds = store.undoSeconds; quickReplies = store.quickReplies; showTimes = store.showTimes; swipeRight = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeRight, com.smizflark.aigile.messenger.data.SWIPE_RIGHT_DEFAULT); swipeLeft = com.smizflark.aigile.messenger.data.SwipeChoice.of(store.swipeLeft, com.smizflark.aigile.messenger.data.SWIPE_LEFT_DEFAULT); nextUnread = store.nextUnread; replies = com.smizflark.aigile.messenger.data.Replies.parse(store.quickReplyText) }
     }
 }
 

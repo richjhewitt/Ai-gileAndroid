@@ -268,6 +268,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                         Text(stringResource(if (open) R.string.show_less else R.string.read_more))
                     }
                 }
+                if (!b.unverified) BubbleLinkPreview(b.text)   // AII-341
                 Text(
                     when (b.state) {
                         SendState.SENDING -> stringResource(R.string.sending)
