@@ -9,7 +9,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /** Where a reply sent from the watch stands (AII-414). */
-enum class ReplyStatus { SENDING, SENT, SAVED, LOCKED, NO_CHAT, FAILED }
+enum class ReplyStatus { SENDING, SENT, UNCONFIRMED, NOT_CONNECTED, LOCKED, NO_CHAT, FAILED }
 
 /** A reply sent from the watch, shown under the chat's lines. */
 data class Outgoing(val id: String, val key: String, val text: String, val status: ReplyStatus = ReplyStatus.SENDING)
@@ -48,7 +48,17 @@ object WearReplies {
     /** An ack for the line's id settles it. */
     fun settle(list: List<Outgoing>, a: Ack): List<Outgoing> = list.map { if (it.id == a.id) it.copy(status = statusFor(a)) else it }
 
-    /** No ack within [ACK_WAIT_MS]: a line still sending becomes "saved". */
+    /** Nothing reached a phone node: the line is "not sent" at once (no waiting for an ack that cannot come). */
+    fun noPhone(list: List<Outgoing>, id: String): List<Outgoing> =
+        list.map { if (it.id == id) it.copy(status = ReplyStatus.NOT_CONNECTED) else it }
+
+    /** Lines the user can retry: they never reached the phone. */
+    fun retryable(list: List<Outgoing>): Outgoing? = list.lastOrNull { it.status == ReplyStatus.NOT_CONNECTED || it.status == ReplyStatus.FAILED }
+
+    /** Retrying drops the old line; the new send puts a fresh one. */
+    fun withoutLine(list: List<Outgoing>, id: String): List<Outgoing> = list.filter { it.id != id }
+
+    /** No ack within [ACK_WAIT_MS]: a line still sending becomes "unconfirmed". */
     fun timeout(list: List<Outgoing>, id: String): List<Outgoing> =
-        list.map { if (it.id == id && it.status == ReplyStatus.SENDING) it.copy(status = ReplyStatus.SAVED) else it }
+        list.map { if (it.id == id && it.status == ReplyStatus.SENDING) it.copy(status = ReplyStatus.UNCONFIRMED) else it }
 }

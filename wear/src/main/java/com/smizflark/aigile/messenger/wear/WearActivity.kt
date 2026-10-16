@@ -65,7 +65,12 @@ import kotlinx.coroutines.tasks.await
 class WearActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { MaterialTheme { WearApp() } }
+        setContent { MaterialTheme { WearApp(intent?.getStringExtra(EXTRA_CHAT)) } }
+    }
+
+    companion object {
+        /** A tile tap on a chat name opens that chat. */
+        const val EXTRA_CHAT = "chat"
     }
 }
 
@@ -102,7 +107,7 @@ private class WearState {
 }
 
 @Composable
-private fun WearApp() {
+private fun WearApp(openChat: String?) {
     val ctx = LocalContext.current
     val st = remember { WearState() }
     val debug = (ctx.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
@@ -115,6 +120,7 @@ private fun WearApp() {
     DisposableEffect(Unit) {
         val client = runCatching { Wearable.getDataClient(ctx) }.getOrNull()
         val l = DataClient.OnDataChangedListener { events: DataEventBuffer ->
+            WearTileService.refresh(ctx)
             events.forEach { e ->
                 if (e.type == com.google.android.gms.wearable.DataEvent.TYPE_DELETED) e.dataItem.uri.path?.let { st.drop(it) }
                 else st.take(e.dataItem, ctx, stamp = true)
@@ -137,15 +143,20 @@ private fun WearApp() {
         val id = java.util.UUID.randomUUID().toString()
         st.outgoing = st.outgoing + Outgoing(id, key, text)
         scope.launch {
-            runCatching {
-                val nodes = Wearable.getNodeClient(ctx).connectedNodes.await()
-                nodes.forEach { Wearable.getMessageClient(ctx).sendMessage(it.id, WearReplies.REPLY, WearReplies.request(key, text, id)).await() }
+            // No connected phone: say so at once and keep the text for "Try again" (nothing was sent).
+            val nodes = runCatching { Wearable.getNodeClient(ctx).connectedNodes.await() }.getOrDefault(emptyList())
+            var reached = false
+            nodes.forEach { n ->
+                runCatching { Wearable.getMessageClient(ctx).sendMessage(n.id, WearReplies.REPLY, WearReplies.request(key, text, id)).await(); reached = true }
             }
+            if (!reached) { st.outgoing = WearReplies.noPhone(st.outgoing, id); return@launch }
             delay(WearReplies.ACK_WAIT_MS)
             st.outgoing = WearReplies.timeout(st.outgoing, id)
         }
     }
     val nav = rememberSwipeDismissableNavController()
+    // Opened from a tile tap on a chat name: go straight to that chat.
+    LaunchedEffect(openChat) { if (!openChat.isNullOrEmpty()) nav.navigate("chat/" + Uri.encode(openChat)) }
     SwipeDismissableNavHost(nav, startDestination = "list") {
         composable("list") {
             ChatList(st, debug, onOpen = { nav.navigate("chat/" + Uri.encode(it.key)) })
@@ -153,7 +164,9 @@ private fun WearApp() {
         composable("chat/{key}", arguments = listOf(navArgument("key") { type = NavType.StringType })) { e ->
             val key = e.arguments?.getString("key") ?: ""
             val chat = st.chats.firstOrNull { it.key == key }
-            ChatScreen(chat?.name ?: "", st.lines[WearChats.path(key)], st.outgoing.filter { it.key == key }, st.locked, onReply = { nav.navigate("reply/" + Uri.encode(key)) })
+            ChatScreen(chat?.name ?: "", st.lines[WearChats.path(key)], st.outgoing.filter { it.key == key }, st.locked,
+                onReply = { nav.navigate("reply/" + Uri.encode(key)) },
+                onRetry = { o -> st.outgoing = WearReplies.withoutLine(st.outgoing, o.id); send(o.key, o.text) })
         }
         composable("reply/{key}", arguments = listOf(navArgument("key") { type = NavType.StringType })) { e ->
             val key = e.arguments?.getString("key") ?: ""
@@ -210,7 +223,7 @@ private fun roundInset(): PaddingValues {
 }
 
 @Composable
-private fun ChatScreen(name: String, lines: List<WearLine>?, outgoing: List<Outgoing>, locked: Boolean, onReply: () -> Unit) {
+private fun ChatScreen(name: String, lines: List<WearLine>?, outgoing: List<Outgoing>, locked: Boolean, onReply: () -> Unit, onRetry: (Outgoing) -> Unit) {
     if (lines == null) {
         Centered { Text(stringResource(R.string.not_yet), textAlign = TextAlign.Center) }
         return
@@ -227,6 +240,12 @@ private fun ChatScreen(name: String, lines: List<WearLine>?, outgoing: List<Outg
         items(outgoing.size) { i ->
             val o = outgoing[i]
             Bubble(true, "", o.text, "", o.status)
+        }
+        WearReplies.retryable(outgoing)?.let { o ->
+            item {
+                Chip(onClick = { onRetry(o) }, modifier = Modifier.fillMaxWidth().padding(top = 6.dp), colors = ChipDefaults.secondaryChipColors(),
+                    label = { Text(stringResource(R.string.try_again), maxLines = 1) })
+            }
         }
         item {
             Chip(onClick = onReply, enabled = !locked, modifier = Modifier.fillMaxWidth().padding(top = 6.dp), colors = ChipDefaults.primaryChipColors(),
@@ -256,7 +275,8 @@ private fun Bubble(mine: Boolean, who: String, text: String, time: String, statu
 private fun statusText(s: ReplyStatus): String = when (s) {
     ReplyStatus.SENDING -> stringResource(R.string.sending)
     ReplyStatus.SENT -> "✓ " + stringResource(R.string.sent)
-    ReplyStatus.SAVED -> stringResource(R.string.saved_offline)
+    ReplyStatus.UNCONFIRMED -> stringResource(R.string.unconfirmed)
+    ReplyStatus.NOT_CONNECTED -> stringResource(R.string.not_connected)
     ReplyStatus.LOCKED -> stringResource(R.string.locked)
     ReplyStatus.NO_CHAT -> stringResource(R.string.no_chat)
     ReplyStatus.FAILED -> stringResource(R.string.send_failed)
@@ -279,10 +299,10 @@ private fun ReplyScreen(replies: List<String>, locked: Boolean, onSend: (String)
         item {
             Chip(
                 onClick = {
-                    // The same screen androidx.wear.input's RemoteInputIntentHelper opens: voice, keyboard, handwriting.
+                    // The watch's input screen (voice, keyboard, handwriting) through wear-input's helper (AII-415).
                     val input = RemoteInput.Builder(REPLY_INPUT).setLabel(label).build()
-                    val i = Intent("android.support.wearable.input.action.REMOTE_INPUT")
-                        .putExtra("android.support.wearable.input.extra.INPUTS_LIST", arrayOf(input))
+                    val i = androidx.wear.input.RemoteInputIntentHelper.createActionRemoteInputIntent()
+                    androidx.wear.input.RemoteInputIntentHelper.putRemoteInputsExtra(i, listOf(input))
                     runCatching { speak.launch(i) }
                 },
                 modifier = Modifier.fillMaxWidth(), colors = ChipDefaults.primaryChipColors(),

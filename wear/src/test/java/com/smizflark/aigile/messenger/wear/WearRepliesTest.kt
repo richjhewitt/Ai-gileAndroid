@@ -29,9 +29,9 @@ class WearRepliesTest {
         assertNull(WearReplies.parseAck("junk".toByteArray()))
     }
 
-    @Test fun noAckInTimeMeansSavedButAnAnsweredLineStays() {
+    @Test fun noAckInTimeMeansUnconfirmedButAnAnsweredLineStays() {
         val l = listOf(Outgoing("1", "k", "a", ReplyStatus.SENT), Outgoing("2", "k", "b"))
         assertEquals(ReplyStatus.SENT, WearReplies.timeout(l, "1")[0].status)
-        assertEquals(ReplyStatus.SAVED, WearReplies.timeout(l, "2")[1].status)
+        assertEquals(ReplyStatus.UNCONFIRMED, WearReplies.timeout(l, "2")[1].status)
     }
 }

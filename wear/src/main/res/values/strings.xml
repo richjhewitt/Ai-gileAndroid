@@ -10,8 +10,14 @@
     <string name="speak">Speak</string>
     <string name="speak_label">Your reply</string>
     <string name="sending">Sending…</string>
-    <string name="sent">Sent</string>
-    <string name="saved_offline">Saved, sends when your phone is online</string>
+    <string name="sent">Sent to your phone</string>
+    <string name="unconfirmed">Sent, your phone has not confirmed yet</string>
+    <string name="not_connected">Phone not connected: not sent</string>
+    <string name="try_again">Try again</string>
+    <plurals name="tile_unread">
+        <item quantity="one">unread chat</item>
+        <item quantity="other">unread chats</item>
+    </plurals>
     <string name="no_chat">Chat not on your phone</string>
     <string name="send_failed">Not sent</string>
 </resources>
