@@ -30,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -64,7 +63,6 @@ import android.os.Build
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import android.view.HapticFeedbackConstants
-import androidx.compose.runtime.snapshotFlow
 import com.smizflark.aigile.messenger.data.ScrollPlaces
 import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalView
@@ -76,6 +74,7 @@ import androidx.compose.ui.platform.LocalView
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = null, onOpenCard: (String) -> Unit = {}, openAt: String? = null, onOpenChat: (ChatRef) -> Unit = {}, onEditReplies: () -> Unit = {}) {
+    /* ---------- state ---------- */
     var convo by remember { mutableStateOf(repo.store.cachedConversation(ref.key)) }
     val seenAtOpen = rememberSaveable(ref.key) { mutableStateOf(repo.store.seen()[ref.key]) }.value   // AII-100: the "New messages" line stays put while you read
     var pending by remember { mutableStateOf(repo.pendingFor(ref.key)) }
@@ -112,12 +111,12 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val res = LocalContext.current.resources
 
     // Keep the half-typed reply (AII-42): saved a moment after typing stops, and on the way out.
-    LaunchedEffect(text) { delay(400); repo.store.saveDraft(ref.key, text) }
-    val latest by rememberUpdatedState(text)
-    DisposableEffect(ref.key) { onDispose { repo.store.saveDraft(ref.key, latest) } }
+    KeepDraft(repo, ref, text)   // ChatScreenParts.kt
     DisposableEffect(ref.key) { onDispose { ReadAloud.stop(); VoicePlayer.stop() } }   // AII-331: and a playing voice note   // AII-185: leaving the chat stops Read aloud
 
     val pace = remember { Pace(fast = 3_000, slow = 30_000) }
+
+    /* ---------- loading and sending ---------- */
 
     /** Fetches the chat; true when there is something new. */
     suspend fun load(): Boolean {
@@ -200,6 +199,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
 
     forwarding?.let { body -> ForwardHost(scope, repo, ref, body, { forwarding = null }, { pending = repo.pendingFor(ref.key) }, ::load) }   // ChatParts.kt
 
+    /* ---------- live refresh ---------- */
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(ref.key) {
         // Anything left from last time goes first (it was saved before sending, so nothing is lost).
@@ -219,10 +219,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     // asked of the chats list every 20 s, only on screen.
     var working by remember(ref.key) { mutableStateOf(ref.working) }
     var workingOn by remember(ref.key) { mutableStateOf(ref.workingOn) }
-    if (ref.kind == Kind.LEAD && focus == null) LaunchedEffect(ref.key) {
-        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { while (true) { repo.fresh(ref)?.let { working = it.working; workingOn = it.workingOn }; delay(20_000) } }
-    }
+    if (ref.kind == Kind.LEAD && focus == null) WatchWorking(repo, ref, lifecycle) { working = it.working; workingOn = it.workingOn }   // ChatScreenParts.kt
 
+    /* ---------- rows, find and scrolling ---------- */
     val live = rememberLiveRef(repo, ref, text)   // AII-324 (ChatFriend.kt)
     var safetyOk by remember(ref.key) { mutableStateOf(0) }   // AII-333: bumped when you accept new safety words
     val safetyChanged = remember(live.safety, safetyOk) { repo.learnSafety(listOf(live)); repo.safetyChanged(live) }
@@ -239,14 +238,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val atBottom by remember { derivedStateOf { list.firstVisibleItemIndex <= 1 } }
     // AII-117: while you scroll by hand, the day of the topmost row floats at the top, and fades a little after.
     // Jumps (newest, a quote, a find hit) don't show it.
-    val days = remember(items) { daysAbove(items) }
-    val topDay by remember(days) { derivedStateOf { list.layoutInfo.visibleItemsInfo.maxOfOrNull { it.index }?.let { days.getOrNull(it - 1) } } }   // index 0 is the spacer
-    val dragged by list.interactionSource.collectIsDraggedAsState()
-    var scrolling by remember { mutableStateOf(false) }
-    LaunchedEffect(dragged, list.isScrollInProgress) {
-        if (dragged) scrolling = true
-        else if (scrolling && !list.isScrollInProgress) { delay(1200); scrolling = false }   // a fling after the drag keeps it up
-    }
+    val topDay by rememberFloatingDay(list, items)   // ChatScreenParts.kt
     // AII-72: coming back, the chat opens where you left it; the 'N new' pill counts from what you had seen.
     val placeKey = ref.key + (focus?.let { "/$it" } ?: "")
     val place = remember(placeKey) { if (openAt != null) null else ScrollPlaces.get(placeKey) }   // a search result wins (AII-105)
@@ -294,23 +286,13 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { shareTranscript(view.context, ref.name, c, owner) } },   // AII-139
         onSave = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { saveTranscript(view.context, ref.name, c, owner) } }) { details = false; muted = ref.key in repo.store.muted() }   // AII-229
     // AII-363: Clear chat for me asks first, hides everything so far on this phone, and offers Undo for a few seconds.
-    if (clearAsk) ClearChatDialog(onDismiss = { clearAsk = false }, onConfirm = {
-        clearAsk = false
-        val before = clearedAt
-        val mark = com.smizflark.aigile.messenger.data.Cleared.mark(convo?.bubbles.orEmpty(), com.smizflark.aigile.messenger.data.Now.instant())
-        clearedAt = mark; repo.store.setCleared(com.smizflark.aigile.messenger.data.Cleared.with(repo.store.cleared(), ref.key, mark))
-        scope.launch {
-            snack.currentSnackbarData?.dismiss()
-            if (snack.showSnackbar(res.getString(R.string.chat_cleared), res.getString(R.string.undo), duration = androidx.compose.material3.SnackbarDuration.Long) == SnackbarResult.ActionPerformed) {
-                clearedAt = before; repo.store.setCleared(com.smizflark.aigile.messenger.data.Cleared.with(repo.store.cleared(), ref.key, before))
-            }
-        }
-    })
+    if (clearAsk) ClearChatHost(repo, ref, convo, clearedAt, snack, scope, onDismiss = { clearAsk = false }, onCleared = { clearedAt = it })
     if (muteAsk) MuteFor(onPick = { f -> repo.store.setMuted(ref.key, true, com.smizflark.aigile.messenger.data.Mute.until(com.smizflark.aigile.messenger.data.Now.millis(), f)); muted = true; muteAsk = false },
         onDismiss = { muteAsk = false })
     // AII-193: Go to date lands on that day's day row, else the next later day with messages, else the newest.
     var goToDate by remember { mutableStateOf(false) }
     if (goToDate) GoToDateHost(items, list, scope) { goToDate = false }   // ChatScroll.kt
+    /* ---------- screen ---------- */
     Scaffold(
         snackbarHost = { SnackbarHost(snack, Modifier.testTag("snack")) },
         topBar = {
@@ -322,10 +304,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {
-            error?.let {
-                Text(it, color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer).padding(10.dp).testTag("error"))
-            }
+            error?.let { ErrorLine(it) }
             // AII-339: the pinned bar; tap jumps to the message and the next tap shows the next pin.
             val chatPins = PinnedMsgs.inChat(pins, ref.key)
             if (chatPins.isNotEmpty()) {
@@ -388,7 +367,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                         Text(stringResource(R.string.chat_empty), Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                DayPill(if (scrolling) topDay else null, onClick = { goToDate = true })
+                DayPill(topDay, onClick = { goToDate = true })
                 JumpToNewest(show = !atBottom && convo != null, unread = unread) { scope.launch { list.animateScrollToItem(0) } }
                 val next = if (list.firstVisibleItemIndex == 0 && convo != null && !finding) nextChat else null   // AII-204; only once its room at the end shows (AII-273: never over a message)
                 NextUnreadButton(next?.name) { next?.let(onOpenChat) }

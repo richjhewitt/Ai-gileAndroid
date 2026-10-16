@@ -53,7 +53,9 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Stars.kt: starred messages (AII-138), listed in the chat details; lead chats kept in step with the board (AII-141, Repo syncStars; Starred refreshes them on open, AII-162).
 - data/PinnedMsgs.kt: pinned messages (AII-339), this phone only (Store pinnedMsgs); Pin / Unpin in the bubble hold menu, the pinned bar under the chat's top bar (PinnedBar in ui/ChatParts.kt; tap jumps and cycles "1 of N", X unpins). Not Pins.kt, which is pinned chats.
 - data/SavedPictures.kt: size of the saved pictures and which files Clear may delete, never ones waiting in the outbox (AII-215).
-- data/Store.kt: on-disk storage: pairing in the "messenger" prefs (not backed up), settings in the "settings" prefs (backed up, AII-81), drafts and cache.
+- data/Store.kt: pairing in the "messenger" prefs (not backed up), settings in the "settings" prefs (backed up, AII-81); extends StoreFiles.
+- data/StoreFiles.kt: Store's saved files: drafts, closed / cleared / starred / pinned / reminders / seen / told lists, the chat cache and the outbox (AII-366 split).
+- data/Vault.kt: the phone key sealed with the Android Keystore.
 - data/Transcript.kt: a whole chat as plain text, for Share this chat (AII-139) and Save as file (AII-229, safe file name here; saveTextFile in ui/ChatDetails.kt writes to Downloads).
 - data/UndoSend.kt: a sent message held 5 or 10 seconds (Settings, AII-233) with an Undo bar (AII-202); used by ui/ChatScreen.kt (helpers in ui/ChatUndoSend.kt).
 - data/Swipe.kt: what a swipe on a chat row does; choices include Remind me in 1 hour (AII-257).
@@ -66,6 +68,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/CardDetails.kt also: Accept / Send back (reason dialog) on a card in For you to test (AII-273; Source.verdict -> board POST .../cards/<id>/verdict); the demo card TUN-7 waits in For you to test (AII-274).
 - ui/ChatDetails.kt: chat details sheet (tap the chat name): open cards, this chat's reminders (AII-223, tap jumps to the message, X cancels via cancelReminder in ui/RemindersScreen.kt), pictures, links (AII-194), Mute and Silent alerts side by side (AII-245), and Pin; section headings show their counts (AII-252).
 - ui/ChatScreen.kt: the chat screen itself (list, find, scrolling).
+- ui/ChatScreenParts.kt: small pieces of ChatScreen: KeepDraft, WatchWorking, rememberFloatingDay, ErrorLine, ClearChatHost (AII-366 split).
 - ui/ChatGestures.kt: the pinch-to-zoom text size (AII-259) and the next unread chat lookup (AII-204) for ui/ChatScreen.kt.
 - ui/ChatScroll.kt: remembered scroll place and New messages opening (AII-72, AII-102), Go to date scroll (AII-193), day and new-line rows, share/save the chat as text (AII-139, AII-229).
 - ui/ChatPictures.kt: the photo picker and pasting a copied picture into the message box (AII-27, AII-56).
@@ -89,7 +92,10 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/Parts.kt: small shared UI helpers (colour parsing and similar).
 - ui/ReadAloud.kt: Read aloud from the hold menu with the phone's own voice (AII-185); leaving a chat stops it.
 - ui/Files.kt: tap a file to download it to the cache and open it with another app (AII-197); used in bubbles and the chat details Files list.
-- ui/Pictures.kt: loads a message's pictures; PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
+- ui/Pictures.kt: loads a message's pictures (MessagePictures, PickedPictures, PictureNote).
+- ui/PictureViewer.kt: PictureHost shows one full screen over the whole app (bars hidden, swipe, zoom).
+- ui/PictureActions.kt: Save and Share for a picture (AII-95, AII-96, AII-104).
+- ui/CopiedPicture.kt: watches the clipboard for a copied picture (AII-56).
 - ui/SearchScreen.kt: search across all chats, with Pictures, Links, Files, Starred and Last 7 days chips (AII-192, AII-267, AII-246, AII-258).
 - ui/SettingsScreen.kt: settings.
 - ui/RemindersScreen.kt: every reminder under Today, Tomorrow, Later headings (AII-269, Remind.groups), soonest first in each (AII-209, a Reminders row in Settings when there are any); tap one, its chat opens at the message (AII-247); hold one or tap X to Cancel (also cancels its WorkManager job remind-<id>).
