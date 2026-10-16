@@ -89,6 +89,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import androidx.compose.ui.res.stringResource
 import com.smizflark.aigile.messenger.R
+import com.smizflark.aigile.messenger.work.CheckWorker
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -226,6 +227,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val appCtx = LocalContext.current.applicationContext
+    LaunchedEffect(ref.key) { CheckWorker.clearChat(appCtx, ref.key) }   // opening the chat clears its alert (AII-65)
     LaunchedEffect(ref.key) {
         // Anything left from last time goes first (it was saved before sending, so nothing is lost).
         repo.pendingFor(ref.key).filter { !it.failed || it.offline }.forEach { deliver(it) }

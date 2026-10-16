@@ -48,7 +48,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         const val CHANNEL = "messages"
         const val EXTRA_CHAT = "chat"
         private const val GROUP = "messages"
-        private const val SUMMARY = 1
+        private const val SUMMARY = QuickReply.SUMMARY_ID
 
         fun schedule(context: Context) {
             val req = PeriodicWorkRequestBuilder<CheckWorker>(15, TimeUnit.MINUTES)
@@ -61,6 +61,14 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
 
         /** Everything read: the "new messages" alert has nothing left to say. */
         fun clearAlert(context: Context) = NotificationManagerCompat.from(context).cancel(1)
+
+        /** Opening a chat clears its notification, and the group summary when no chat alerts remain (AII-65). */
+        fun clearChat(context: Context, chat: String) {
+            val nm = NotificationManagerCompat.from(context)
+            nm.cancel(QuickReply.notificationId(chat))
+            val active = context.getSystemService(NotificationManager::class.java).activeNotifications.map { it.id }
+            if (QuickReply.summaryIsLonely(active)) nm.cancel(SUMMARY)
+        }
 
         fun channel(context: Context) {
             val ch = NotificationChannel(CHANNEL, "Messages", NotificationManager.IMPORTANCE_DEFAULT)
@@ -79,7 +87,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                 // Fetching the Lead Scrum Master's chat would mark it read on the board: go by its count instead.
                 if (ref.kind == Kind.WATCHMAN) return@map News.Item(ref.key, ref.name, ref.last.takeIf { ref.unread > 0 })
                 val convo = runCatching { repo.conversation(ref) }.getOrNull()
-                News.Item(ref.key, ref.name, convo?.lastFromThem, QuickReply.preview(convo))
+                News.Item(ref.key, ref.name, convo?.lastFromThem, QuickReply.preview(convo), QuickReply.recentLines(convo, seen[ref.key]))
             }
             val (all, nextTold) = News.diff(items, seen, told)
             val news = News.audible(all, store.muted())
@@ -125,10 +133,13 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                     .setShowsUserInterface(false)
                     .build()
                 val text = n.preview ?: "New message"
+                // Newest few lines stacked, newest last; one line is the same as before.
+                val style = NotificationCompat.InboxStyle().setBigContentTitle(n.name)
+                for (l in n.lines.ifEmpty { listOf(text) }) style.addLine(l)
                 nm.notify(id, base(context)
                     .setContentTitle(n.name)
                     .setContentText(text)
-                    .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                    .setStyle(style)
                     .setContentIntent(openChat(context, n.chat, id))
                     .addAction(action)
                     .setGroup(GROUP)

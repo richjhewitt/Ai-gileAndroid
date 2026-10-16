@@ -48,4 +48,25 @@ class QuickReplyTest {
         assertTrue(QuickReply.outcome(false, "Can't reach the board.").contains("Can't reach the board."))
         assertTrue(QuickReply.outcome(false, null).contains("try again"))
     }
+
+    @Test fun recentLinesAreTheirNewestOnesOldestFirst() {
+        val bs = (1..7).map { Bubble("k$it", "Conductor", "msg $it", "2026-10-13T0$it:00:00Z", false) } +
+            Bubble("m", "Rich", "mine", "2026-10-13T08:00:00Z", true)
+        val lines = QuickReply.recentLines(Conversation(ref, bs), null)
+        assertEquals(listOf("msg 3", "msg 4", "msg 5", "msg 6", "msg 7"), lines)
+        assertEquals(listOf("msg 6", "msg 7"), QuickReply.recentLines(Conversation(ref, bs), "2026-10-13T05:00:00Z"))
+        assertTrue(QuickReply.recentLines(null, null).isEmpty())
+    }
+
+    @Test fun longLinesAreCut() {
+        assertEquals("a b", QuickReply.cut("  a \n b ", 10))
+        assertEquals("abcd…", QuickReply.cut("abcdefgh", 5))
+    }
+
+    @Test fun summaryGoesWhenNoChatAlertsRemain() {
+        val id = QuickReply.notificationId("lead:a")
+        assertTrue(QuickReply.summaryIsLonely(emptyList()))
+        assertTrue(QuickReply.summaryIsLonely(listOf(QuickReply.SUMMARY_ID)))
+        assertEquals(false, QuickReply.summaryIsLonely(listOf(QuickReply.SUMMARY_ID, id)))
+    }
 }
