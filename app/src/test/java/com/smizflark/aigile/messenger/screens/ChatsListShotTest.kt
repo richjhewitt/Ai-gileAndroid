@@ -62,10 +62,13 @@ class ChatsListShotTest : ShotBase() {
     @Test fun tabletLight() {   // AII-350: chats list and the open chat side by side
         RuntimeEnvironment.setQualifiers("w1280dp-h800dp-mdpi")
         prime(lead())
-        shot("chats_tablet", false) {
+        show(false) {
             com.smizflark.aigile.messenger.ui.ChatsPanes(repo, lead().key, {}, {}, list = { ChatsScreen(repo, it, {}, {}) },
                 chat = { ChatScreen(repo, it, onBack = {}) })
         }
+        // The picture's name shows once it has (not) loaded; shooting before that made this shot flaky
+        rule.waitUntil(5_000) { rule.onAllNodesWithText("hills.png", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        rule.onRoot().captureRoboImage("../docs/shots/chats_tablet_light.png")
     }
     @Test fun tabletEmptyLight() {   // AII-350: nothing picked yet
         RuntimeEnvironment.setQualifiers("w1280dp-h800dp-mdpi")
