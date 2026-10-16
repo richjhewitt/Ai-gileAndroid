@@ -17,6 +17,8 @@ $msg = 'smoke' + (Get-Random -Maximum 9999)
 TapWhenFound 'Try the demo' 'Try the demo'
 TapWhenFound 'Got it' 'welcome tips' 30   # AII-276
 TapWhenFound 'Tunio' 'Tunio chat' 30
+# A tap while the welcome tips are still closing can be lost: tap the row again until the chat is open
+for ($t = 0; $t -lt 3 -and -not (Find '^Message$|Message the'); $t++) { Start-Sleep 2; if (-not (Find '^Message$|Message the')) { TapWhenFound 'Tunio' 'Tunio chat (again)' 10 } }
 TapWhenFound '^Message$|Message the' 'message field'
 & $adb shell input text $msg
 TapWhenFound '^Send$' 'Send'
