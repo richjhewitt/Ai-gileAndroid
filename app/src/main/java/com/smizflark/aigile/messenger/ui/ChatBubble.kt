@@ -138,7 +138,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -159,7 +159,11 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
     val clipboard = LocalClipboardManager.current
     val ctx = LocalContext.current
     // AII-101: drag a message to the right to reply to it; it springs back.
-    val canReply = b.state == SendState.SENT && !b.unverified
+    val canReply = b.state == SendState.SENT && !b.unverified && !b.deleted
+    // AII-324: Edit and Delete on my own friend lines, once the board has given the line an id.
+    val ownLine = ref.kind == Kind.FRIEND && b.mine && b.id != null && b.state == SendState.SENT && !b.deleted && !b.unverified
+    var editing by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
     val view = LocalView.current
     val reach = with(LocalDensity.current) { SWIPE_REPLY.toPx() }
     val drag = remember { Animatable(0f) }
@@ -229,7 +233,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             border = when (mark) { 2 -> BorderStroke(3.dp, cs.tertiary); 1 -> BorderStroke(1.5.dp, cs.tertiary.copy(alpha = 0.6f)); else -> null },   // AII-78: find matches
             shape = RoundedCornerShape(18.dp, 18.dp, if (b.mine) 4.dp else 18.dp, if (b.mine) 18.dp else 4.dp),
             modifier = Modifier.widthIn(max = 320.dp).semantics(mergeDescendants = true) {}.testTag(if (b.mine) "mine" else "theirs")
-                .combinedClickable(onClick = { if (!Appearance.showTimes) showTime = !showTime }, onLongClick = { menu = true },
+                .combinedClickable(onClick = { if (!Appearance.showTimes) showTime = !showTime }, onLongClick = { if (!b.deleted) menu = true },
                     onDoubleClick = if (onStar != null && b.state == SendState.SENT && !b.unverified) { {
                         if (!starred) scope.launch { pop.snapTo(0f); pop.animateTo(1f, tween(450)) }
                         onStar()
@@ -238,12 +242,18 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             /* ---------- menus (BubbleMenu.kt) ---------- */
             RemindMenu(remindMenu, { remindMenu = false }) { at -> noteAt = at; noteText = "" }   // AII-244: ask for an optional note before saving
             noteAt?.let { at -> RemindNoteDialog(at, ref, b, shown, repo, noteText, { noteText = it }, onSaved = onReminded) { noteAt = null } }
-            HoldMenu(menu, { menu = false }, b, shown, starred, onStar, onReply, onForward, onRemind = { remindMenu = true }, onSelect = { selecting = true })
+            HoldMenu(menu, { menu = false }, b, shown, starred, onStar, onReply, onForward, onRemind = { remindMenu = true }, onSelect = { selecting = true },
+                onEdit = if (ownLine && onEditMsg != null) { { editing = true } } else null,
+                onDelete = if (ownLine && onDeleteMsg != null) { { deleting = true } } else null)
+            if (editing) EditMessageDialog(Quote.split(b.text).second, onSave = { editing = false; onEditMsg?.invoke(b, it) }, onDismiss = { editing = false })
+            if (deleting) DeleteMessageDialog(onConfirm = { deleting = false; onDeleteMsg?.invoke(b) }, onDismiss = { deleting = false })
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
                 if (!b.mine && ref.kind != Kind.FRIEND && b.author.isNotBlank()) {
                     Text(b.author, style = MaterialTheme.typography.labelMedium, color = cs.primary)
                 }
                 // AII-188: GIF links in the text play here too, like on the board.
+                if (b.deleted) Text(stringResource(R.string.msg_deleted), style = MaterialTheme.typography.bodyLarge,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic, color = fg.copy(alpha = 0.6f), modifier = Modifier.testTag("deleted"))
                 val pics = remember(b.pics, b.text, b.unverified, Appearance.gifs) { if (b.unverified || !Appearance.gifs) b.pics else b.pics + Gif.pics(b.text) }
                 if (pics.isNotEmpty()) MessagePictures(pics, repo)
                 val (forwarded, body) = Forward.split(b.text)
@@ -273,7 +283,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                         SendState.SENDING -> stringResource(R.string.sending)
                         SendState.FAILED -> stringResource(R.string.not_sent)
                         SendState.LATER -> stringResource(R.string.sends_at, sendTime(b.at)) + if (laterP?.repeat != null) " 🔁" else ""   // AII-174
-                        SendState.SENT -> (if (starred) "★ " else "") + clock(b.at) +if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
+                        SendState.SENT -> (if (starred) "★ " else "") + (if (b.edited != null) stringResource(R.string.edited_time, clock(b.at)) else clock(b.at)) + if (ref.kind == Kind.FRIEND && !b.unverified) "  🔒" else ""
                     },
                     style = MaterialTheme.typography.labelSmall,
                     color = if (b.state == SendState.FAILED) cs.error else fg.copy(alpha = 0.6f),

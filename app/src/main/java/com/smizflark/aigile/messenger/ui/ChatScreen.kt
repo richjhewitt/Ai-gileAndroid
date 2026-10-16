@@ -88,6 +88,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var detail by remember { mutableStateOf<CardDetail?>(null) }
     if (focus != null && ref.kind == Kind.LEAD) LaunchedEffect(focus) { detail = repo.card(ref, focus) }
     var quoting by rememberSaveable { mutableStateOf<String?>(null) }   // AII-60: the quoted line of the message being answered
+    var replyId by rememberSaveable { mutableStateOf<String?>(null) }   // AII-324: friend chats send the id of the line being answered
     var forwarding by remember { mutableStateOf<String?>(null) }   // AII-71: the text of the message being forwarded
     var error by remember { mutableStateOf<String?>(null) }
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
@@ -144,17 +145,17 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         }
     }
 
-    fun send(body: String, to: String?, files: List<String> = emptyList()) {
+    fun send(body: String, to: String?, files: List<String> = emptyList(), reply: String? = null) {
         val t = body.trim(); if (t.isEmpty() && files.isEmpty()) return
         tick()
-        deliver(repo.queue(ref, t, to, files))
+        deliver(repo.queue(ref, t, to, files, reply = reply))
     }
 
     /* ---------- undo send ---------- */
     // Undo send (AII-202): the message waits here for 5 or 10 seconds; leaving the chat sends it at once.
     val snack = remember { SnackbarHostState() }
     var held by remember { mutableStateOf<Held?>(null) }
-    fun sendHeld(h: Held) { held = null; send(h.body, h.to, h.files) }
+    fun sendHeld(h: Held) { held = null; send(h.body, h.to, h.files, h.reply) }
     val heldNow by rememberUpdatedState(held)
     DisposableEffect(ref.key) {
         onDispose { heldNow?.let { h -> flushHeld(repo, ref, h) } }   // ChatUndoSend.kt
@@ -162,27 +163,28 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
 
     /** What is typed in the box, now or (Send later, AII-146) at [at]. */
     fun sendTyped(at: Instant? = null) {
-        val body = Quote.with(quoting, text.trim()).takeIf { text.isNotBlank() } ?: text
+        val rid = replyId.takeIf { ref.kind == Kind.FRIEND }   // AII-324: a friend reply goes by id, not as a quote in the text
+        val body = (if (rid != null) text.trim() else Quote.with(quoting, text.trim())).takeIf { text.isNotBlank() } ?: text
         val to = if (ref.kind == Kind.LEAD) focus ?: target else null
         if (at == null && Appearance.undoSend && (body.isNotBlank() || pics.isNotEmpty())) {
             held?.let { sendHeld(it) }   // a second Send sends the first at once
-            val h = Held(text, quoting, to, pics); held = h
+            val h = Held(text, quoting, to, pics, rid); held = h
             scope.launch {
                 val r = showUndoBar(snack, res)   // ChatUndoSend.kt
                 if (held !== h) return@launch
                 if (r == SnackbarResult.ActionPerformed) {
                     held = null
-                    if (text.isBlank() && pics.isEmpty() && quoting == null) { text = h.text; pics = h.files; quoting = h.quote }
-                    else { send(h.body, h.to, h.files) }   // the box was used meanwhile: never lose either
+                    if (text.isBlank() && pics.isEmpty() && quoting == null) { text = h.text; pics = h.files; quoting = h.quote; replyId = h.reply }
+                    else { send(h.body, h.to, h.files, h.reply) }   // the box was used meanwhile: never lose either
                 } else sendHeld(h)
             }
         }
-        else if (at == null) send(body, to, pics)
+        else if (at == null) send(body, to, pics, rid)
         else if (body.isNotBlank() || pics.isNotEmpty()) {
-            repo.later(ref, body.trim(), to, pics, at); pending = repo.pendingFor(ref.key)
+            repo.later(ref, body.trim(), to, pics, at, rid); pending = repo.pendingFor(ref.key)
             scope.launch { list.animateScrollToItem(0) }
         }
-        text = ""; pics = emptyList(); picNote = null; quoting = null
+        text = ""; pics = emptyList(); picNote = null; quoting = null; replyId = null
     }
 
     /* ---------- pictures ---------- */
@@ -227,6 +229,18 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var workingOn by remember(ref.key) { mutableStateOf(ref.workingOn) }
     if (ref.kind == Kind.LEAD && focus == null) LaunchedEffect(ref.key) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { while (true) { repo.fresh(ref)?.let { working = it.working; workingOn = it.workingOn }; delay(20_000) } }
+    }
+
+    // AII-324: a friend chat asks the board every 3 s who is typing and whether the safety code is checked; and tells them when I type (at most every 4 s).
+    var live by remember(ref.key) { mutableStateOf(ref) }
+    if (ref.kind == Kind.FRIEND) LaunchedEffect(ref.key) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { while (true) { repo.fresh(ref)?.let { live = it }; delay(3_000) } }
+    }
+    val typedAtOpen = remember(ref.key) { text }
+    var lastTyping by remember(ref.key) { mutableStateOf(0L) }
+    if (ref.kind == Kind.FRIEND) LaunchedEffect(text) {
+        val now = System.currentTimeMillis()
+        if (text.isNotBlank() && text != typedAtOpen && now - lastTyping >= TYPING_EVERY_MS) { lastTyping = now; runCatching { repo.source.typing(ref) } }
     }
 
     val items = remember(convo, pending, owner, focus) { rows(convo, pending, owner, focus, seenAtOpen).asReversed() }
@@ -299,7 +313,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
 
     androidx.compose.runtime.LaunchedEffect(details) { reminders = repo.store.reminders() }   // a reminder cancelled in the details
-    if (details) ChatDetails(ref, repo, chatInfo(convo), onFind = { details = false; finding = true },
+    if (details) ChatDetails(live, repo, chatInfo(convo), onChecked = if (ref.kind == Kind.FRIEND) { { scope.launch { runCatching { repo.source.setChecked(ref) }.onFailure { error = it.message } } } } else null,
+ onFind = { details = false; finding = true },
         starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
         onShare = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { shareTranscript(view.context, ref.name, c, owner) } },   // AII-139
         onSave = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { c -> { saveTranscript(view.context, ref.name, c, owner) } }) { details = false; muted = ref.key in repo.store.muted() }   // AII-229
@@ -322,7 +337,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
                 onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true },
                 onGoToDate = { goToDate = true }, onMyLast = { jumpToMine() }, onOpenCard = onOpenCard, silent = silent,
-                onSilent = { repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent })
+                onSilent = { repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent },
+                typing = live.typing)
         },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {
@@ -348,6 +364,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                             }
                             is Row.Msg -> MessageBubble(r, ref, repo, mark = if (r.id == flash) 2 else if (r.id !in hitIds) 0 else if (hitIds.getOrNull(current) == r.id) 2 else 1, onReply = { q ->
                                 quoting = Quote.of(if (q.mine) owner else q.author, q.text, q.pics.size)
+                                replyId = q.id.takeIf { ref.kind == Kind.FRIEND }   // AII-324
                                 // A reply to a team message goes to its card, like answering it on the board.
                                 if (ref.kind == Kind.LEAD && focus == null && q.card != null && targets.any { it.id == q.card }) { target = q.card; picked = true }
                             }, onForward = { forwarding = it.text }, cards = if (ref.kind == Kind.LEAD) known - setOfNotNull(focus) else emptySet(), onCard = onOpenCard,
@@ -363,6 +380,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                     if (p.target != null && targets.any { it.id == p.target }) { target = p.target; picked = true }
                                 },
                                 onQuote = { q -> jumpToQuote(q, r.id) },
+                                onEditMsg = if (ref.kind == Kind.FRIEND) { { b, t -> scope.launch { runCatching { repo.source.edit(ref, b.id!!, t) }.onFailure { error = it.message }; load() } } } else null,   // AII-324
+                                onDeleteMsg = if (ref.kind == Kind.FRIEND) { { b -> scope.launch { runCatching { repo.source.delete(ref, b.id!!) }.onFailure { error = it.message }; load() } } } else null,
                                 remindAt = com.smizflark.aigile.messenger.data.Remind.forMessage(reminders, ref.key, r.b.key), onReminded = { reminders = repo.store.reminders() },
                                 starred = Stars.has(stars, ref.key, r.b.key),
                                 onStar = if (r.pending == null) { {
@@ -387,9 +406,12 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 onAttach = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 onRemovePic = { f -> pics = pics - f; File(f).delete() },
                 onPasteCopied = if (copied.available && pics.size < MAX_PICS) ::pasteCopied else null,
-                quote = quoting, onClearQuote = { quoting = null },
+                quote = quoting, onClearQuote = { quoting = null; replyId = null },
                 onSendLater = { at -> sendTyped(at) }, onEditReplies = onEditReplies,
             ) { sendTyped() }
         }
     }
 }
+
+/** AII-324: how often a friend chat tells the friend that I am typing. */
+internal const val TYPING_EVERY_MS = 4_000L

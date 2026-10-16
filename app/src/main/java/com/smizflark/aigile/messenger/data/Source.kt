@@ -32,7 +32,7 @@ interface ChatSource {
     suspend fun chats(): List<ChatRef>
     suspend fun conversation(ref: ChatRef): Conversation
     /** Sends a reply. Returns the card it landed on (a new 💬 card when target is null), if the board says. */
-    suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload> = emptyList()): String?
+    suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload> = emptyList(), reply: String? = null): String?
     /** A new 💬 message to a project's team. Returns the new card id. */
     suspend fun newMessage(slug: String, text: String, files: List<Upload> = emptyList()): String?
     /** One card of a lead's chat (AII-45); null where the board can't say. */
@@ -51,6 +51,14 @@ interface ChatSource {
     suspend fun replaceStars(slug: String, stars: List<Pair<String, String>>) {}
     /** The board's stars for a project as "fold|at" (AII-162); null when the board doesn't keep them. */
     suspend fun stars(slug: String): List<String>? = null
+    /** Friend DMs (AII-324): change the text of one of your own lines. */
+    suspend fun edit(ref: ChatRef, id: String, text: String) {}
+    /** Friend DMs (AII-324): delete one of your own lines. */
+    suspend fun delete(ref: ChatRef, id: String) {}
+    /** Friend DMs (AII-324): tell them you are typing. */
+    suspend fun typing(ref: ChatRef) {}
+    /** Friend DMs (AII-324): you and your friend read the safety words to each other and they matched. */
+    suspend fun setChecked(ref: ChatRef) {}
 }
 
 /** A picture or file to send with a message. */
@@ -167,11 +175,12 @@ class BoardSource(
         else -> Mapper.conversation(ref, json.decodeFromString(call("GET", "/api/chats/${ref.id}")))
     }
 
-    override suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload>): String? = when {
+    override suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload>, reply: String?): String? = when {
         // Friend DMs carry their files inside the sealed message.
         ref.kind == Kind.FRIEND -> {
             call("POST", "/api/dms/contacts/${ref.id}/messages", buildJsonObject {
                 put("text", text)
+                if (reply != null) put("reply", reply)
                 if (files.isNotEmpty()) put("attachments", buildJsonArray {
                     files.forEach { f -> add(buildJsonObject { put("name", f.name); put("type", f.type); put("data", b64(f.bytes)) }) }
                 })
@@ -250,6 +259,22 @@ class BoardSource(
 
     override suspend fun setClosed(key: String, closed: Boolean) {
         call("POST", "/api/dmclosed", buildJsonObject { put("key", key); put("closed", closed) })
+    }
+
+    override suspend fun edit(ref: ChatRef, id: String, text: String) {
+        call("PATCH", "/api/dms/contacts/${ref.id}/messages/$id", buildJsonObject { put("text", text) })
+    }
+
+    override suspend fun delete(ref: ChatRef, id: String) {
+        call("DELETE", "/api/dms/contacts/${ref.id}/messages/$id")
+    }
+
+    override suspend fun typing(ref: ChatRef) {
+        call("POST", "/api/dms/contacts/${ref.id}/typing", buildJsonObject {})
+    }
+
+    override suspend fun setChecked(ref: ChatRef) {
+        call("PATCH", "/api/dms/contacts/${ref.id}", buildJsonObject { put("checked", true) })
     }
 
     /** Full URL for a board picture path like /api/avatars/x.png. */

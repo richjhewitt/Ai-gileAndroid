@@ -1,9 +1,9 @@
 package com.smizflark.aigile.messenger.data
 
 /** Undo send (AII-202): a message held for [UndoSend.waitMs] after Send. Undo puts [text], [quote] and [files] back in the box. */
-data class Held(val text: String, val quote: String?, val to: String?, val files: List<String>) {
+data class Held(val text: String, val quote: String?, val to: String?, val files: List<String>, val reply: String? = null) {
     /** What goes out: the quote, a blank line, then the text; a blank text is sent as it is (pictures only). */
-    val body: String get() = Quote.with(quote, text.trim()).takeIf { text.isNotBlank() } ?: text
+    val body: String get() = (if (reply != null) text.trim() else Quote.with(quote, text.trim())).takeIf { text.isNotBlank() } ?: text
 }
 
 object UndoSend {

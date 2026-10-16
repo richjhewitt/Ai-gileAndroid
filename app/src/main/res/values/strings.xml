@@ -412,4 +412,14 @@
     <string name="new_starred">Starred list: filter by chat, share all as text</string>
     <string name="new_widget">Widget shows unread counts and follows the app\'s look</string>
     <string name="new_build">build %1$d</string>
+    <string name="typing">typing…</string>
+    <string name="msg_deleted">Message deleted</string>
+    <string name="edited_time">edited · %1$s</string>
+    <string name="edit_message">Edit message</string>
+    <string name="delete_message_title">Delete this message?</string>
+    <string name="delete_message_body">It disappears for both of you.</string>
+    <string name="safety_code">Safety code</string>
+    <string name="safety_hint">Read these words to each other. If they match, nobody is listening in.</string>
+    <string name="we_checked_it">We checked it</string>
+    <string name="safety_checked">✓ Checked</string>
 </resources>

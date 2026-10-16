@@ -6,6 +6,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -73,12 +75,35 @@ internal fun RemindNoteDialog(at: Long, ref: ChatRef, b: Bubble, shown: Annotate
         dismissButton = { androidx.compose.material3.TextButton(onClick = { save(null) }, modifier = Modifier.testTag("remind-note-skip")) { Text(stringResource(R.string.skip)) } })
 }
 
+/* ---------- edit and delete (friend lines, AII-324) ---------- */
+
+/** A small dialog with the line's text; Save sends the change (a blank text is not saved). */
+@Composable
+internal fun EditMessageDialog(initial: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var t by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(initial) }
+    androidx.compose.material3.AlertDialog(onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.edit_message)) },
+        text = { androidx.compose.material3.OutlinedTextField(t, { t = it }, modifier = Modifier.testTag("edit-text")) },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = { onSave(t.trim()) }, enabled = t.isNotBlank(), modifier = Modifier.testTag("edit-save")) { Text(stringResource(R.string.save)) } },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss, modifier = Modifier.testTag("edit-cancel")) { Text(stringResource(R.string.cancel)) } })
+}
+
+/** Delete asks first. */
+@Composable
+internal fun DeleteMessageDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    androidx.compose.material3.AlertDialog(onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.delete_message_title)) },
+        text = { Text(stringResource(R.string.delete_message_body)) },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = onConfirm, modifier = Modifier.testTag("delete-confirm")) { Text(stringResource(R.string.delete)) } },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss, modifier = Modifier.testTag("delete-cancel")) { Text(stringResource(R.string.cancel)) } })
+}
+
 /* ---------- hold menu ---------- */
 
 // AII-43: long-press a bubble for Remind me, Reply, Forward, Star, Copy, Copy as quote, Select, links, Share, Read aloud.
 @Composable
 internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown: AnnotatedString, starred: Boolean, onStar: (() -> Unit)?,
-                      onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, onRemind: () -> Unit, onSelect: () -> Unit) {
+                      onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, onRemind: () -> Unit, onSelect: () -> Unit, onEdit: (() -> Unit)? = null, onDelete: (() -> Unit)? = null) {
     val ctx = LocalContext.current
     val clipboard = LocalClipboardManager.current
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
@@ -91,6 +116,9 @@ internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown
         // AII-138: star it, to find it again in the chat details.
         if (onStar != null && b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(if (starred) R.string.unstar else R.string.star)) },
             modifier = Modifier.testTag("star"), onClick = { onDismiss(); onStar() })
+        // AII-324: change or take back one of my own friend lines.
+        if (onEdit != null) DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, modifier = Modifier.testTag("edit-msg"), onClick = { onDismiss(); onEdit() })
+        if (onDelete != null) DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, modifier = Modifier.testTag("delete-msg"), onClick = { onDismiss(); onDelete() })
         DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
             onDismiss()
             clipboard.setText(AnnotatedString(Markdown.plain(shown)))

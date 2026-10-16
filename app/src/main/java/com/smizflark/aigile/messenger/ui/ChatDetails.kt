@@ -67,7 +67,8 @@ internal fun saveTextFile(ctx: android.content.Context, name: String, text: Stri
 /** Tap the chat name (AII-80): the team, its open cards, the pictures sent here, and the Mute and Pin switches. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onSave: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onClose: () -> Unit) {
+fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onSave: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onChecked: (() -> Unit)? = null, onClose: () -> Unit) {
+    var checked by remember { mutableStateOf(ref.checked) }   // AII-324: safety code checked together
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var silent by remember { mutableStateOf(ref.key in repo.store.silent) }
     var pinned by remember { mutableStateOf(ref.key in repo.store.pinned) }
@@ -95,6 +96,17 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 val n = androidx.compose.ui.res.pluralStringResource(R.plurals.about_chat_count, ab.total, ab.total)
                 Text(if (ab.since != null) stringResource(R.string.about_chat, n, com.smizflark.aigile.messenger.data.aboutDate(ab.since), ab.mine) else stringResource(R.string.about_chat_nodate, n, ab.mine),
                     style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp).testTag("details-about"))
+            }
+            // AII-324: the six words both phones show; read them to each other.
+            if (ref.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND && ref.safety.isNotBlank()) {
+                Text(stringResource(R.string.safety_code), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+                Text(ref.safety, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.fillMaxWidth().testTag("safety-words"))
+                Text(stringResource(R.string.safety_hint), style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                if (checked) Text(stringResource(R.string.safety_checked), style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp).testTag("safety-checked"))
+                else if (onChecked != null) androidx.compose.material3.Button(onClick = { checked = true; onChecked() },
+                    modifier = Modifier.padding(top = 8.dp).testTag("we-checked-it")) { Text(stringResource(R.string.we_checked_it)) }
             }
             // AII-128: straight to the find bar from here.
             FlowRow(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

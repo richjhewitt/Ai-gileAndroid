@@ -92,7 +92,15 @@ data class Contact(
     val checked: Boolean = false,
     val last: String? = null,
     val lastIn: String? = null,
+    /** The six words both phones show for this friend (AII-324); empty from an older board. */
+    val safety: String = "",
+    /** They are typing to you right now. */
+    val typing: Boolean = false,
 )
+
+/** The line a friend's reply quotes (AII-324). */
+@Serializable
+data class FriendReply(val id: String? = null, val text: String = "")
 
 @Serializable
 data class FriendMsg(
@@ -102,6 +110,12 @@ data class FriendMsg(
     val at: String = "",
     val verified: Boolean = true,
     val attachments: List<Attachment> = emptyList(),
+    /** When the line was edited, ISO (AII-324). */
+    val edited: String? = null,
+    /** When the line was deleted, ISO; its text is then empty. */
+    val deleted: String? = null,
+    /** The line this one answers. */
+    val reply: FriendReply? = null,
 )
 
 @Serializable
@@ -150,6 +164,12 @@ data class ChatRef(
     val working: Boolean = false,
     /** The card the team at work is on, like "AII-5" (AII-113). */
     val workingOn: String? = null,
+    /** Friends: the six safety words (AII-324), empty when the board has none. */
+    val safety: String = "",
+    /** Friends: the safety code has been checked together. */
+    val checked: Boolean = false,
+    /** Friends: they are typing to you now. */
+    val typing: Boolean = false,
 ) {
     val key get() = "${kind.name.lowercase()}:$id"
 }
@@ -172,6 +192,12 @@ data class Bubble(
     /** This card is still waiting on you (an open question). */
     val waiting: Boolean = false,
     val pics: List<Pic> = emptyList(),
+    /** Friend lines: the board's message id, used to edit, delete and reply (AII-324). */
+    val id: String? = null,
+    /** Friend lines: when it was edited (ISO). */
+    val edited: String? = null,
+    /** Friend lines: it was deleted; the bubble says so. */
+    val deleted: Boolean = false,
 )
 
 /** A picture or file on a message: a board path (/api/...) or, before it is sent or in the demo, a file:// address. */
@@ -216,4 +242,6 @@ data class Pending(
     val sendAt: String? = null,
     /** Send later that repeats (AII-174): "day" or "week"; once it goes, the next one waits by itself. */
     val repeat: String? = null,
+    /** Friend DMs: the id of the message this one answers (AII-324). */
+    val reply: String? = null,
 )

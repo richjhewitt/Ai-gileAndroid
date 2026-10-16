@@ -10,6 +10,9 @@ private val DEMO_PICTURE = Attachment("android.resource://${com.smizflark.aigile
 /** AII-91: a second one, so swiping between pictures can be tried. */
 private val DEMO_SEA = Attachment("android.resource://${com.smizflark.aigile.messenger.BuildConfig.APPLICATION_ID}/drawable/demo_picture_sea", "sea.png", "image/png")
 
+/** AII-324: the demo friend's safety code. */
+const val DEMO_SAFETY = "apple river candle mountain violin harbor"
+
 class DemoSource : ChatSource {
     private fun ago(min: Long) = Now.instant().minus(min, ChronoUnit.MINUTES).toString()
 
@@ -48,6 +51,8 @@ class DemoSource : ChatSource {
             FriendMsg("d2", "out", "After the barbers, yeah", ago(45)),
         ),
     )
+    /** AII-324: you and Davy have not checked the safety words yet, so the button shows. */
+    private var checked = false
 
     /** The Lead Scrum Master's read mark, which the board keeps (AII-25). */
     private var watchRead = false
@@ -78,7 +83,7 @@ class DemoSource : ChatSource {
         } + ChatSummary("_watchman", "Lead Scrum Master", "🧭", "#3a5a7a", watchman = true, last = threads.getValue("_watchman").messages.last().at,
             lastText = threads.getValue("_watchman").messages.last().text, lastMine = threads.getValue("_watchman").messages.last().mine,
             unread = if (watchRead) 0 else threads.getValue("_watchman").messages.count { !it.mine })
-        val contacts = friends.map { (id, l) -> Contact(id, "Davy", checked = true, last = l.last().at, lastIn = l.last { it.dir == "in" }.at) }
+        val contacts = friends.map { (id, l) -> Contact(id, "Davy", checked = checked, safety = DEMO_SAFETY, last = l.last().at, lastIn = l.last { it.dir == "in" }.at) }
         return Mapper.chats(summaries, contacts)
     }
 
@@ -89,7 +94,7 @@ class DemoSource : ChatSource {
         else Mapper.conversation(ref, threads.getValue(ref.id))
     }
 
-    override suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload>): String? {
+    override suspend fun send(ref: ChatRef, text: String, target: String?, files: List<Upload>, reply: String?): String? {
         delay(300)
         val now = Now.instant().toString()
         // No board here: the demo keeps sent pictures as files on the phone so they still show.
@@ -98,7 +103,9 @@ class DemoSource : ChatSource {
             Attachment(out.toURI().toString(), f.name, f.type, f.bytes.size.toLong())
         }
         if (ref.kind == Kind.FRIEND) {
-            friends.getValue(ref.id) += FriendMsg("o$now", "out", text, now, attachments = att)
+            val l = friends.getValue(ref.id)
+            val quoted = reply?.let { id -> l.firstOrNull { it.id == id } }?.let { FriendReply(it.id, it.text.orEmpty()) }
+            l += FriendMsg("o$now-${l.size}", "out", text, now, attachments = att, reply = quoted)
             return null
         }
         val t = threads.getValue(ref.id)
@@ -115,6 +122,20 @@ class DemoSource : ChatSource {
         )
         return card
     }
+
+    override suspend fun edit(ref: ChatRef, id: String, text: String) {
+        val l = friends[ref.id] ?: return
+        val i = l.indexOfFirst { it.id == id && it.dir == "out" && it.deleted == null }
+        if (i >= 0) l[i] = l[i].copy(text = text, edited = Now.instant().toString())
+    }
+
+    override suspend fun delete(ref: ChatRef, id: String) {
+        val l = friends[ref.id] ?: return
+        val i = l.indexOfFirst { it.id == id && it.dir == "out" }
+        if (i >= 0) l[i] = l[i].copy(text = "", attachments = emptyList(), deleted = Now.instant().toString())
+    }
+
+    override suspend fun setChecked(ref: ChatRef) { checked = true }
 
     override suspend fun newMessage(slug: String, text: String, files: List<Upload>) =
         send(ChatRef(Kind.LEAD, slug, slug, "", ""), text, null, files)

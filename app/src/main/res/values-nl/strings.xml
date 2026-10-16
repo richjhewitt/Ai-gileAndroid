@@ -412,4 +412,14 @@
     <string name="new_starred">Lijst met sterren: filter op chat, alles delen als tekst</string>
     <string name="new_widget">Widget toont ongelezen aantallen en volgt de stijl van de app</string>
     <string name="new_build">build %1$d</string>
+    <string name="typing">typt…</string>
+    <string name="msg_deleted">Bericht verwijderd</string>
+    <string name="edited_time">bewerkt · %1$s</string>
+    <string name="edit_message">Bericht bewerken</string>
+    <string name="delete_message_title">Dit bericht verwijderen?</string>
+    <string name="delete_message_body">Het verdwijnt bij jullie allebei.</string>
+    <string name="safety_code">Veiligheidscode</string>
+    <string name="safety_hint">Lees deze woorden aan elkaar voor. Als ze overeenkomen, luistert niemand mee.</string>
+    <string name="we_checked_it">We hebben het gecontroleerd</string>
+    <string name="safety_checked">✓ Gecontroleerd</string>
 </resources>

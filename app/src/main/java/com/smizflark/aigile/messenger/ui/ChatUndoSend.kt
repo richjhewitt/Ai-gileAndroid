@@ -18,7 +18,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 internal fun flushHeld(repo: Repo, ref: ChatRef, h: Held) {
     val t = h.body.trim()
     if (t.isNotEmpty() || h.files.isNotEmpty()) {
-        val p = repo.queue(ref, t, h.to, h.files)
+        val p = repo.queue(ref, t, h.to, h.files, reply = h.reply)
         @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
         kotlinx.coroutines.GlobalScope.launch { repo.deliver(ref, p) }
     }

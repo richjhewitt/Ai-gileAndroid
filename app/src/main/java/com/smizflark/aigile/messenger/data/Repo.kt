@@ -160,15 +160,15 @@ class Repo(context: Context) {
 
     /* ---------- sending through the outbox: nothing typed is lost ---------- */
 
-    fun queue(ref: ChatRef, text: String, target: String?, files: List<String> = emptyList(), sendAt: Instant? = null): Pending {
-        val p = Pending(UUID.randomUUID().toString(), ref.key, text, target, Instant.now().toString(), files = files, sendAt = sendAt?.toString())
+    fun queue(ref: ChatRef, text: String, target: String?, files: List<String> = emptyList(), sendAt: Instant? = null, reply: String? = null): Pending {
+        val p = Pending(UUID.randomUUID().toString(), ref.key, text, target, Instant.now().toString(), files = files, sendAt = sendAt?.toString(), reply = reply)
         store.saveOutbox(store.outbox() + p)
         return p
     }
 
     /** Send later (AII-146): kept in the outbox until [at], then sent by SendWorker (or by the open chat, in the demo). */
-    fun later(ref: ChatRef, text: String, target: String?, files: List<String>, at: Instant): Pending {
-        val p = queue(ref, text, target, files, at)
+    fun later(ref: ChatRef, text: String, target: String?, files: List<String>, at: Instant, reply: String? = null): Pending {
+        val p = queue(ref, text, target, files, at, reply)
         if (!store.demo) SendWorker.scheduleAt(app, p.id, at)
         return p
     }
@@ -197,7 +197,7 @@ class Repo(context: Context) {
     /** Sends one queued message. Returns the card it landed on; on failure it stays queued, marked failed. */
     suspend fun deliver(ref: ChatRef, p: Pending): Result<String?> = sending.withLock {
         if (store.outbox().none { it.id == p.id }) return Result.success(p.target)   // already sent
-        val r = runCatching { source.send(ref, p.text, p.target, p.files.map { upload(it) }) }
+        val r = runCatching { source.send(ref, p.text, p.target, p.files.map { upload(it) }, p.reply) }
         val offline = r.exceptionOrNull()?.let(::isOffline) == true
         store.saveOutbox(
             if (r.isSuccess) Outbox.remove(store.outbox(), p.id)

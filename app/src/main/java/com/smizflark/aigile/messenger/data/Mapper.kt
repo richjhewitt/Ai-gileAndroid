@@ -33,6 +33,7 @@ object Mapper {
                 kind = Kind.FRIEND, id = c.id, name = c.name.ifBlank { "Friend" },
                 subtitle = if (c.checked) "🔒 Private, safety code checked" else "🔒 Private",
                 emoji = "", last = c.last, lastIn = c.lastIn,
+                safety = c.safety, checked = c.checked, typing = c.typing,
             )
         }
         return leads + friends
@@ -99,14 +100,18 @@ object Mapper {
     fun friend(ref: ChatRef, owner: String, msgs: List<FriendMsg>): Conversation {
         val bubbles = msgs.mapIndexed { i, m ->
             val mine = m.dir == "out"
+            val gone = m.deleted != null
+            // A reply shows its quoted line above the text, the way the bubble already shows a quote (AII-324).
+            val quoted = m.reply?.text?.takeIf { it.isNotBlank() && !gone }?.let { Quote.copy(it.trim()) }.orEmpty()
             Bubble(
                 key = m.id ?: "$i:${m.at}",
                 author = if (mine) owner else ref.name,
-                text = if (m.verified) (m.text ?: "") else "⚠️ Not verified: this message could not be checked",
-                at = m.at, mine = mine, unverified = !m.verified,
-                pics = if (m.verified) pics("/api/dms/contacts/${ref.id}/files/", m.attachments) else emptyList(),
+                text = if (gone) "" else if (m.verified) quoted + (m.text ?: "") else "⚠️ Not verified: this message could not be checked",
+                at = m.at, mine = mine, unverified = !m.verified && !gone,
+                pics = if (m.verified && !gone) pics("/api/dms/contacts/${ref.id}/files/", m.attachments) else emptyList(),
+                id = m.id, edited = m.edited?.takeIf { !gone }, deleted = gone,
             )
-        }.filter { it.text.isNotEmpty() || it.pics.isNotEmpty() }
+        }.filter { it.text.isNotEmpty() || it.pics.isNotEmpty() || it.deleted }
         return Conversation(ref, bubbles, lastFromThem = bubbles.lastOrNull { !it.mine }?.at)
     }
 
