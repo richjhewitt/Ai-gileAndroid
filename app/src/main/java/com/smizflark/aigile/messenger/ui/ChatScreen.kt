@@ -86,6 +86,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var picked by rememberSaveable { mutableStateOf(false) }
     var text by rememberSaveable { mutableStateOf(repo.store.draft(ref.key)) }
     var pics by rememberSaveable { mutableStateOf(listOf<String>()) }
+    var editingPic by remember { mutableStateOf<String?>(null) }   // AII-385: the picked picture in the crop and rotate editor
     var picNote by remember { mutableStateOf<String?>(null) }
     var detail by remember { mutableStateOf<CardDetail?>(null) }
     if (focus != null && ref.kind == Kind.LEAD) LaunchedEffect(focus) { detail = repo.card(ref, focus) }
@@ -412,6 +413,11 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 val next = if (list.firstVisibleItemIndex == 0 && convo != null && !finding) nextChat else null   // AII-204; only once its room at the end shows (AII-273: never over a message)
                 NextUnreadButton(next?.name) { next?.let(onOpenChat) }
             }
+            editingPic?.let { old ->   // AII-385: Done swaps the picked picture for the edited copy; the phone's original is never touched
+                PicEditorDialog(old, onCancel = { editingPic = null }, onDone = { new ->
+                    pics = pics.map { if (it == old) new else it }; File(old).delete(); editingPic = null
+                })
+            }
             // AII-333: the friend's safety code changed: no message box until you have read the new words to each other.
             if (safetyChanged) SafetyChangedBar(ref.name, onShow = { details = true },
                 onChecked = { scope.launch { runCatching { repo.acceptSafety(live) }.onFailure { error = it.message }; safetyOk++ } })
@@ -419,6 +425,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 pics = pics, picNote = picNote,
                 onAttach = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 onRemovePic = { f -> pics = pics - f; File(f).delete() },
+                onEditPic = if (ref.kind == Kind.FRIEND) ({ f -> editingPic = f }) else null,   // AII-385
                 onPasteCopied = if (copied.available && pics.size < MAX_PICS) ::pasteCopied else null,
                 onPictures = { u, m -> receivePictures(ref.kind, u, m, repo, scope, view.context, { pics }, { pics = it }, { picNote = it }) },
                 quote = quoting, onClearQuote = { quoting = null; replyId = null },

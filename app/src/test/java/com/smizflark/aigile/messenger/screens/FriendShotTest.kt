@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.ui.ChatScreen
@@ -105,5 +106,21 @@ class FriendShotTest : ShotBase() {
             com.smizflark.aigile.messenger.ui.Composer(davy(), "", {}, emptyList(), null, {}, voice = voice) {}
         }
         rule.onNodeWithTag("voice-send").assertIsDisplayed()
+    }
+
+    /** AII-385: the crop and rotate editor on a made-up picture, rotated once. */
+    @Test fun picEditorDark() {
+        val bmp = android.graphics.Bitmap.createBitmap(1200, 800, android.graphics.Bitmap.Config.ARGB_8888)
+        val c = android.graphics.Canvas(bmp)
+        c.drawColor(0xFF2E7D6B.toInt())
+        val paint = android.graphics.Paint().apply { color = 0xFFF2C14E.toInt() }
+        c.drawCircle(900f, 220f, 110f, paint)
+        paint.color = 0xFF1B3A4B.toInt(); c.drawRect(0f, 560f, 1200f, 800f, paint)
+        show(true) { com.smizflark.aigile.messenger.ui.PicEditor("x.jpg", {}, {}, preloaded = bmp) }
+        rule.onNodeWithTag("pic-editor").assertIsDisplayed()
+        rule.onNodeWithTag("pic-rotate").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("pic-done").assertIsDisplayed()
+        rule.onRoot().captureRoboImage("../docs/shots/pic_editor_dark.png")
     }
 }

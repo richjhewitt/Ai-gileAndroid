@@ -115,14 +115,15 @@ internal fun Missing(p: Pic) {
 
 /** Pictures picked but not sent yet, above the message box. Each has an ✕ to take it off. */
 @Composable
-fun PickedPictures(files: List<String>, onRemove: (String) -> Unit) {
+fun PickedPictures(files: List<String>, onEdit: ((String) -> Unit)? = null, onRemove: (String) -> Unit) {
     LazyRow(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(files, key = { it }) { f ->
             Box {
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(LocalContext.current).data(File(f)).build(),
                     contentDescription = stringResource(R.string.picture_to_send), contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(72.dp).clip(RoundedCornerShape(10.dp)).testTag("picked"),
+                    modifier = Modifier.size(72.dp).clip(RoundedCornerShape(10.dp))
+                        .then(if (onEdit != null) Modifier.clickable(onClickLabel = stringResource(R.string.pic_edit)) { onEdit(f) } else Modifier).testTag("picked"),   // AII-385
                     error = { Missing(Pic(f, File(f).name)) },
                 )
                 Surface(shape = CircleShape, color = MaterialTheme.colorScheme.inverseSurface,

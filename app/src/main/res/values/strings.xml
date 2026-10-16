@@ -445,6 +445,9 @@
     <string name="reset_settings">Reset settings</string>
     <string name="reset_settings_text">Reset all settings? Your board connection, pins and mutes stay.</string>
     <string name="reset">Reset</string>
+    <string name="pic_edit">Crop or rotate</string>
+    <string name="pic_rotate">Rotate</string>
+    <string name="pic_edit_failed">Could not open or save this picture</string>
     <string name="go_to_message">Go to message</string>
     <!-- What's new (AII-261), newest first; keep in step with WHATS_NEW in AboutScreen.kt -->
     <string name="whats_new">What\'s new</string>
