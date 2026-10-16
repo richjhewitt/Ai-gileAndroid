@@ -141,7 +141,7 @@ import androidx.compose.ui.platform.LocalView
 internal fun Composer(
     ref: ChatRef, text: String, onText: (String) -> Unit,
     targets: List<Pair<String?, String>>, target: String?, onTarget: (String?) -> Unit,
-    pics: List<String> = emptyList(), picNote: String? = null, onAttach: () -> Unit = {}, onRemovePic: (String) -> Unit = {},
+    pics: List<String> = emptyList(), picNote: String? = null, onAttach: () -> Unit = {}, onRemovePic: (String) -> Unit = {}, onEditPic: ((String) -> Unit)? = null,
     onPasteCopied: (() -> Unit)? = null,
     onPictures: (List<android.net.Uri>, List<String?>) -> Unit = { _, _ -> },   // AII-370: a GIF or sticker from the keyboard
     quote: String? = null, onClearQuote: () -> Unit = {},
@@ -179,7 +179,7 @@ internal fun Composer(
                 onClick = onPasteCopied, label = { Text(stringResource(R.string.paste_picture)) },
                 leadingIcon = { Icon(Icons.Default.ContentPaste, null) }, modifier = Modifier.testTag("paste-pic"),
             )
-            if (pics.isNotEmpty()) PickedPictures(pics, onRemovePic)
+            if (pics.isNotEmpty()) PickedPictures(pics, onEditPic, onRemovePic)
             // AII-179: ready-made replies while the box is empty; a tap puts one in the box, Send still sends it.
             if (Appearance.quickReplies && text.isEmpty() && pics.isEmpty()) QuickReplies(onText, onEditReplies)
             if (voice?.recording == true) RecordingLine(voice)

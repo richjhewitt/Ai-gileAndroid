@@ -442,6 +442,9 @@
     <string name="reset_settings">Instellingen herstellen</string>
     <string name="reset_settings_text">Alle instellingen herstellen? Je bordverbinding, vastgezette en gedempte chats blijven staan.</string>
     <string name="reset">Herstel</string>
+    <string name="pic_edit">Bijsnijden of draaien</string>
+    <string name="pic_rotate">Draaien</string>
+    <string name="pic_edit_failed">Deze foto kon niet worden geopend of opgeslagen</string>
     <string name="go_to_message">Ga naar bericht</string>
     <!-- What's new (AII-261), newest first; keep in step with WHATS_NEW in AboutScreen.kt -->
     <string name="whats_new">Wat is er nieuw</string>
