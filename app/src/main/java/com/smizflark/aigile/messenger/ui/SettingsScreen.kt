@@ -147,7 +147,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
             Toggle(stringResource(R.string.muted_last), stringResource(R.string.muted_last_sub), Appearance.mutedLast, Modifier.testTag("mutedLast")) {
                 Appearance.mutedLast = it; s.mutedLast = it
             }
-            SortPick(Appearance.sortAz) { Appearance.sortAz = it; s.sortChats = if (it) "az" else "newest" }
+            SortPick(Appearance.sort) { Appearance.sort = it; s.sortChats = it }
             SwipePick(stringResource(R.string.swipe_right), Appearance.swipeRight, "swipeRight") { Appearance.swipeRight = it; s.swipeRight = it.id }
             SwipePick(stringResource(R.string.swipe_left), Appearance.swipeLeft, "swipeLeft") { Appearance.swipeLeft = it; s.swipeLeft = it.id }
 

@@ -41,12 +41,18 @@ class PinsTest {
 
     @Test fun aToZSortsByNameIgnoringCaseAndNewestKeepsBoardOrder() {
         val z = ChatRef(Kind.LEAD, "z", "zed", "", "")
-        assertEquals(listOf(a, b, d, z), sortChats(listOf(z, b, d, a), true))
-        assertEquals(listOf(z, b, a), sortChats(listOf(z, b, a), false))
+        assertEquals(listOf(a, b, d, z), sortChats(listOf(z, b, d, a), "az"))
+        assertEquals(listOf(z, b, a), sortChats(listOf(z, b, a), "newest"))
+    }
+
+    @Test fun unreadFirstKeepsEachGroupInItsOrder() {
+        val unread = setOf(c.key, a.key)
+        assertEquals(listOf(c, a, b, d), sortChats(listOf(b, c, d, a), "unread") { it.key in unread })
+        assertEquals(listOf(b, c, d, a), sortChats(listOf(b, c, d, a), "newest") { it.key in unread })
     }
 
     @Test fun pinsAndMutedStillWinAfterSorting() {
-        val sorted = sortChats(listOf(d, c, b, a), true)
+        val sorted = sortChats(listOf(d, c, b, a), "az")
         assertEquals(listOf(d, a, c, b), mutedLast(sorted, setOf(d.key), setOf(b.key, d.key)))
     }
 }

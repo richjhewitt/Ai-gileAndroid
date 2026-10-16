@@ -311,7 +311,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     else EmptyState(androidx.compose.ui.res.stringResource(R.string.empty_loading))
                 }
                 val unsent = outbox.groupBy { it.chat }
-                val sorted = com.smizflark.aigile.messenger.data.sortChats(shown, Appearance.sortAz)
+                val sorted = com.smizflark.aigile.messenger.data.sortChats(shown, Appearance.sort) { News.fresh(it, seen[it.key]) }
                 val rows = (if (Appearance.mutedLast) mutedLast(sorted, pinned, muted) else pinFirst(sorted, pinned)) + if (showClosed) shut else emptyList()
                 items(rows, key = { it.key }) { c ->
                     val isShut = c in shut
