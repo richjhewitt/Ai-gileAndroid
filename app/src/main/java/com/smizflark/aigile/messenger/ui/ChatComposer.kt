@@ -143,6 +143,7 @@ internal fun Composer(
     targets: List<Pair<String?, String>>, target: String?, onTarget: (String?) -> Unit,
     pics: List<String> = emptyList(), picNote: String? = null, onAttach: () -> Unit = {}, onRemovePic: (String) -> Unit = {},
     onPasteCopied: (() -> Unit)? = null,
+    onPictures: (List<android.net.Uri>, List<String?>) -> Unit = { _, _ -> },   // AII-370: a GIF or sticker from the keyboard
     quote: String? = null, onClearQuote: () -> Unit = {},
     onSendLater: ((Instant) -> Unit)? = null,
     onEditReplies: () -> Unit = {},
@@ -187,17 +188,10 @@ internal fun Composer(
                 IconButton(onClick = onAttach, enabled = pics.size < MAX_PICS, modifier = Modifier.size(52.dp).testTag("attach")) {
                     Icon(Icons.Default.AddPhotoAlternate, stringResource(R.string.add_picture))
                 }
-                // Text put in from outside (a draft, dictation, Edit on Send later: AII-150) gets the cursor at its end, not the start.
-                var field by remember { mutableStateOf(TextFieldValue(text, TextRange(text.length))) }
-                if (field.text != text) field = TextFieldValue(text, TextRange(text.length))
-                OutlinedTextField(
-                    value = field, onValueChange = { field = it; onText(it.text) }, maxLines = 6,
+                MessageField(   // MessageField.kt: text from outside gets the cursor at its end (AII-150); Enter sends (AII-126)
+                    text, onText, canSend, onSend, onPictures,
                     placeholder = { Text(stringResource(if (ref.kind == Kind.WATCHMAN) R.string.message_watchman else R.string.message)) },
                     trailingIcon = { MicButton(voice = voice) { onText(Dictate.join(text, it)) } },
-                    shape = RoundedCornerShape(24.dp),
-                    // Enter sends (AII-126): the keyboard shows a Send key, and a hardware Enter sends too (Shift+Enter still makes a new line).
-                    keyboardOptions = if (Appearance.enterSends) KeyboardOptions(imeAction = ImeAction.Send) else KeyboardOptions.Default,
-                    keyboardActions = KeyboardActions(onSend = { if (canSend) onSend() }),
                     modifier = Modifier.weight(1f).testTag("input").onPreviewKeyEvent {
                         val enter = it.key == Key.Enter || it.key == Key.NumPadEnter
                         if (!Appearance.enterSends || !enter || it.isShiftPressed) false

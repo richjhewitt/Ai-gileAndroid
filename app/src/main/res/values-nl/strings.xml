@@ -109,6 +109,7 @@
     <string name="replying_to">Antwoord op: %1$s</string>
     <string name="quote_cancel">Niet hierop antwoorden</string>
     <string name="paste_picture">Gekopieerde foto plakken</string>
+    <string name="pictures_friend_only">Foto\'s kunnen alleen in vriendenchats</string>
     <string name="add_picture">Foto toevoegen</string>
     <string name="message_watchman">Bericht aan de Lead Scrum Master</string>
     <string name="message">Bericht</string>

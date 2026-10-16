@@ -382,6 +382,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 onAttach = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 onRemovePic = { f -> pics = pics - f; File(f).delete() },
                 onPasteCopied = if (copied.available && pics.size < MAX_PICS) ::pasteCopied else null,
+                onPictures = { u, m -> receivePictures(ref.kind, u, m, repo, scope, view.context, { pics }, { pics = it }, { picNote = it }) },
                 quote = quoting, onClearQuote = { quoting = null; replyId = null },
                 onSendLater = { at -> sendTyped(at) }, onEditReplies = onEditReplies, voice = voice,
             ) { sendTyped() }
