@@ -64,6 +64,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var alerts by remember { mutableStateOf(s.alerts) }
+    var lockOn by remember { mutableStateOf(s.lock) }
     var quietOn by remember { mutableStateOf(s.quietOn) }
     var from by remember { mutableStateOf(s.quietFrom) }
     var to by remember { mutableStateOf(s.quietTo) }
@@ -97,6 +98,13 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: () -> Unit) {
             HorizontalDivider()
 
             AppearanceSettings(s)
+            HorizontalDivider()
+
+            Text("Privacy", style = MaterialTheme.typography.titleMedium)
+            Toggle("Lock with fingerprint", "Asks for your fingerprint, face or phone PIN when you open the app", lockOn) {
+                if (it && !Lock.available(ctx)) note = "This phone has no fingerprint, face or PIN set up yet."
+                else { lockOn = it; s.lock = it }
+            }
             HorizontalDivider()
 
             Text("Alerts", style = MaterialTheme.typography.titleMedium)

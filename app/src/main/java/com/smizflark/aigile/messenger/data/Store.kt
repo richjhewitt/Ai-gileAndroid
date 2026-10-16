@@ -78,6 +78,11 @@ class Store(context: Context) {
         get() = prefs.getBoolean("alerts", true)
         set(v) = prefs.edit().putBoolean("alerts", v).apply()
 
+    /** Ask for fingerprint, face or PIN when the app opens (AII-63). */
+    var lock: Boolean
+        get() = prefs.getBoolean("lock", false)
+        set(v) = prefs.edit().putBoolean("lock", v).apply()
+
     var quietFrom: Int
         get() = prefs.getInt("quietFrom", 22)
         set(v) = prefs.edit().putInt("quietFrom", v).apply()
