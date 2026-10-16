@@ -62,7 +62,7 @@ internal fun ChatTopBar(
     // AII-375: the chat's colour tints the bar.
     val tint = com.smizflark.aigile.messenger.data.ChatColour.tint(chatColour, MaterialTheme.colorScheme.surface.luminance() < 0.5f)
     val tintOn = tint?.let { Color(it.text) }
-    TopAppBar(
+    TopAppBar(expandedHeight = barHeight(),
         colors = if (tint == null) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(containerColor = Color(tint.fill), titleContentColor = tintOn!!, navigationIconContentColor = tintOn, actionIconContentColor = tintOn),
         navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
         title = {
@@ -140,3 +140,7 @@ internal fun SelectTopBar(count: Int, onLeave: () -> Unit, onCopy: () -> Unit, o
 private class NoTouchPadding(base: ViewConfiguration) : ViewConfiguration by base {
     override val minimumTouchTargetSize: DpSize get() = DpSize.Zero
 }
+
+/** AII-410: the top bar is 64dp at normal text and grows with a bigger font, so two-line titles and the search field are not clipped. */
+@Composable
+internal fun barHeight(): androidx.compose.ui.unit.Dp = 64.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f)
