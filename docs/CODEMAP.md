@@ -52,6 +52,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/NextUnread.kt: which chat the Next unread button at the bottom of a chat goes to (AII-204); button in ui/ChatParts.kt.
 - data/QuickReply.kt: replying from the notification.
 - data/Quote.kt: quoting a message in a reply.
+- Quote part of a message (AII-409): the Select text dialog (ui/ChatBubble.kt SelectText, read-only BasicTextField on a TextFieldState) has a Quote button for the picked words; Quote.part makes the "> **Name:** words" line, ChatScreen.startReply does the rest like Reply (same reply id; Quote.source also finds the original from part of its text); test quotePartOfAMessage.
 - data/Replies.kt: your own quick replies, one per line in Settings (AII-180).
 - data/Recent.kt: recent searches, newest first, at most 5 (AII-155).
 - data/Repo.kt: the one place screens and background checks get chats from.

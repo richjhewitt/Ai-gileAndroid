@@ -1,7 +1,6 @@
 package com.smizflark.aigile.messenger.ui
 
 import androidx.compose.material3.AlertDialog
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -75,6 +74,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -140,7 +140,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null, onReact: ((Bubble, String) -> Unit)? = null, pinned: Boolean = false, onPin: (() -> Unit)? = null, selectMode: Boolean = false, picked: Boolean = false, onToggle: () -> Unit = {}, onPick: (() -> Unit)? = null, chatColour: String = "") {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, onQuotePart: (Bubble, String) -> Unit = { _, _ -> }, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null, onReact: ((Bubble, String) -> Unit)? = null, pinned: Boolean = false, onPin: (() -> Unit)? = null, selectMode: Boolean = false, picked: Boolean = false, onToggle: () -> Unit = {}, onPick: (() -> Unit)? = null, chatColour: String = "") {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val tint = if (b.mine && !b.unverified) com.smizflark.aigile.messenger.data.ChatColour.tint(chatColour, cs.surface.luminance() < 0.5f) else null   // AII-375
@@ -319,7 +319,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             })
         }
         }
-        if (selecting) SelectText(shown.text) { selecting = false }
+        if (selecting) SelectText(shown.text, onQuote = { selecting = false; onQuotePart(b, it) }) { selecting = false }
         if ((showTime || Appearance.showTimes) && b.at.isNotBlank()) Text(fullTime(b.at), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp).testTag("fulltime"))
         if (remindAt != null) Text(com.smizflark.aigile.messenger.data.Remind.label(remindAt, com.smizflark.aigile.messenger.data.Now.millis()), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant,
@@ -331,18 +331,25 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
     }
 }
 
-/** The message on its own, so you can drag the handles over just the part you want and copy it (AII-127). */
+/** The message on its own, so you can drag the handles over just the part you want and copy it (AII-127) or quote it (AII-409). */
 @Composable
-private fun SelectText(text: String, onClose: () -> Unit) = AlertDialog(
-    onDismissRequest = onClose,
-    title = { Text(stringResource(R.string.select_text)) },
-    text = {
-        SelectionContainer(Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
-            Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.testTag("select-text"))
-        }
-    },
-    confirmButton = { TextButton(onClick = onClose) { Text(stringResource(R.string.done)) } },
-)
+internal fun SelectText(text: String, onQuote: (String) -> Unit, onClose: () -> Unit) {
+    val field = androidx.compose.foundation.text.input.rememberTextFieldState(text)
+    val sel = field.selection
+    val picked = if (sel.collapsed) "" else field.text.substring(sel.min, sel.max)
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text(stringResource(R.string.select_text)) },
+        text = {
+            androidx.compose.foundation.text.BasicTextField(field, readOnly = true,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.Transparent),   // read-only: no cursor to blink (steady shots)
+                modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp).testTag("select-text"))
+        },
+        confirmButton = { TextButton(onClick = onClose) { Text(stringResource(R.string.done)) } },
+        dismissButton = { TextButton(onClick = { onQuote(picked) }, enabled = picked.isNotBlank(), modifier = Modifier.testTag("select-quote")) { Text(stringResource(R.string.quote_selected)) } },
+    )
+}
 
 private val SWIPE_REPLY = 72.dp
 
