@@ -48,6 +48,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Cleared.kt: Clear chat for me (AII-363): per chat a cleared-before time (Store cleared), messages up to it are hidden on this phone only (Cleared.visible, applied in ui/ChatRows.kt rows); Clear chat in the chat details and top bar menu, confirm dialog, Undo snackbar in ui/ChatScreen.kt.
 - data/Pause.kt: pause alerts for a while.
 - data/Pins.kt: pinned chats first; sortChats = Newest first / A to Z / Unread first (AII-241, AII-404, Settings, Store sortChats) applied before pins and muted-last.
+- data/KeyShortcuts.kt: hardware keyboard shortcuts (AII-408): Ctrl+F search, Ctrl+N new message, Esc back, Alt+Down / Alt+Up next / previous chat; MainActivity.dispatchKeyEvent runs them, onProvideKeyboardShortcuts lists them (strings key_*); test KeyShortcutsTest.
 - data/NextUnread.kt: which chat the Next unread button at the bottom of a chat goes to (AII-204); button in ui/ChatParts.kt.
 - data/QuickReply.kt: replying from the notification.
 - data/Quote.kt: quoting a message in a reply.

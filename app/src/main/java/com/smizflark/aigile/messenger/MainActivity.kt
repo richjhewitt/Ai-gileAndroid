@@ -4,6 +4,20 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.KeyboardShortcutGroup
+import android.view.KeyboardShortcutInfo
+import android.view.KeyEvent
+import android.view.Menu
+import androidx.compose.runtime.SideEffect
+import com.smizflark.aigile.messenger.data.Closed
+import com.smizflark.aigile.messenger.data.KeyAction
+import com.smizflark.aigile.messenger.data.News
+import com.smizflark.aigile.messenger.data.keyAction
+import com.smizflark.aigile.messenger.data.mutedLast
+import com.smizflark.aigile.messenger.data.neighbourChat
+import com.smizflark.aigile.messenger.data.pinFirst
+import com.smizflark.aigile.messenger.data.sortChats
+import com.smizflark.aigile.messenger.ui.Appearance
 import android.os.SystemClock
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -84,6 +98,29 @@ class MainActivity : FragmentActivity() {
             MessengerTheme(repo.store) {
                 val nav = rememberNavController()
                 var selected by rememberSaveable { mutableStateOf<String?>(null) }   // AII-350: the chat open in the right pane
+                val wideNow = isWide(LocalConfiguration.current.screenWidthDp.toFloat(), LocalConfiguration.current.screenHeightDp.toFloat())
+                SideEffect {   // AII-408: hardware keyboard shortcuts, see dispatchKeyEvent
+                    keyAct = { act ->
+                        val route = nav.currentDestination?.route
+                        if (repo.store.connected && !locked) when (act) {
+                            KeyAction.BACK -> onBackPressedDispatcher.onBackPressed()
+                            KeyAction.SEARCH -> if (route != "search" && route != CONNECT) nav.navigate("search") { launchSingleTop = true }
+                            KeyAction.NEW_MESSAGE -> if (route != "new" && route != CONNECT) nav.navigate("new") { launchSingleTop = true }
+                            KeyAction.NEXT_CHAT, KeyAction.PREVIOUS_CHAT -> {
+                                val inChat = route?.startsWith("chat/") == true
+                                if (inChat || route == "chats") {
+                                    val cur = if (inChat) nav.currentBackStackEntry?.arguments?.getString("key")?.let { Uri.decode(it) } else if (wideNow) selected else null
+                                    val next = neighbourChat(chatOrder(repo), cur, if (act == KeyAction.NEXT_CHAT) 1 else -1)
+                                    if (next != null) when {
+                                        inChat -> { nav.popBackStack(); nav.openChat(next) }
+                                        wideNow -> selected = next
+                                        else -> nav.openChat(next)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 val start = if (repo.store.connected) "chats" else CONNECT
                 PictureHost { NavHost(nav, startDestination = start) {
                     composable(CONNECT, arguments = listOf(navArgument("out") { defaultValue = false; type = NavType.BoolType })) { e ->
@@ -176,6 +213,44 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    private var keyAct: ((KeyAction) -> Unit)? = null
+
+    /** The chats in the order the chats list shows them, without closed ones (AII-408). */
+    private fun chatOrder(repo: com.smizflark.aigile.messenger.data.Repo): List<String> {
+        val all = repo.store.cachedChats().orEmpty()
+        val cl = repo.store.closed()
+        val seen = repo.store.seen()
+        val shown = all.filter { !Closed.hidden(it, cl[it.key]) }
+        val sorted = sortChats(shown, Appearance.sort) { News.fresh(it, seen[it.key]) }
+        val pinned = repo.store.pinned
+        return (if (Appearance.mutedLast) mutedLast(sorted, pinned, repo.store.muted()) else pinFirst(sorted, pinned)).map { it.key }
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN || event.action == KeyEvent.ACTION_UP) {
+            val act = keyAction(event.keyCode, event.isCtrlPressed, event.isAltPressed, event.isShiftPressed, event.isMetaPressed)
+            if (act != null && keyAct != null) {
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) keyAct?.invoke(act)
+                return true
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    /** Keyboard Shortcuts Helper (hold Meta, or Ctrl+Alt+/): lists the shortcuts above (AII-408). */
+    override fun onProvideKeyboardShortcuts(data: MutableList<KeyboardShortcutGroup>, menu: Menu?, deviceId: Int) {
+        val ctrl = KeyEvent.META_CTRL_ON
+        val alt = KeyEvent.META_ALT_ON
+        data.add(KeyboardShortcutGroup(getString(R.string.app_name), listOf(
+            KeyboardShortcutInfo(getString(R.string.key_search), KeyEvent.KEYCODE_F, ctrl),
+            KeyboardShortcutInfo(getString(R.string.key_new), KeyEvent.KEYCODE_N, ctrl),
+            KeyboardShortcutInfo(getString(R.string.key_back), KeyEvent.KEYCODE_ESCAPE, 0),
+            KeyboardShortcutInfo(getString(R.string.key_next_chat), KeyEvent.KEYCODE_DPAD_DOWN, alt),
+            KeyboardShortcutInfo(getString(R.string.key_prev_chat), KeyEvent.KEYCODE_DPAD_UP, alt),
+        )))
+        super.onProvideKeyboardShortcuts(data, menu, deviceId)
     }
 
     private fun NavHostController.openChat(key: String, msg: String? = null) =

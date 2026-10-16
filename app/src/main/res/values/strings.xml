@@ -543,4 +543,9 @@
     <string name="kw_privacy">private hide screenshot</string>
     <string name="kw_storage">cache pictures space clean up delete</string>
     <string name="kw_backup">backup save copy</string>
+    <string name="key_search">Search</string>
+    <string name="key_new">New message</string>
+    <string name="key_back">Back</string>
+    <string name="key_next_chat">Next chat</string>
+    <string name="key_prev_chat">Previous chat</string>
 </resources>

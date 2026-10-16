@@ -543,4 +543,9 @@
     <string name="kw_privacy">privé verbergen schermafbeelding screenshot</string>
     <string name="kw_storage">cache plaatjes foto\'s ruimte opruimen verwijderen</string>
     <string name="kw_backup">back-up backup bewaren kopie</string>
+    <string name="key_search">Zoeken</string>
+    <string name="key_new">Nieuw bericht</string>
+    <string name="key_back">Terug</string>
+    <string name="key_next_chat">Volgende chat</string>
+    <string name="key_prev_chat">Vorige chat</string>
 </resources>
