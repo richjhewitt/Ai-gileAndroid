@@ -349,7 +349,8 @@ fun ChatScreen(repo: Repo, listed: ChatRef, onBack: () -> Unit, focus: String? =
             val chatPins = PinnedMsgs.inChat(pins, ref.key)
             if (chatPins.isNotEmpty()) {
                 val sh = PinnedMsgs.clamp(pinShown, chatPins.size); val p = chatPins[sh]
-                PinnedBar(p.text, sh, chatPins.size, onTap = { jumpToStar(p.key); pinShown = PinnedMsgs.next(sh, chatPins.size) },
+                val pinColors = MaterialTheme.colorScheme
+                PinnedBar(Markdown.render(p.text, pinColors.surfaceVariant, pinColors.primary).text, sh, chatPins.size, onTap = { jumpToStar(p.key); pinShown = PinnedMsgs.next(sh, chatPins.size) },
                     onUnpin = { pins = PinnedMsgs.remove(pins, ref.key, p.key); repo.store.setPinnedMsgs(pins) })
             }
             if (finding) FindBar(query, { query = it }, hits.size, current,
