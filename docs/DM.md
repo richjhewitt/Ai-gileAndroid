@@ -1,6 +1,6 @@
 # Native direct messages (AII-321)
 
-Built from our own design while the chilled chat audit (AII-322) is blocked; the audit will be checked against this.
+Chilled chat audit: docs/DM-AUDIT.md (AII-322).
 
 ## Security (AII-325), `data/DmCrypto.kt`
 - Each device holds a P-256 key pair; the private key never leaves the phone
@@ -24,10 +24,12 @@ Why C:
 
 Screens to build (AII-324): People chip, new DM sheet (pick a person), the DM chat (the existing chat screen with a lock line), safety number sheet.
 
-## Board relay spec (needed by AII-324, a change in the board repo)
-- `GET /api/dm/people`: people you can message, each with `id`, `name`, `publicKey`
-- `PUT /api/dm/key`: publish this device's public key
-- `GET /api/dm/chats`: your DM chats with last sealed message and unread count
-- `POST /api/dm/chats/<id>/messages`: body `{sealed}`; board stores ciphertext and the sender's key fingerprint only
-- `GET /api/dm/chats/<id>/messages?after=<n>`: sealed messages; the app opens them with `DmCrypto`
-- All calls ride the existing sealed phone link, so the relay never sees plain text
+## Board API used (AII-324, AII-326)
+The relay spec once planned here was dropped: the board already has secure friend DMs (its own keys, relay and six safety words, lifted from chilled chat), so the app uses those and `DmCrypto` is kept unused for now.
+- `GET /api/dms/contacts`: friends, with `safety`, `checked`, `typing`, last times
+- `PATCH /api/dms/contacts/<id>` `{checked: true}`: we read the safety words to each other
+- `GET|POST /api/dms/contacts/<id>/messages`: lines; a POST may carry `reply` (a line id) and sealed `attachments`
+- `PATCH|DELETE /api/dms/contacts/<id>/messages/<mid>`: edit or delete one of your own lines
+- `POST /api/dms/contacts/<id>/messages/<mid>/react` `{emoji}`: toggle your reaction (reactions are not sealed, see DM-AUDIT.md)
+- `POST /api/dms/contacts/<id>/typing`: at most every 4 s
+- All calls ride the existing sealed phone link (`data/Seal.kt`)
