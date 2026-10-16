@@ -123,7 +123,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - widget/ChatWidget.kt + ChatWidgetConfig.kt + ChatWidgetLogic.kt: One chat widget (AII-380): pick a chat when adding it (per appWidgetId, ChatWidgetPicks), shows its newest 3 messages from the cache, tap opens that chat; refreshed by LatestWidget.refresh; lines / trimming / id mapping in ChatWidgetLogic (ChatWidgetLogicTest).
 
 ## work/ (background)
-- work/ChatNotifier.kt: builds and shows message alerts (quick replies as chips on Reply, AII-181).
+- work/ChatNotifier.kt: builds and shows message alerts (quick replies as chips on Reply, AII-181); the grouped summary has Mark all as read (AII-387, ReadReceiver.ACTION_ALL over alertingChats, chat key kept in each alert's extras).
 - work/CheckWorker.kt: looks for new messages about every 15 minutes.
 - work/PauseTile.kt: Quick Settings tile Pause alerts (AII-367): tap pauses 1 hour, tap again turns alerts back on; shows Until HH:MM on Android 10+; logic in PauseTileLogic.
 - work/ReadReceiver.kt: the Mark as read button on an alert.
