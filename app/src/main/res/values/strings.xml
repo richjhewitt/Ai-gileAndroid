@@ -232,6 +232,9 @@
     <string name="voice_hold_label">Hold to record a voice note</string>
     <string name="voice_denied">Allow the microphone to record voice notes.</string>
     <string name="voice_failed">Couldn\'t record.</string>
+    <string name="voice_delete">Delete voice note</string>
+    <string name="voice_send">Send voice note</string>
+    <string name="voice_lock_hint">Slide up to lock</string>
     <string name="voice_too_short">Hold the mic to record, let go to send.</string>
     <string name="voice_play_len">Play voice note, %1$s</string>
     <string name="voice_play">Play voice note</string>

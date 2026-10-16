@@ -97,4 +97,13 @@ class FriendShotTest : ShotBase() {
         }
         rule.onNodeWithTag("recording").assertIsDisplayed()
     }
+
+    @Test fun recordingLockedDark() {
+        shot("chat_friend_recording_locked", true) {
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            val voice = com.smizflark.aigile.messenger.ui.VoiceController.preview(ctx, kotlinx.coroutines.MainScope(), 7_000, locked = true)
+            com.smizflark.aigile.messenger.ui.Composer(davy(), "", {}, emptyList(), null, {}, voice = voice) {}
+        }
+        rule.onNodeWithTag("voice-send").assertIsDisplayed()
+    }
 }
