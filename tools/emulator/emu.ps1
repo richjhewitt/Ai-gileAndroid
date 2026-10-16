@@ -11,7 +11,7 @@ $emuExe = "$Sdk/emulator/emulator.exe"
 $pkg = 'com.smizflark.aigile.messenger'
 $script:emu = $null
 
-function Fail($m) { Write-Host "FAIL: $m"; try { (Dump).OuterXml | Out-File (Join-Path $env:TEMP 'smoke-ui.xml') -Encoding utf8; Write-Host "screen saved to TEMP\smoke-ui.xml" } catch {}; Cleanup; exit 1 }
+function Fail($m) { Write-Host "FAIL: $m"; try { (Dump).OuterXml | Out-File (Join-Path $env:TEMP 'smoke-ui.xml') -Encoding utf8; Write-Host "screen saved to TEMP\smoke-ui.xml" } catch {}; try { & $adb logcat -d -b crash,main -t 400 | Out-File (Join-Path $env:TEMP 'smoke-crash.txt') -Encoding utf8; Write-Host "crash log saved to TEMP\smoke-crash.txt" } catch {}; Cleanup; exit 1 }
 function Cleanup {
   if ($script:onCleanup) { try { & $script:onCleanup } catch {} }
   try { & $adb -s emulator-5584 emu kill 2>$null | Out-Null } catch {}
