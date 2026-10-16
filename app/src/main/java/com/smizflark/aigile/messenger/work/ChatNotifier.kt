@@ -102,7 +102,7 @@ object ChatNotifier {
         val own = ChatSound.of(Store(context).chatSounds, chat)
         val b = base(context, channelFor(context, chat, name)).setContentTitle(name).setStyle(style).setSilent(quiet || (ChatSound.isNone(own) && Build.VERSION.SDK_INT < 26))
         if (own.isNotEmpty() && !ChatSound.isNone(own) && !quiet && Build.VERSION.SDK_INT < 26) b.setSound(android.net.Uri.parse(own))
-            .setContentIntent(openChat(context, chat, id)).addAction(action).addAction(readAction).setGroup(GROUP)
+        b.setContentIntent(openChat(context, chat, id)).addAction(action).addAction(readAction).setGroup(GROUP)
         // AII-210: Remind me in 1 hour, for the newest message in this alert (kept in the alert's extras so later lines keep it).
         if (msg != null && text != null) {
             val remind = Intent(context, RemindReceiver::class.java).setAction(RemindReceiver.ACTION).putExtra(CheckWorker.EXTRA_CHAT, chat)
