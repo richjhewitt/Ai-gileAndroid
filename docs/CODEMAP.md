@@ -59,7 +59,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Selection.kt: select several messages (AII-371): toggle and the picked messages' text, oldest first in Transcript style; hold menu Select (ui/BubbleMenu.kt), tinted picked bubbles (ui/ChatBubble.kt), SelectTopBar with Copy / Share / Star (ui/ChatTopBar.kt), state in ui/ChatScreen.kt; shot selectModeLight.
 - data/Stars.kt: starred messages (AII-138), listed in the chat details; lead chats kept in step with the board (AII-141, Repo syncStars; Starred refreshes them on open, AII-162).
 - data/PinnedMsgs.kt: pinned messages (AII-339), this phone only (Store pinnedMsgs); Pin / Unpin in the bubble hold menu, the pinned bar under the chat's top bar (PinnedBar in ui/ChatParts.kt; tap jumps and cycles "1 of N", X unpins). Not Pins.kt, which is pinned chats.
-- data/SavedPictures.kt: size of the saved pictures and which files Clear may delete, never ones waiting in the outbox (AII-215).
+- data/SavedPictures.kt: size of the saved pictures and which files Clear may delete, never ones waiting in the outbox (AII-215). Also per chat (AII-392): chatKeys = the chat's board / web pictures as Coil disk-cache keys (the picture's address), usage = count and bytes of those saved, removableKeys; Storage line and Clear pictures button in ui/ChatDetails.kt.
 - data/Store.kt: pairing in the "messenger" prefs (not backed up), settings in the "settings" prefs (backed up, AII-81); extends StoreFiles.
 - data/StoreFiles.kt: Store's saved files: drafts, closed / cleared / starred / pinned / reminders / seen / told lists, the chat cache and the outbox (AII-366 split).
 - data/Vault.kt: the phone key sealed with the Android Keystore.

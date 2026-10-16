@@ -398,6 +398,14 @@
     <string name="open_cards">Open cards</string>
     <string name="no_open_cards">Nothing is waiting on you.</string>
     <string name="chat_pictures">Pictures in this chat</string>
+    <string name="chat_storage">Storage: %1$s, %2$s</string>
+    <plurals name="chat_storage_pictures">
+        <item quantity="one">%d picture</item>
+        <item quantity="other">%d pictures</item>
+    </plurals>
+    <string name="clear_chat_pictures">Clear pictures</string>
+    <string name="clear_chat_pictures_title">Clear this chat\'s pictures?</string>
+    <string name="clear_chat_pictures_text">The pictures of this chat saved on this phone are deleted. They load again from the board when you open them. Pictures waiting to be sent are kept.</string>
     <string name="no_chat_pictures">No pictures yet.</string>
     <string name="chat_links">Links in this chat</string>
     <string name="chat_files">Files in this chat</string>

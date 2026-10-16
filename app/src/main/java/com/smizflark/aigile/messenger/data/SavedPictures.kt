@@ -35,4 +35,26 @@ object SavedPictures {
         all.filter { it.path in go }.forEach { it.delete() }
         return size(cacheDir)
     }
+
+    /** AII-392: what one chat's saved pictures use: how many are on the phone, and their bytes. */
+    data class Usage(val count: Int, val bytes: Long)
+
+    /**
+     * The cache keys (Coil's disk cache is keyed by the picture's address) of a chat's pictures that are on the board or the web.
+     * Pictures on the phone itself (file: / content:, e.g. waiting in the outbox) are never in the cache, so never here.
+     */
+    fun chatKeys(pics: List<Pic>, urlOf: (String) -> String): List<String> =
+        pics.filter { it.image && !it.local && it.path.isNotBlank() }.map { urlOf(it.path) }.distinct()
+
+    /** Of [keys], those with a saved file ([sizeOf] gives its bytes, null = not saved); count and total size. */
+    fun usage(keys: List<String>, sizeOf: (String) -> Long?): Usage {
+        val sizes = keys.mapNotNull { sizeOf(it) }
+        return Usage(sizes.size, sizes.sum())
+    }
+
+    /** Of [keys], the ones Clear pictures may delete: never a key of a picture still waiting in the outbox ([pending] files). */
+    fun removableKeys(keys: List<String>, pending: List<Pending>): List<String> {
+        val keep = pending.flatMap { it.files }.map { norm(it).removePrefix("file://") }.toSet()
+        return keys.filter { norm(it).removePrefix("file://") !in keep }
+    }
 }

@@ -13,6 +13,25 @@ class SavedPicturesTest {
         assertEquals("1023 KB", SavedPictures.format(1023L * 1024))
     }
 
+    @Test fun chatKeysAreBoardAndWebPicturesOnly() {
+        val pics = listOf(Pic("/api/f/1", "a.png"), Pic("/api/f/1", "a.png"), Pic("file:///out/b.jpg", "b.jpg"),
+            Pic("https://x/y.gif"), Pic("/api/f/doc", "d.pdf"))
+        assertEquals(listOf("http://b/api/f/1", "https://x/y.gif"),
+            SavedPictures.chatKeys(pics) { if (it.startsWith("http")) it else "http://b$it" })
+    }
+
+    @Test fun usageCountsOnlySavedOnes() {
+        val sizes = mapOf("a" to 1024L, "c" to 2048L)
+        assertEquals(SavedPictures.Usage(2, 3072), SavedPictures.usage(listOf("a", "b", "c")) { sizes[it] })
+        assertEquals(SavedPictures.Usage(0, 0), SavedPictures.usage(emptyList()) { 5 })
+    }
+
+    @Test fun clearChatNeverTouchesOutboxPictures() {
+        val p = Pending(id = "1", chat = "c", text = "", target = null, at = "", files = listOf("/data/outbox/ab-cat.jpg"))
+        assertEquals(listOf("http://b/api/f/1"), SavedPictures.removableKeys(listOf("/data/outbox/ab-cat.jpg", "http://b/api/f/1"), listOf(p)))
+        assertEquals(listOf("k"), SavedPictures.removableKeys(listOf("k"), emptyList()))
+    }
+
     @Test fun keepsPicturesWaitingInTheOutbox() {
         val p = Pending(id = "1", chat = "c", text = "", target = null, at = "", files = listOf("/data/outbox/ab-cat.jpg"))
         val all = listOf("/data/outbox/ab-cat.jpg", "/cache/image_cache/x.0", "/cache/files/doc.pdf")
