@@ -80,6 +80,8 @@ Write-Host "booted"
 & $adb shell input keyevent 82
 
 & $adb install -r $Apk | Out-String | Write-Host
+# Start from a fresh app every run: a pairing left over from an earlier run skips the Connect screen
+& $adb shell pm clear $pkg | Out-Null
 & $adb shell pm grant $pkg android.permission.POST_NOTIFICATIONS 2>$null
 # am start, not monkey: monkey gives up if Play Services freezes during a cold boot
 & $adb shell input keyevent 3
