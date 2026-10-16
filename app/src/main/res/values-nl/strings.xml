@@ -473,4 +473,7 @@
     <string name="clear_chat_title">Dit gesprek wissen?</string>
     <string name="clear_chat_body">Verbergt alle berichten tot nu, alleen op deze telefoon. Het bord en je vriend houden hun berichten, en nieuwere berichten zie je gewoon.</string>
     <string name="chat_cleared">Gesprek gewist</string>
+    <string name="format_bold">Vet</string>
+    <string name="format_italic">Cursief</string>
+    <string name="format_code">Code</string>
 </resources>

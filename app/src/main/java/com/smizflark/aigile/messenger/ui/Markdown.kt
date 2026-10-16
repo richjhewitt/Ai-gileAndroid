@@ -13,7 +13,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 
 /**
- * The little markdown the board uses: "- " bullets, **bold**, `code`, ``` blocks ```, links,
+ * The little markdown the board uses: "- " bullets, **bold**, *italic*, `code`, ``` blocks ```, links,
  * and card ids (AIG-464) that open the card in the app when it is one of the chat's (AII-28).
  * Blank lines between bullets are squeezed to keep bubbles compact.
  * With [onCode], tapping a ``` block hands over its whole text, to copy it (AII-115).
@@ -21,7 +21,8 @@ import androidx.compose.ui.text.withStyle
 object Markdown {
     /** Like the board's chat (AII-187): [name](link) shows the name; a link or bare web address drops its closing full stop. */
     private val inline = Regex("""\*\*(.+?)\*\*|`([^`]+)`|\[([^\]\n]+)]\((https?://[^\s)]+)\)|(https?://[^\s<>]*[^\s<>.,;:!?)\]])""" +
-        """|(?<![\w@/.:"=-])((?i:(?:[a-z0-9-]+\.)+(?:com|net|org|io|live|dev|app|co|uk|nl|be|ai|me|tv|gg|xyz|info|site|online))(?::\d+)?(?:/[^\s<>]*[^\s<>.,;:!?)\]])?)(?![\w-])""")
+        """|(?<![\w@/.:"=-])((?i:(?:[a-z0-9-]+\.)+(?:com|net|org|io|live|dev|app|co|uk|nl|be|ai|me|tv|gg|xyz|info|site|online))(?::\d+)?(?:/[^\s<>]*[^\s<>.,;:!?)\]])?)(?![\w-])""" +
+        """|(?<!\*)\*([^*\s][^*\n]*)\*(?!\*)""")   // the board's italic (format.js): single asterisks, after **bold**
 
     private val cardId = Regex("""\b[A-Z]{2,6}-\d+\b""")
 
@@ -130,10 +131,11 @@ object Markdown {
         var at = 0
         for (m in inline.findAll(s)) {
             plain(s.substring(at, m.range.first), link, cards, onCard)
-            val (bold, code, name, named, url, bare) = m.destructured
+            val (bold, code, name, named, url, bare, italic) = m.destructured
             val style = TextLinkStyles(SpanStyle(color = link, textDecoration = TextDecoration.Underline))
             when {
                 bold.isNotEmpty() -> withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { plain(bold, link, cards, onCard) }
+                italic.isNotEmpty() -> withStyle(SpanStyle(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)) { plain(italic, link, cards, onCard) }
                 code.isNotEmpty() -> withStyle(SpanStyle(fontFamily = FontFamily.Monospace, background = codeBg)) { append(code) }
                 named.isNotEmpty() -> withLink(LinkAnnotation.Url(named, style)) { append(name) }
                 url.isNotEmpty() -> withLink(LinkAnnotation.Url(url, style)) { append(url) }
