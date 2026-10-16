@@ -107,6 +107,14 @@
     <string name="alert_sound_default">Standaard</string>
     <string name="alert_sound_none">Stil</string>
     <string name="silent_alerts">Stille meldingen</string>
+    <string name="chat_colour">Kleur</string>
+    <string name="colour_default">Standaard</string>
+    <string name="colour_blue">Blauw</string>
+    <string name="colour_green">Groen</string>
+    <string name="colour_teal">Groenblauw</string>
+    <string name="colour_purple">Paars</string>
+    <string name="colour_pink">Roze</string>
+    <string name="colour_orange">Oranje</string>
     <string name="silent_alerts_off">Meldingen met geluid</string>
     <string name="jump_unread">%1$d nieuw</string>
     <string name="next_unread">Volgende ongelezen: %1$s →</string>

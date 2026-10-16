@@ -34,6 +34,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.smizflark.aigile.messenger.R
@@ -68,7 +74,7 @@ internal fun saveTextFile(ctx: android.content.Context, name: String, text: Stri
 /** Tap the chat name (AII-80): the team, its open cards, the pictures sent here, and the Mute and Pin switches. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onSave: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onChecked: (() -> Unit)? = null, onClear: (() -> Unit)? = null, onClose: () -> Unit) {
+fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? = null, starred: List<Star> = emptyList(), onStarred: ((String) -> Unit)? = null, onShare: (() -> Unit)? = null, onSave: (() -> Unit)? = null, onReminder: ((String) -> Unit)? = null, onChecked: (() -> Unit)? = null, onClear: (() -> Unit)? = null, onColour: (String) -> Unit = {}, onClose: () -> Unit) {
     var checked by remember { mutableStateOf(ref.checked) }   // AII-324: safety code checked together
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var silent by remember { mutableStateOf(ref.key in repo.store.silent) }
@@ -135,6 +141,11 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 SwitchRow(stringResource(R.string.silent_alerts), silent, "details-silent", Modifier.weight(1f)) {
                     repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent
                 }
+            }
+            // AII-375: the chat's colour for your bubbles and the top bar.
+            var colour by remember { mutableStateOf(com.smizflark.aigile.messenger.data.ChatColour.of(repo.store.chatColours, ref.key)) }
+            ChatColourRow(colour) { id ->
+                repo.store.chatColours = com.smizflark.aigile.messenger.data.ChatColour.put(repo.store.chatColours, ref.key, id); colour = id; onColour(id)
             }
             // AII-373: this chat's own alert sound, picked in the phone's ringtone picker.
             val ctx = androidx.compose.ui.platform.LocalContext.current
@@ -245,6 +256,30 @@ private fun SwitchRow(label: String, on: Boolean, tag: String, modifier: Modifie
     Row(modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp))
         Switch(checked = on, onCheckedChange = onChange, modifier = Modifier.testTag(tag))
+    }
+}
+
+/** AII-375: Default plus six round colour swatches; the picked one shows a check. */
+@Composable
+private fun ChatColourRow(picked: String, onPick: (String) -> Unit) {
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val names = mapOf("" to R.string.colour_default, "blue" to R.string.colour_blue, "green" to R.string.colour_green, "teal" to R.string.colour_teal,
+        "purple" to R.string.colour_purple, "pink" to R.string.colour_pink, "orange" to R.string.colour_orange)
+    Text(stringResource(R.string.chat_colour), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 12.dp))
+    Row(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp).testTag("details-colour"), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        (listOf("") + com.smizflark.aigile.messenger.data.ChatColour.choices.map { it.id }).forEach { id ->
+            val t = com.smizflark.aigile.messenger.data.ChatColour.tint(id, dark)
+            val fill = t?.let { androidx.compose.ui.graphics.Color(it.fill) } ?: MaterialTheme.colorScheme.primaryContainer
+            val on = t?.let { androidx.compose.ui.graphics.Color(it.text) } ?: MaterialTheme.colorScheme.onPrimaryContainer
+            val name = stringResource(names.getValue(id))
+            val sel = id == picked
+            androidx.compose.foundation.layout.Box(
+                Modifier.size(40.dp).background(fill, androidx.compose.foundation.shape.CircleShape)
+                    .border(if (sel) 2.dp else 1.dp, if (sel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, androidx.compose.foundation.shape.CircleShape)
+                    .selectable(selected = sel, role = androidx.compose.ui.semantics.Role.RadioButton, onClick = { onPick(id) })
+                    .semantics { contentDescription = name }.testTag("colour-${id.ifEmpty { "default" }}"),
+                contentAlignment = Alignment.Center) { if (sel) Icon(Icons.Default.Done, null, Modifier.size(22.dp), tint = on) }
+        }
     }
 }
 

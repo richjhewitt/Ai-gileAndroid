@@ -95,6 +95,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var error by remember { mutableStateOf<String?>(null) }
     var muted by remember { mutableStateOf(ref.key in repo.store.muted()) }
     var silent by remember { mutableStateOf(ref.key in repo.store.silent) }
+    var colour by remember { mutableStateOf(com.smizflark.aigile.messenger.data.ChatColour.of(repo.store.chatColours, ref.key)) }   // AII-375
     var muteAsk by remember { mutableStateOf(false) }   // AII-157: Mute asks how long
     var reminders by remember { mutableStateOf(repo.store.reminders()) }   // AII-251: read once here, not per bubble
     var details by remember { mutableStateOf(false) }   // AII-80: the chat details sheet
@@ -287,7 +288,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     }
 
     androidx.compose.runtime.LaunchedEffect(details) { reminders = repo.store.reminders() }   // a reminder cancelled in the details
-    if (details) ChatDetails(live, repo, chatInfo(convo), onChecked = if (ref.kind == Kind.FRIEND) { { scope.launch { runCatching { repo.acceptSafety(live) }.onFailure { error = it.message }; safetyOk++ } } } else null,
+    if (details) ChatDetails(live, repo, chatInfo(convo), onColour = { colour = it }, onChecked = if (ref.kind == Kind.FRIEND) { { scope.launch { runCatching { repo.acceptSafety(live) }.onFailure { error = it.message }; safetyOk++ } } } else null,
  onFind = { details = false; finding = true },
         starred = Stars.inChat(stars, ref.key), onStarred = { details = false; jumpToStar(it) }, onReminder = { details = false; jumpToStar(it) },
         onClear = convo?.takeIf { it.bubbles.isNotEmpty() }?.let { { details = false; clearAsk = true } },
@@ -336,7 +337,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 onGoToDate = { goToDate = true }, onMyLast = { jumpToMine() }, onOpenCard = onOpenCard, silent = silent,
                 onAddHome = { if (!com.smizflark.aigile.messenger.data.HomeShortcut.pin(homeCtx, ref.key, ref.name)) Toast.makeText(homeCtx, homeCtx.getString(R.string.add_to_home_unsupported), Toast.LENGTH_SHORT).show() },
                 onSilent = { repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent },
-                typing = live.typing, onClear = { clearAsk = true })
+                typing = live.typing, onClear = { clearAsk = true }, chatColour = colour)
         },
     ) { pad ->
         Column(Modifier.fillMaxSize().padding(pad).imePadding()) {
@@ -364,7 +365,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 onOpen = if (focus == null && ref.kind == Kind.LEAD) { { onOpenCard(r.card) } } else null) {
                                 if (targets.any { it.id == r.card }) { target = r.card; picked = true }
                             }
-                            is Row.Msg -> MessageBubble(r, ref, repo, mark = if (r.id == flash) 2 else if (r.id !in hitIds) 0 else if (hitIds.getOrNull(current) == r.id) 2 else 1, onReply = { q ->
+                            is Row.Msg -> MessageBubble(r, ref, repo, chatColour = colour, mark = if (r.id == flash) 2 else if (r.id !in hitIds) 0 else if (hitIds.getOrNull(current) == r.id) 2 else 1, onReply = { q ->
                                 quoting = Quote.of(if (q.mine) owner else q.author, q.text, q.pics.size)
                                 replyId = q.id.takeIf { ref.kind == Kind.FRIEND }   // AII-324
                                 // A reply to a team message goes to its card, like answering it on the board.

@@ -61,6 +61,9 @@ import org.robolectric.annotation.GraphicsMode
 class ChatShotTest : ShotBase() {
     @Test fun chatLight() { prime(lead()); shot("chat", false) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun chatDark() { prime(lead()); shot("chat", true) { ChatScreen(repo, lead(), onBack = {}) } }
+    /** AII-375: a chat with its own colour (purple) tints your bubbles and the top bar. */
+    @Test fun chatColourLight() { prime(lead()); repo.store.chatColours = com.smizflark.aigile.messenger.data.ChatColour.put(emptySet(), lead().key, "purple"); shot("chat_colour", false) { ChatScreen(repo, lead(), onBack = {}) } }
+    @Test fun chatColourDark() { prime(lead()); repo.store.chatColours = com.smizflark.aigile.messenger.data.ChatColour.put(emptySet(), lead().key, "purple"); shot("chat_colour", true) { ChatScreen(repo, lead(), onBack = {}) } }
     @Test fun codeBoxDark() { val t = chats.first { it.id == "tunio" }; prime(t); shot("chat_code", true) { ChatScreen(repo, t, onBack = {}) } }   // AII-115
     @Test fun chatShowTimes() {   // AII-211
         prime(lead()); Appearance.showTimes = true

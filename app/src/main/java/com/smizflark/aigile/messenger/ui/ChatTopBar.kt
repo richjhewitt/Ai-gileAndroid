@@ -25,6 +25,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -54,9 +57,13 @@ import com.smizflark.aigile.messenger.data.Repo
 @Composable
 internal fun ChatTopBar(
     ref: ChatRef, repo: Repo, focus: String?, focusBubble: Bubble?, working: Boolean, workingOn: String?, muted: Boolean,
-    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {}, onMyLast: () -> Unit = {}, onOpenCard: (String) -> Unit = {}, silent: Boolean = false, onSilent: () -> Unit = {}, typing: Boolean = false, onClear: () -> Unit = {}, onAddHome: () -> Unit = {},
+    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {}, onMyLast: () -> Unit = {}, onOpenCard: (String) -> Unit = {}, silent: Boolean = false, onSilent: () -> Unit = {}, typing: Boolean = false, onClear: () -> Unit = {}, onAddHome: () -> Unit = {}, chatColour: String = "",
 ) {
+    // AII-375: the chat's colour tints the bar.
+    val tint = com.smizflark.aigile.messenger.data.ChatColour.tint(chatColour, MaterialTheme.colorScheme.surface.luminance() < 0.5f)
+    val tintOn = tint?.let { Color(it.text) }
     TopAppBar(
+        colors = if (tint == null) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(containerColor = Color(tint.fill), titleContentColor = tintOn!!, navigationIconContentColor = tintOn, actionIconContentColor = tintOn),
         navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
         title = {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onDetails() }.testTag("chat-title")) {
@@ -67,7 +74,7 @@ internal fun ChatTopBar(
                         style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val on = workingOn.takeIf { working && focus == null }
                     CompositionLocalProvider(LocalViewConfiguration provides NoTouchPadding(LocalViewConfiguration.current)) { Text(if (on != null) stringResource(R.string.working_on, on) else if (focus == null && typing) stringResource(R.string.typing) else if (focus == null) (if (working) stringResource(R.string.working) else ref.subtitle) else ref.name + if (focusBubble?.waiting == true) " · ⏳ " + stringResource(R.string.waiting_on_you) else "", style = MaterialTheme.typography.labelMedium,
-                        color = if (focus == null && (working || typing)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (focus == null && (working || typing)) MaterialTheme.colorScheme.primary else tintOn?.copy(alpha = 0.75f) ?: MaterialTheme.colorScheme.onSurfaceVariant,
                         // AII-219: tap opens that card. No 48 dp touch padding (NoTouchPadding), so taps beside it still reach the name (AII-113).
                         modifier = if (on != null) Modifier.testTag("working-on").clickable(onClickLabel = stringResource(R.string.open_working_card, on)) { onOpenCard(on) } else Modifier,
                         maxLines = 1, overflow = TextOverflow.Ellipsis) }
