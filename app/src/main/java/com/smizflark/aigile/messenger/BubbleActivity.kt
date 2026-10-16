@@ -52,6 +52,7 @@ class BubbleActivity : FragmentActivity() {
 
     override fun onStart() {
         super.onStart()
+        com.smizflark.aigile.messenger.data.Secure.apply(window, (application as App).repo.store.blockShots)
         val store = (application as App).repo.store
         if (Build.VERSION.SDK_INT >= 33) setRecentsScreenshotEnabled(!store.lock)
         if (Lock.shouldLock(store.lock, unlocked, leftAt, SystemClock.elapsedRealtime(), store.lockAfter)) { unlocked = false; locked = true }

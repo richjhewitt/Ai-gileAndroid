@@ -295,6 +295,8 @@
     <string name="show_typing">Laat zien dat ik typ</string>
     <string name="hide_on_lock">Verberg berichttekst op het vergrendelscherm</string>
     <string name="hide_on_lock_sub">Meldingen tonen alleen de chatnaam en “Nieuw bericht” als je telefoon vergrendeld is</string>
+    <string name="block_shots">Schermafbeeldingen blokkeren</string>
+    <string name="block_shots_sub">Geen screenshots of schermopnames van de app en een lege voorbeeldweergave bij recente apps</string>
     <string name="show_typing_sub">Vrienden zien \"aan het typen…\" terwijl je naar ze schrijft. Uit: jij ziet dat van hen nog steeds</string>
     <string name="link_previews_sub">Je telefoon haalt de pagina zelf op om de titel en afbeelding onder een link te tonen</string>
     <string name="link_preview_open">%1$s openen</string>

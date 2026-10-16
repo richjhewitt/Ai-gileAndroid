@@ -295,6 +295,8 @@
     <string name="show_typing">Show when I’m typing</string>
     <string name="hide_on_lock">Hide message text on the lock screen</string>
     <string name="hide_on_lock_sub">Alerts show only the chat name and “New message” while the phone is locked</string>
+    <string name="block_shots">Block screenshots</string>
+    <string name="block_shots_sub">No screenshots or screen recording of the app, and a blank preview in recent apps</string>
     <string name="show_typing_sub">Friends see \"typing…\" while you write to them. Off: you still see theirs</string>
     <string name="link_previews_sub">Your phone fetches the page itself to show its title and picture under a link</string>
     <string name="link_preview_open">Open %1$s</string>
