@@ -277,6 +277,11 @@ class Store(context: Context) {
     fun stars(): List<Star> = read("stars.json") ?: emptyList()
     fun setStars(all: List<Star>) = write("stars.json", all)
 
+    /* ---------- pinned messages (AII-339), per board, this phone only ---------- */
+
+    fun pinnedMsgs(): List<PinnedMsg> = read("pinned_msgs.json") ?: emptyList()
+    fun setPinnedMsgs(all: List<PinnedMsg>) = write("pinned_msgs.json", all)
+
     /* ---------- reminders (AII-201) ---------- */
 
     fun reminders(): List<Reminder> = read("reminders.json") ?: emptyList()

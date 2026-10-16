@@ -410,4 +410,7 @@
     <string name="new_starred">Lijst met sterren: filter op chat, alles delen als tekst</string>
     <string name="new_widget">Widget toont ongelezen aantallen en volgt de stijl van de app</string>
     <string name="new_build">build %1$d</string>
+    <string name="pin_message">Bericht vastzetten</string>
+    <string name="unpin_message">Bericht losmaken</string>
+    <string name="pinned_of">%1$d van %2$d</string>
 </resources>

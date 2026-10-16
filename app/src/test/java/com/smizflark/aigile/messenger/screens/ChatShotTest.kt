@@ -79,6 +79,16 @@ class ChatShotTest : ShotBase() {
         rule.waitForIdle()
         rule.onRoot().captureRoboImage("../docs/shots/chat_find_light.png")
     }
+    /** AII-339: two pinned messages show the pinned bar, "1 of 2". */
+    @Test fun pinnedBarLight() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        val theirs = repo.store.cachedConversation(lead().key)!!.bubbles.filter { !it.mine && it.text.isNotBlank() }
+        repo.store.setPinnedMsgs(theirs.take(2).mapIndexed { i, b -> com.smizflark.aigile.messenger.data.PinnedMsgs.of(lead().key, b, 10L + i) })
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.waitForIdle()
+        rule.onNodeWithTag("pinned-bar").assertIsDisplayed()
+        rule.onRoot().captureRoboImage("../docs/shots/chat_pinned_light.png")
+    }
     /** AII-100: opening a chat with messages you hadn't seen shows a "New messages" line above them. */
     @Test fun newLineLight() {
         // A chat with no pictures, so the shot never catches one half loaded.

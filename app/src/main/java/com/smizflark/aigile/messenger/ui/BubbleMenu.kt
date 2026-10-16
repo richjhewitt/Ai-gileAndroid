@@ -78,7 +78,8 @@ internal fun RemindNoteDialog(at: Long, ref: ChatRef, b: Bubble, shown: Annotate
 // AII-43: long-press a bubble for Remind me, Reply, Forward, Star, Copy, Copy as quote, Select, links, Share, Read aloud.
 @Composable
 internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown: AnnotatedString, starred: Boolean, onStar: (() -> Unit)?,
-                      onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, onRemind: () -> Unit, onSelect: () -> Unit) {
+                      onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, onRemind: () -> Unit, onSelect: () -> Unit,
+                      pinned: Boolean = false, onPin: (() -> Unit)? = null) {
     val ctx = LocalContext.current
     val clipboard = LocalClipboardManager.current
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
@@ -91,6 +92,9 @@ internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown
         // AII-138: star it, to find it again in the chat details.
         if (onStar != null && b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(if (starred) R.string.unstar else R.string.star)) },
             modifier = Modifier.testTag("star"), onClick = { onDismiss(); onStar() })
+        // AII-339: pin it to the bar at the top of the chat.
+        if (onPin != null && b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(if (pinned) R.string.unpin_message else R.string.pin_message)) },
+            modifier = Modifier.testTag("pin"), onClick = { onDismiss(); onPin() })
         DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
             onDismiss()
             clipboard.setText(AnnotatedString(Markdown.plain(shown)))

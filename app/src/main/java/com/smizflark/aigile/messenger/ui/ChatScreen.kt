@@ -55,6 +55,7 @@ import com.smizflark.aigile.messenger.data.Pending
 import com.smizflark.aigile.messenger.data.Forward
 import com.smizflark.aigile.messenger.data.Quote
 import com.smizflark.aigile.messenger.data.Repo
+import com.smizflark.aigile.messenger.data.PinnedMsgs
 import com.smizflark.aigile.messenger.data.Stars
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -96,6 +97,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     var reminders by remember { mutableStateOf(repo.store.reminders()) }   // AII-251: read once here, not per bubble
     var details by remember { mutableStateOf(false) }   // AII-80: the chat details sheet
     var stars by remember { mutableStateOf(repo.store.stars()) }   // AII-138: starred messages
+    var pins by remember { mutableStateOf(repo.store.pinnedMsgs()) }   // AII-339: pinned messages, this phone only
+    var pinShown by remember { mutableStateOf(0) }   // AII-339: which pin the bar shows
     val scope = rememberCoroutineScope()
     val list = rememberLazyListState()
     var finding by rememberSaveable { mutableStateOf(false) }   // AII-78: the find bar
@@ -330,6 +333,13 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 Text(it, color = MaterialTheme.colorScheme.onErrorContainer, style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer).padding(10.dp).testTag("error"))
             }
+            // AII-339: the pinned bar; tap jumps to the message and the next tap shows the next pin.
+            val chatPins = PinnedMsgs.inChat(pins, ref.key)
+            if (chatPins.isNotEmpty()) {
+                val sh = PinnedMsgs.clamp(pinShown, chatPins.size); val p = chatPins[sh]
+                PinnedBar(p.text, sh, chatPins.size, onTap = { jumpToStar(p.key); pinShown = PinnedMsgs.next(sh, chatPins.size) },
+                    onUnpin = { pins = PinnedMsgs.remove(pins, ref.key, p.key); repo.store.setPinnedMsgs(pins) })
+            }
             if (finding) FindBar(query, { query = it }, hits.size, current,
                 onUp = { if (hits.isNotEmpty()) at = (current + 1) % hits.size },   // older
                 onDown = { if (hits.isNotEmpty()) at = (current - 1 + hits.size) % hits.size },   // newer
@@ -368,6 +378,10 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 onStar = if (r.pending == null) { {
                                     val s = Stars.of(ref.key, r.b); val on = !Stars.has(stars, s.chat, s.key)
                                     stars = Stars.toggle(stars, s); scope.launch { repo.setStar(ref, s, on) }   // AII-141: on the board too
+                                } } else null,
+                                pinned = PinnedMsgs.has(pins, ref.key, r.b.key),
+                                onPin = if (r.pending == null) { {
+                                    pins = PinnedMsgs.toggle(pins, PinnedMsgs.of(ref.key, r.b, com.smizflark.aigile.messenger.data.Now.millis())); repo.store.setPinnedMsgs(pins)
                                 } } else null)
                         }
                     }

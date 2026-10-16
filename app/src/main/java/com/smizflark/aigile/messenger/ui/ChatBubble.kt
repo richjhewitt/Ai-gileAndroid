@@ -138,7 +138,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, pinned: Boolean = false, onPin: (() -> Unit)? = null) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -238,7 +238,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             /* ---------- menus (BubbleMenu.kt) ---------- */
             RemindMenu(remindMenu, { remindMenu = false }) { at -> noteAt = at; noteText = "" }   // AII-244: ask for an optional note before saving
             noteAt?.let { at -> RemindNoteDialog(at, ref, b, shown, repo, noteText, { noteText = it }, onSaved = onReminded) { noteAt = null } }
-            HoldMenu(menu, { menu = false }, b, shown, starred, onStar, onReply, onForward, onRemind = { remindMenu = true }, onSelect = { selecting = true })
+            HoldMenu(menu, { menu = false }, b, shown, starred, onStar, onReply, onForward, onRemind = { remindMenu = true }, onSelect = { selecting = true }, pinned = pinned, onPin = onPin)
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
                 if (!b.mine && ref.kind != Kind.FRIEND && b.author.isNotBlank()) {
                     Text(b.author, style = MaterialTheme.typography.labelMedium, color = cs.primary)
