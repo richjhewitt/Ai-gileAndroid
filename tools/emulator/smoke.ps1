@@ -40,6 +40,8 @@ if (-not $ok) { Fail "hold on message did not show 'Remind me'" }
 TapWhenFound '^Remind me$' 'Remind me'
 TapWhenFound '^In 1 hour$' 'In 1 hour'
 TapWhenFound '^Skip$' 'Skip note'
+# AII-396: the first reminder asks once to allow exact alarms; say Not now so the smoke stays on the chat
+Start-Sleep 1; $n = Find '(?i)^not now$'; if ($n) { & $adb shell input tap $n[0] $n[1]; Write-Host "tapped Not now (exact alarms)" }
 $ok = $false
 for ($i = 0; $i -lt 10 -and -not $ok; $i++) { Start-Sleep 1; $ok = (Dump).OuterXml -match [regex]::Escape($bell) }
 if (-not $ok) { Fail "no bell line under the message after Remind me" }
