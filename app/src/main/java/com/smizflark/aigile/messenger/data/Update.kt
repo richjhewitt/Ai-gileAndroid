@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 /* ---------- 'New version' bar (AII-132): the latest build on the board (AII-314) or GitHub, checked once a day ---------- */
 
 /** A release: its build number (the APK's versionCode) and where to download it; board = a path on the paired board (AII-314). */
-data class Release(val build: Int, val url: String, val board: Boolean = false)
+data class Release(val build: Int, val url: String, val board: Boolean = false, val sha256: String = "")
 
 object Update {
     const val LATEST = "https://api.github.com/repos/richjhewitt/Ai-gileAndroid/releases/latest"
@@ -21,7 +21,7 @@ object Update {
     const val EVERY = 6 * 60 * 60 * 1000L
 
     @Serializable private data class Asset(val name: String = "", val browser_download_url: String = "")
-    @Serializable private data class Board(val build: Int = 0, val url: String = "")
+    @Serializable private data class Board(val build: Int = 0, val url: String = "", val sha256: String = "")
     @Serializable private data class Latest(val tag_name: String = "", val html_url: String = "", val assets: List<Asset> = emptyList())
 
     /** The build number is the number at the end of the tag ("build-322"); a tag without one is never newer. */
@@ -38,8 +38,12 @@ object Update {
     /** The board's GET /api/messenger/latest (AII-313): a build and a path on the board, else null. */
     fun parseBoard(body: String): Release? = runCatching {
         val b = json.decodeFromString(Board.serializer(), body)
-        if (b.build <= 0 || !b.url.startsWith("/api/")) null else Release(b.build, b.url, board = true)
+        if (b.build <= 0 || !b.url.startsWith("/api/")) null else Release(b.build, b.url, board = true, sha256 = b.sha256.lowercase())
     }.getOrNull()
+
+    /** AII-315: a download matches the board's SHA-256; a board that gave none can't be checked, so it passes. */
+    fun matches(bytes: ByteArray, sha256: String): Boolean = sha256.isBlank() ||
+        java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) } == sha256.lowercase()
 
     /** AII-314: the board first; GitHub only when the board has nothing newer. The higher build wins, the board on a tie. */
     fun pick(board: Release?, mine: Int, github: () -> Release?): Release? =

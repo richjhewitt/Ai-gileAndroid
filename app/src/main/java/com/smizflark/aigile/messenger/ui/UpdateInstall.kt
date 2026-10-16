@@ -19,6 +19,7 @@ suspend fun installUpdate(context: Context, repo: Repo, r: Release) {
     val file = repo.boardSource?.let { b ->
         runCatching {
             val bytes = b.fileBytes(r.url)
+            check(Update.matches(bytes, r.sha256)) { "the download doesn't match the board's fingerprint" }   // AII-315
             withContext(Dispatchers.IO) {
                 File(context.cacheDir, "files").apply { mkdirs() }.resolve("update.apk").apply { writeBytes(bytes) }
             }

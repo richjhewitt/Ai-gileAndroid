@@ -47,11 +47,18 @@ class UpdateTest {
     /* ---------- AII-314: the board first ---------- */
 
     @Test fun parseBoardReadsTheBoardsLatest() {
-        assertEquals(Release(330, "/api/messenger/apk", board = true),
+        assertEquals(Release(330, "/api/messenger/apk", board = true, sha256 = "ab"),
             Update.parseBoard("""{"build":330,"version":"0.1.0","size":5,"sha256":"ab","url":"/api/messenger/apk"}"""))
         assertNull(Update.parseBoard("""{"error":"no Messenger build on this board yet"}"""))
         assertNull(Update.parseBoard("""{"build":330,"url":"https://elsewhere/x.apk"}"""))
         assertNull(Update.parseBoard("not json"))
+    }
+
+    @Test fun theBoardsFingerprintIsKeptAndChecked() {
+        val r = Update.parseBoard("""{"build":5,"url":"/api/messenger/apk","sha256":"BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD"}""")!!
+        assertTrue(Update.matches("abc".toByteArray(), r.sha256))   // SHA-256 of "abc"
+        assertFalse(Update.matches("abd".toByteArray(), r.sha256))
+        assertTrue(Update.matches("anything".toByteArray(), ""))   // an older board sends none
     }
 
     @Test fun aNewerBoardBuildSkipsGitHub() {
