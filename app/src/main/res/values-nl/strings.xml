@@ -304,6 +304,7 @@
     <string name="sort_chats">Gesprekken sorteren</string>
     <string name="sort_newest">Nieuwste eerst</string>
     <string name="sort_az">A tot Z</string>
+    <string name="sort_unread">Ongelezen eerst</string>
     <string name="muted_last">Gedempte gesprekken onderaan</string>
     <string name="muted_last_sub">Gedempte gesprekken staan onder alle andere</string>
     <string name="compact_list_sub">Kleinere rijen, zodat er meer gesprekken op het scherm passen</string>

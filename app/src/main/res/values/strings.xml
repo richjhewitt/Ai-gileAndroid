@@ -304,6 +304,7 @@
     <string name="sort_chats">Sort chats</string>
     <string name="sort_newest">Newest first</string>
     <string name="sort_az">A to Z</string>
+    <string name="sort_unread">Unread first</string>
     <string name="muted_last">Muted chats at the bottom</string>
     <string name="muted_last_sub">Muted chats move below all the others</string>
     <string name="compact_list_sub">Smaller rows, so more chats fit on the screen</string>
