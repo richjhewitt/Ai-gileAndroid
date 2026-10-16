@@ -13,7 +13,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 
 /**
- * The little markdown the board uses: "- " bullets, **bold**, _italic_, `code`, ``` blocks ```, links,
+ * The little markdown the board uses: "- " bullets, **bold**, *italic*, `code`, ``` blocks ```, links,
  * and card ids (AIG-464) that open the card in the app when it is one of the chat's (AII-28).
  * Blank lines between bullets are squeezed to keep bubbles compact.
  * With [onCode], tapping a ``` block hands over its whole text, to copy it (AII-115).
@@ -22,7 +22,7 @@ object Markdown {
     /** Like the board's chat (AII-187): [name](link) shows the name; a link or bare web address drops its closing full stop. */
     private val inline = Regex("""\*\*(.+?)\*\*|`([^`]+)`|\[([^\]\n]+)]\((https?://[^\s)]+)\)|(https?://[^\s<>]*[^\s<>.,;:!?)\]])""" +
         """|(?<![\w@/.:"=-])((?i:(?:[a-z0-9-]+\.)+(?:com|net|org|io|live|dev|app|co|uk|nl|be|ai|me|tv|gg|xyz|info|site|online))(?::\d+)?(?:/[^\s<>]*[^\s<>.,;:!?)\]])?)(?![\w-])""" +
-        """|(?<![\w_])_([^_\n]+)_(?![\w_])""")
+        """|(?<!\*)\*([^*\s][^*\n]*)\*(?!\*)""")   // the board's italic (format.js): single asterisks, after **bold**
 
     private val cardId = Regex("""\b[A-Z]{2,6}-\d+\b""")
 
