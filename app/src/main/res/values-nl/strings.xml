@@ -404,6 +404,14 @@
     <string name="open_cards">Open kaarten</string>
     <string name="no_open_cards">Er wacht niets op je.</string>
     <string name="chat_pictures">Foto\'s in deze chat</string>
+    <string name="chat_storage">Opslag: %1$s, %2$s</string>
+    <plurals name="chat_storage_pictures">
+        <item quantity="one">%d foto</item>
+        <item quantity="other">%d foto\'s</item>
+    </plurals>
+    <string name="clear_chat_pictures">Foto\'s wissen</string>
+    <string name="clear_chat_pictures_title">Foto\'s van deze chat wissen?</string>
+    <string name="clear_chat_pictures_text">De foto\'s van deze chat die op deze telefoon zijn opgeslagen, worden verwijderd. Ze laden opnieuw vanaf het bord als je ze opent. Foto\'s die nog moeten worden verstuurd, blijven staan.</string>
     <string name="no_chat_pictures">Nog geen foto\'s.</string>
     <string name="chat_links">Links in deze chat</string>
     <string name="chat_files">Bestanden in deze chat</string>

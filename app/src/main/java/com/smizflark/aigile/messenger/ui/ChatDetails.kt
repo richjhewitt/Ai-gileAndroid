@@ -52,6 +52,8 @@ import com.smizflark.aigile.messenger.data.Star
 import androidx.compose.ui.text.style.TextOverflow
 import com.smizflark.aigile.messenger.data.togglePin
 import kotlinx.coroutines.launch
+import coil.imageLoader
+import androidx.compose.runtime.LaunchedEffect
 
 /** AII-229: writes [text] to Downloads (MediaStore from Android 10, else the app's own external files folder); true when it worked. */
 internal fun saveTextFile(ctx: android.content.Context, name: String, text: String): Boolean = runCatching {
@@ -88,6 +90,30 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
     val ctx = androidx.compose.ui.platform.LocalContext.current
     var mine by remember { mutableStateOf(com.smizflark.aigile.messenger.data.Remind.inChat(repo.store.reminders(), ref.key)) }   // AII-223
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+    // AII-392: what this chat's pictures use in the saved-picture cache (Coil's disk cache, keyed by the picture's address)
+    val picKeys = remember(info.pictures) { com.smizflark.aigile.messenger.data.SavedPictures.chatKeys(info.pictures) { repo.boardSource?.url(it) ?: it } }
+    var storage by remember { mutableStateOf<com.smizflark.aigile.messenger.data.SavedPictures.Usage?>(null) }
+    var confirmStorage by remember { mutableStateOf(false) }
+    LaunchedEffect(picKeys) { storage = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { chatStorage(ctx, picKeys) } }
+    if (confirmStorage) androidx.compose.material3.AlertDialog(
+        onDismissRequest = { confirmStorage = false },
+        title = { Text(stringResource(R.string.clear_chat_pictures_title)) },
+        text = { Text(stringResource(R.string.clear_chat_pictures_text)) },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = {
+                confirmStorage = false
+                scope.launch {
+                    val go = com.smizflark.aigile.messenger.data.SavedPictures.removableKeys(picKeys, repo.store.outbox())
+                    storage = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        val cache = ctx.imageLoader.diskCache
+                        go.forEach { k -> runCatching { cache?.remove(k) } }
+                        chatStorage(ctx, picKeys)
+                    }
+                }
+            }, modifier = Modifier.testTag("details-storage-confirm")) { Text(stringResource(R.string.clear)) }
+        },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = { confirmStorage = false }) { Text(stringResource(R.string.cancel)) } },
+    )
     ModalBottomSheet(onDismissRequest = onClose) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding().testTag("chat-details")) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -229,6 +255,13 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
             if (info.pictures.isEmpty()) Text(stringResource(R.string.no_chat_pictures), color = MaterialTheme.colorScheme.onSurfaceVariant)
             // The sheet is its own window and would cover the full screen picture, so it closes first (AII-93).
             else MessagePictures(info.pictures, repo, onOpened = onClose)
+            storage?.takeIf { it.count > 0 }?.let { u ->
+                Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.chat_storage, androidx.compose.ui.res.pluralStringResource(R.plurals.chat_storage_pictures, u.count, u.count), com.smizflark.aigile.messenger.data.SavedPictures.format(u.bytes)),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f).testTag("details-storage"))
+                    androidx.compose.material3.TextButton(onClick = { confirmStorage = true }, modifier = Modifier.testTag("details-storage-clear")) { Text(stringResource(R.string.clear_chat_pictures)) }
+                }
+            }
             // AII-194: web links from the messages, newest first.
             if (info.links.isNotEmpty()) {
                 Text(heading(R.string.chat_links, info.links.size), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
@@ -287,3 +320,9 @@ private fun ChatColourRow(picked: String, onPick: (String) -> Unit) {
 @Composable
 private fun heading(res: Int, count: Int): String =
     if (count > 0) stringResource(R.string.heading_count, stringResource(res), count) else stringResource(res)
+
+/** AII-392: count and size of the chat's pictures that Coil has saved. */
+private fun chatStorage(ctx: android.content.Context, keys: List<String>) = com.smizflark.aigile.messenger.data.SavedPictures.usage(keys) { k ->
+    val cache = ctx.imageLoader.diskCache ?: return@usage null
+    cache.openSnapshot(k)?.use { snap -> cache.fileSystem.metadataOrNull(snap.data)?.size }
+}
