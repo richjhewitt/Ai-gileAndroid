@@ -102,6 +102,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.smizflark.aigile.messenger.data.Bubble
+import com.smizflark.aigile.messenger.data.bigEmojiCount
 import com.smizflark.aigile.messenger.data.Gif
 import com.smizflark.aigile.messenger.data.CardDetail
 import com.smizflark.aigile.messenger.data.ChatRef
@@ -224,8 +225,9 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
         }
         val pop = remember { Animatable(0f) }   // AII-206: the ★ that pops on a double-tap
         Box {
+        val bigEmoji = remember(b.text, b.pics) { if (b.pics.isEmpty()) bigEmojiCount(b.text) else 0 } > 0   // AII-364: only 1 to 3 emoji shows big, no bubble
         Surface(
-            color = bg,
+            color = if (bigEmoji) androidx.compose.ui.graphics.Color.Transparent else bg,
             border = when (mark) { 2 -> BorderStroke(3.dp, cs.tertiary); 1 -> BorderStroke(1.5.dp, cs.tertiary.copy(alpha = 0.6f)); else -> null },   // AII-78: find matches
             shape = RoundedCornerShape(18.dp, 18.dp, if (b.mine) 4.dp else 18.dp, if (b.mine) 18.dp else 4.dp),
             modifier = Modifier.widthIn(max = 320.dp).semantics(mergeDescendants = true) {}.testTag(if (b.mine) "mine" else "theirs")
@@ -261,7 +263,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 if (text != null) {
                     var open by rememberSaveable(b.key) { mutableStateOf(false) }
                     var long by remember(b.key) { mutableStateOf(false) }
-                    Text(text, style = MaterialTheme.typography.bodyLarge, color = fg,
+                    Text(text, style = MaterialTheme.typography.bodyLarge.let { if (bigEmoji) it.copy(fontSize = it.fontSize * 3, lineHeight = it.lineHeight * 3) else it }, color = fg,
                         maxLines = if (open || mark > 0) Int.MAX_VALUE else FOLD_LINES, overflow = TextOverflow.Ellipsis,
                         onTextLayout = { if (it.hasVisualOverflow) long = true })
                     if (long && mark == 0) TextButton(onClick = { open = !open }, modifier = Modifier.testTag("read-more")) {
