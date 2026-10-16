@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -50,7 +51,7 @@ import com.smizflark.aigile.messenger.data.Repo
 @Composable
 internal fun ChatTopBar(
     ref: ChatRef, repo: Repo, focus: String?, focusBubble: Bubble?, working: Boolean, workingOn: String?, muted: Boolean,
-    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {}, onMyLast: () -> Unit = {}, onOpenCard: (String) -> Unit = {}, silent: Boolean = false, onSilent: () -> Unit = {}, typing: Boolean = false, onClear: () -> Unit = {},
+    onBack: () -> Unit, onDetails: () -> Unit, onFind: () -> Unit, onMute: () -> Unit, onGoToDate: () -> Unit = {}, onMyLast: () -> Unit = {}, onOpenCard: (String) -> Unit = {}, silent: Boolean = false, onSilent: () -> Unit = {}, typing: Boolean = false, onClear: () -> Unit = {}, onAddHome: () -> Unit = {},
 ) {
     TopAppBar(
         navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) } },
@@ -98,6 +99,12 @@ internal fun ChatTopBar(
                     leadingIcon = { Icon(Icons.Default.Close, null) },
                     onClick = { menu = false; onClear() },
                     modifier = Modifier.testTag("clear-chat"),
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.add_to_home)) },
+                    leadingIcon = { Icon(Icons.Default.Home, null) },
+                    onClick = { menu = false; onAddHome() },
+                    modifier = Modifier.testTag("add-home"),
                 )
             }
         },

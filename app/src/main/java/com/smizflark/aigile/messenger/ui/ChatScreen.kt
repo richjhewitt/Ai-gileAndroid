@@ -108,7 +108,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val view = LocalView.current
     fun tick() = Appearance.buzz && view.performHapticFeedback(if (Build.VERSION.SDK_INT >= 30) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.VIRTUAL_KEY)
     val owner = repo.store.owner.ifBlank { "You" }
-    val res = LocalContext.current.resources
+    val homeCtx = LocalContext.current
+    val res = homeCtx.resources
 
     // Keep the half-typed reply (AII-42): saved a moment after typing stops, and on the way out.
     KeepDraft(repo, ref, text)   // ChatScreenParts.kt
@@ -299,6 +300,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
             ChatTopBar(ref, repo, focus, focusBubble, working, workingOn, muted, onBack = onBack, onDetails = { details = true },
                 onFind = { finding = true }, onMute = { if (muted) { muted = false; repo.store.setMuted(ref.key, false) } else muteAsk = true },
                 onGoToDate = { goToDate = true }, onMyLast = { jumpToMine() }, onOpenCard = onOpenCard, silent = silent,
+                onAddHome = { if (!com.smizflark.aigile.messenger.data.HomeShortcut.pin(homeCtx, ref.key, ref.name)) Toast.makeText(homeCtx, homeCtx.getString(R.string.add_to_home_unsupported), Toast.LENGTH_SHORT).show() },
                 onSilent = { repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent },
                 typing = live.typing, onClear = { clearAsk = true })
         },

@@ -318,6 +318,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                     ChatRow(c, repo, News.fresh(c, seen[c.key]), unread[c.key] ?: 0, c.key in pinned, c.key in muted, c.key in reminded, unsent[c.key].orEmpty(), drafts[c.key], isShut,
                         onRead = { markRead(listOf(c)) }, onUnread = { markUnread(c) },
                         onMute = { on -> if (on) muteAsk = c else { repo.store.setMuted(c.key, false); muted = repo.store.muted() } },
+                        onAddHome = { if (!com.smizflark.aigile.messenger.data.HomeShortcut.pin(context, c.key, c.name)) scope.launch { snack.currentSnackbarData?.dismiss(); snack.showSnackbar(context.getString(R.string.add_to_home_unsupported)) } },
                         onPin = { pinned = togglePin(pinned, c.key); repo.store.pinned = pinned },
                         onClose = { shutIt -> scope.launch {
                             repo.setClosed(c, shutIt); closed = repo.store.closed()

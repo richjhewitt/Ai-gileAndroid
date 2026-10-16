@@ -342,6 +342,15 @@ class ChatShotTest : ShotBase() {
         rule.waitForIdle()
         rule.onNodeWithText("Cancel").assertIsDisplayed()
     }
+    /** AII-368: the chat menu shows Add to home screen. */
+    @Test fun addToHomeMenuLight() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onNodeWithContentDescription("More").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("add-home").assertIsDisplayed()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chat_add_to_home_menu_light.png")
+    }
     /** AII-121: hold a message, Share: the phone's share menu gets the message text. */
     @Test fun shareMessage() {
         prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")

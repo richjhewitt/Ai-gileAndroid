@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
@@ -65,7 +66,7 @@ import com.smizflark.aigile.messenger.data.swipeAction
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned: Boolean, muted: Boolean, reminded: Boolean, unsent: List<Pending>, draft: String?, closed: Boolean,
-                    onRead: () -> Unit, onUnread: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClose: (Boolean) -> Unit, onClick: () -> Unit) {
+                    onRead: () -> Unit, onUnread: () -> Unit, onMute: (Boolean) -> Unit, onPin: () -> Unit, onClose: (Boolean) -> Unit, onAddHome: () -> Unit = {}, onClick: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
     // Swipes do what Settings says (AII-216; starting: right = mark read, left = mute/unmute, AII-61). The row always springs back.
     val mutedNow by rememberUpdatedState(muted)
@@ -127,6 +128,9 @@ internal fun ChatRow(c: ChatRef, repo: Repo, fresh: Boolean, unread: Int, pinned
                     menu = false
                     remindHour()
                 }, modifier = Modifier.testTag("menu-remind"))
+            // AII-376: pin a shortcut to this chat on the home screen.
+            DropdownMenuItem(text = { Text(stringResource(R.string.add_to_home)) }, leadingIcon = { Icon(Icons.Default.Home, null) },
+                onClick = { menu = false; onAddHome() }, modifier = Modifier.testTag("menu-add-home"))
             // AII-249: Copy name.
             val clipboard = androidx.compose.ui.platform.LocalClipboardManager.current
             DropdownMenuItem(text = { Text(stringResource(R.string.copy_name)) }, leadingIcon = { Icon(Icons.Default.ContentCopy, null) },
