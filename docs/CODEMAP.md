@@ -18,7 +18,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Emoji.kt: bigEmojiCount = how many emoji a message is when it is only 1 to 3 emoji (else 0); ui/ChatBubble.kt shows those big with no bubble (AII-364).
 - data/Drafts.kt: half-typed replies, one per chat.
 - data/GoToDate.kt: Go to date in a chat (AII-193): which day to land on, and the picker's range (dialog: ui/GoToDateDialog.kt, with a First message button that picks the range start, AII-231).
-- data/Filter.kt: the chips above the chats list.
+- data/Filter.kt: the chips above the chats list (Drafts chip while a chat has a non-blank draft, AII-369; `Drafts.chatKeys`).
 - data/Forward.kt: forwarding a message to another chat.
 - data/Mapper.kt: turns the board's answers into what the screens show.
 - data/Models.kt: data classes for the board's chats and messages.

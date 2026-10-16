@@ -312,5 +312,15 @@ class ChatsListShotTest : ShotBase() {
         com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_unread_chip_light.png")
         org.junit.Assert.assertTrue(rule.onAllNodesWithTag("chat:${c.key}").fetchSemanticsNodes().isEmpty())
     }
+    /** AII-369: with a draft waiting, the Drafts chip keeps just that chat. */
+    @Test fun draftsChipLight() {
+        val c = lead(); prime(c); repo.store.saveDraft(c.key, "Can we move this to Friday?")
+        RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatsScreen(repo, {}, {}, {}) } }
+        rule.onNodeWithTag("filter:drafts").performScrollTo().performClick()
+        rule.waitForIdle()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chats_drafts_chip_light.png")
+        org.junit.Assert.assertTrue(rule.onAllNodesWithTag("chat:${c.key}").fetchSemanticsNodes().isNotEmpty())
+    }
     @Test fun chatsDark() = shot("chats", true) { ChatsScreen(repo, {}, {}, {}) }
 }

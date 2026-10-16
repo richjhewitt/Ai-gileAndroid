@@ -6,10 +6,10 @@ import com.smizflark.aigile.messenger.R
 enum class ChatFilter(val label: String, @androidx.annotation.StringRes val res: Int) {
     ALL("All", R.string.filter_all), UNREAD("Unread", R.string.filter_unread), WAITING("Waiting on me", R.string.filter_waiting),
     TEAMS("Teams", R.string.filter_teams), FRIENDS("Friends", R.string.filter_friends), SCHEDULED("Scheduled", R.string.filter_scheduled),
-    REMINDERS("Reminders", R.string.filter_reminders);
+    REMINDERS("Reminders", R.string.filter_reminders), DRAFTS("Drafts", R.string.filter_drafts);
 
     /** [unread]: the row shows a badge (AII-125). [scheduled]: a Send later message waits in it (AII-152). */
-    fun keep(c: ChatRef, unread: Boolean = false, scheduled: Boolean = false, reminded: Boolean = false) = when (this) {
+    fun keep(c: ChatRef, unread: Boolean = false, scheduled: Boolean = false, reminded: Boolean = false, drafted: Boolean = false) = when (this) {
         ALL -> true
         UNREAD -> unread
         WAITING -> c.waiting > 0
@@ -17,12 +17,13 @@ enum class ChatFilter(val label: String, @androidx.annotation.StringRes val res:
         FRIENDS -> c.kind == Kind.FRIEND
         SCHEDULED -> scheduled
         REMINDERS -> reminded
+        DRAFTS -> drafted   // a non-blank draft waits in the chat (AII-369)
     }
 
     companion object {
         /** The chips to show: Scheduled only while a Send later message waits, or while it is the one picked (AII-152). */
-        fun shown(anyScheduled: Boolean, picked: ChatFilter, anyReminder: Boolean = false) = entries.filter {
-            (it != SCHEDULED || anyScheduled || picked == SCHEDULED) && (it != REMINDERS || anyReminder || picked == REMINDERS)
+        fun shown(anyScheduled: Boolean, picked: ChatFilter, anyReminder: Boolean = false, anyDraft: Boolean = false) = entries.filter {
+            (it != SCHEDULED || anyScheduled || picked == SCHEDULED) && (it != REMINDERS || anyReminder || picked == REMINDERS) && (it != DRAFTS || anyDraft || picked == DRAFTS)
         }
     }
 }
