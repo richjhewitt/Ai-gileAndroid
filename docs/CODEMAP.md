@@ -139,3 +139,4 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 
 ## res/xml backup (AII-81)
 - res/xml/backup_rules.xml and res/xml/data_extraction_rules.xml: backup takes only settings.xml (look, text size, pins, mutes, quiet hours); keys, board address, drafts and outbox stay out.
+- data/ChatHeads.kt: chat heads (AII-381): Settings > Alerts switch (Store chatHeads, off, API 30+) gives each chat alert BubbleMetadata and a long-lived shortcut "chat:<key>" (not HomeShortcut's "home:"); the bubble opens BubbleActivity (one chat; MainActivity can't take documentLaunchMode=always); channels setAllowBubbles.

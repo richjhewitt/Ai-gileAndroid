@@ -14,6 +14,8 @@ import androidx.core.app.Person
 import androidx.core.app.RemoteInput
 import com.smizflark.aigile.messenger.MainActivity
 import com.smizflark.aigile.messenger.R
+import androidx.core.graphics.drawable.IconCompat
+import com.smizflark.aigile.messenger.data.ChatHeads
 import com.smizflark.aigile.messenger.data.ChatSound
 import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.QuickReply
@@ -71,7 +73,7 @@ object ChatNotifier {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.notificationChannels.filter { it.id.startsWith(ChatSound.prefix(chat)) && it.id != id }.forEach { nm.deleteNotificationChannel(it.id) }
         if (uri.isEmpty() || nm.getNotificationChannel(id) != null) return id
-        val ch = android.app.NotificationChannel(id, name, NotificationManager.IMPORTANCE_DEFAULT).apply { description = context.getString(R.string.channel_desc) }
+        val ch = android.app.NotificationChannel(id, name, NotificationManager.IMPORTANCE_DEFAULT).apply { description = context.getString(R.string.channel_desc); if (Build.VERSION.SDK_INT >= 29) setAllowBubbles(true) }
         if (ChatSound.isNone(uri)) ch.setSound(null, null)
         else ch.setSound(android.net.Uri.parse(uri), android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION).build())
         nm.createNotificationChannel(ch)
@@ -103,6 +105,14 @@ object ChatNotifier {
         val b = base(context, channelFor(context, chat, name)).setContentTitle(name).setStyle(style).setSilent(quiet || (ChatSound.isNone(own) && Build.VERSION.SDK_INT < 26))
         if (own.isNotEmpty() && !ChatSound.isNone(own) && !quiet && Build.VERSION.SDK_INT < 26) b.setSound(android.net.Uri.parse(own))
         b.setContentIntent(openChat(context, chat, id)).addAction(action).addAction(readAction).setGroup(GROUP)
+        // AII-381: Chat heads: link the alert to the chat's long-lived shortcut and give it bubble metadata.
+        if (ChatHeads.enabled(Store(context).chatHeads, Build.VERSION.SDK_INT)) {
+            ChatHeads.pushShortcut(context, chat, name)
+            val bubblePi = PendingIntent.getActivity(context, id, ChatHeads.intent(context, chat), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+            b.setShortcutId(ChatHeads.shortcutId(chat)).setLocusId(androidx.core.content.LocusIdCompat(ChatHeads.shortcutId(chat)))
+                .setBubbleMetadata(NotificationCompat.BubbleMetadata.Builder(bubblePi, IconCompat.createWithResource(context, R.mipmap.ic_launcher))
+                    .setDesiredHeight(600).build())
+        }
         // AII-210: Remind me in 1 hour, for the newest message in this alert (kept in the alert's extras so later lines keep it).
         if (msg != null && text != null) {
             val remind = Intent(context, RemindReceiver::class.java).setAction(RemindReceiver.ACTION).putExtra(CheckWorker.EXTRA_CHAT, chat)
