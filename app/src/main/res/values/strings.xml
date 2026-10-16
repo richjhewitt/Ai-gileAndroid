@@ -518,6 +518,10 @@
     <string name="restore_bad">Wrong passphrase, or not a settings file</string>
     <string name="backup_failed">That did not work</string>
     <string name="clear_chat">Clear chat</string>
+    <string name="rename_chat">Rename</string>
+    <string name="rename_chat_title">Rename this chat</string>
+    <string name="rename_chat_hint">Only changes the name on this phone.</string>
+    <string name="reset_name">Reset name</string>
     <string name="clear_chat_title">Clear this chat?</string>
     <string name="clear_chat_body">Hides every message so far on this phone only. The board and your friend keep theirs, and newer messages still show.</string>
     <string name="chat_cleared">Chat cleared</string>

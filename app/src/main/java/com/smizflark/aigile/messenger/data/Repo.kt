@@ -56,8 +56,10 @@ class Repo(context: Context) {
     fun signOut() { board = null; store.signOut(); LatestWidget.refresh(app); Shortcuts.clear(app) }
 
     suspend fun chats(): List<ChatRef> {
-        val l = source.chats().map { Mapper.mineFromCache(it, store.cachedConversation(it.key)) }   // "You:" on the chats list (AII-106)
-        store.cacheChats(l); store.lastSync = System.currentTimeMillis()
+        val board = source.chats().map { Mapper.mineFromCache(it, store.cachedConversation(it.key)) }   // "You:" on the chats list (AII-106)
+        store.cacheChats(board)   // the board's names; this phone's own names (AII-365) go on here and on every cachedChats read
+        val l = ChatNames.apply(board, store.chatNames)
+ store.lastSync = System.currentTimeMillis()
         learnSafety(l)
         // In step with the board (AII-25): the Lead Scrum Master read on the PC counts as read here too.
         l.filter { it.kind == Kind.WATCHMAN && it.unread == 0 }.forEach { store.markSeen(it.key, it.last) }
@@ -77,7 +79,7 @@ class Repo(context: Context) {
     }
 
     /** This chat as the chats list has it now: is the team at work, and on which card (AII-112/113)? Null when the board can't be reached. */
-    suspend fun fresh(ref: ChatRef): ChatRef? = runCatching { source.chats().firstOrNull { it.key == ref.key } }.getOrNull()
+    suspend fun fresh(ref: ChatRef): ChatRef? = runCatching { source.chats().firstOrNull { it.key == ref.key } }.getOrNull()?.let { ChatNames.on(it, store.chatNames) }
 
     /* ---------- safety code change warning (AII-333) ---------- */
 

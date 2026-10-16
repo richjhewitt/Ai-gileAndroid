@@ -75,7 +75,7 @@ open class StoreFiles(context: Context) {
 
     /* ---------- cache: show the last chats at once, also offline ---------- */
 
-    fun cachedChats(): List<ChatRef>? = read("chats.json")
+    open fun cachedChats(): List<ChatRef>? = read("chats.json")
     fun cacheChats(l: List<ChatRef>) = write("chats.json", l)
     fun cachedConversation(chat: String): Conversation? = read(file(chat))
     fun cacheConversation(c: Conversation) = write(file(c.ref.key), c)

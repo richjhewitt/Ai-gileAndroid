@@ -518,6 +518,10 @@
     <string name="restore_bad">Verkeerde wachtwoordzin, of geen instellingenbestand</string>
     <string name="backup_failed">Dat lukte niet</string>
     <string name="clear_chat">Chat wissen</string>
+    <string name="rename_chat">Hernoemen</string>
+    <string name="rename_chat_title">Chat hernoemen</string>
+    <string name="rename_chat_hint">Verandert de naam alleen op deze telefoon.</string>
+    <string name="reset_name">Naam herstellen</string>
     <string name="clear_chat_title">Deze chat wissen?</string>
     <string name="clear_chat_body">Verbergt alle berichten tot nu toe, alleen op deze telefoon. Het bord en je vriend houden hun berichten en nieuwe berichten blijven gewoon zichtbaar.</string>
     <string name="chat_cleared">Chat gewist</string>

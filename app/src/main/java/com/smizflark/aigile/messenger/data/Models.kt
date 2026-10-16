@@ -180,6 +180,8 @@ data class ChatRef(
     val checked: Boolean = false,
     /** Friends: they are typing to you now. */
     val typing: Boolean = false,
+    /** The board's name when this phone shows its own (AII-365, see ChatNames); null when not renamed. */
+    val boardName: String? = null,
 ) {
     val key get() = "${kind.name.lowercase()}:$id"
 }
