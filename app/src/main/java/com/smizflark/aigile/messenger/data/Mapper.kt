@@ -97,6 +97,13 @@ object Mapper {
         return Conversation(ref, bubbles, targets, default, lastFromThem, boardStars = t.stars)
     }
 
+    /** AII-326: one chip per emoji, counting yours and theirs, in the order first seen. */
+    fun chips(r: FriendReacts?): List<ReactChip> {
+        if (r == null) return emptyList()
+        val all = r.mine.distinct() + r.theirs.distinct()
+        return all.distinct().map { e -> ReactChip(e, (if (e in r.mine) 1 else 0) + (if (e in r.theirs) 1 else 0), e in r.mine) }
+    }
+
     fun friend(ref: ChatRef, owner: String, msgs: List<FriendMsg>): Conversation {
         val bubbles = msgs.mapIndexed { i, m ->
             val mine = m.dir == "out"
@@ -110,6 +117,7 @@ object Mapper {
                 at = m.at, mine = mine, unverified = !m.verified && !gone,
                 pics = if (m.verified && !gone) pics("/api/dms/contacts/${ref.id}/files/", m.attachments) else emptyList(),
                 id = m.id, edited = m.edited?.takeIf { !gone }, deleted = gone,
+                reacts = if (gone) emptyList() else chips(m.reacts),
             )
         }.filter { it.text.isNotEmpty() || it.pics.isNotEmpty() || it.deleted }
         return Conversation(ref, bubbles, lastFromThem = bubbles.lastOrNull { !it.mine }?.at)

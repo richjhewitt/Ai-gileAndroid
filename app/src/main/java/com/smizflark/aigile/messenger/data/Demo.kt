@@ -47,7 +47,7 @@ class DemoSource : ChatSource {
     )
     private val friends = mutableMapOf(
         "davy" to mutableListOf(
-            FriendMsg("d1", "in", "Fancy a game later?", ago(50)),
+            FriendMsg("d1", "in", "Fancy a game later?", ago(50), reacts = FriendReacts(theirs = listOf("👍"))),
             FriendMsg("d2", "out", "After the barbers, yeah", ago(45)),
         ),
     )
@@ -133,6 +133,14 @@ class DemoSource : ChatSource {
         val l = friends[ref.id] ?: return
         val i = l.indexOfFirst { it.id == id && it.dir == "out" }
         if (i >= 0) l[i] = l[i].copy(text = "", attachments = emptyList(), deleted = Now.instant().toString())
+    }
+
+    override suspend fun react(ref: ChatRef, id: String, emoji: String) {
+        val l = friends[ref.id] ?: return
+        val i = l.indexOfFirst { it.id == id && it.deleted == null }
+        if (i < 0) return
+        val r = l[i].reacts ?: FriendReacts()
+        l[i] = l[i].copy(reacts = r.copy(mine = if (emoji in r.mine) r.mine - emoji else r.mine + emoji))
     }
 
     override suspend fun setChecked(ref: ChatRef) { checked = true }

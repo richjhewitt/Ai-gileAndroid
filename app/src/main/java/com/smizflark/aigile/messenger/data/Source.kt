@@ -53,6 +53,8 @@ interface ChatSource {
     suspend fun stars(slug: String): List<String>? = null
     /** Friend DMs (AII-324): change the text of one of your own lines. */
     suspend fun edit(ref: ChatRef, id: String, text: String) {}
+    /** Friend DMs (AII-326): react with an emoji; doing it again takes it back. */
+    suspend fun react(ref: ChatRef, id: String, emoji: String) {}
     /** Friend DMs (AII-324): delete one of your own lines. */
     suspend fun delete(ref: ChatRef, id: String) {}
     /** Friend DMs (AII-324): tell them you are typing. */
@@ -267,6 +269,10 @@ class BoardSource(
 
     override suspend fun delete(ref: ChatRef, id: String) {
         call("DELETE", "/api/dms/contacts/${ref.id}/messages/$id")
+    }
+
+    override suspend fun react(ref: ChatRef, id: String, emoji: String) {
+        call("POST", "/api/dms/contacts/${ref.id}/messages/$id/react", buildJsonObject { put("emoji", emoji) })
     }
 
     override suspend fun typing(ref: ChatRef) {

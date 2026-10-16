@@ -5,6 +5,9 @@ import android.widget.Toast
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -103,10 +106,17 @@ internal fun DeleteMessageDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
 // AII-43: long-press a bubble for Remind me, Reply, Forward, Star, Copy, Copy as quote, Select, links, Share, Read aloud.
 @Composable
 internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown: AnnotatedString, starred: Boolean, onStar: (() -> Unit)?,
-                      onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, onRemind: () -> Unit, onSelect: () -> Unit, onEdit: (() -> Unit)? = null, onDelete: (() -> Unit)? = null) {
+                      onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, onRemind: () -> Unit, onSelect: () -> Unit, onEdit: (() -> Unit)? = null, onDelete: (() -> Unit)? = null, onReact: ((String) -> Unit)? = null) {
     val ctx = LocalContext.current
     val clipboard = LocalClipboardManager.current
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        // AII-326: quick reactions on top, for friend lines.
+        if (onReact != null) androidx.compose.foundation.layout.Row(Modifier.testTag("react-row").padding(horizontal = 8.dp)) {
+            listOf("👍", "❤️", "😂", "😮", "😢", "🙏").forEach { e ->
+                Text(e, style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.clickable { onDismiss(); onReact(e) }.padding(horizontal = 6.dp, vertical = 8.dp))
+            }
+        }
         if (b.state == SendState.SENT && !b.unverified && shown.text.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.remind_me)) }, modifier = Modifier.testTag("remind"),
             onClick = { onDismiss(); onRemind() })
         if (b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(R.string.reply)) }, modifier = Modifier.testTag("reply"),

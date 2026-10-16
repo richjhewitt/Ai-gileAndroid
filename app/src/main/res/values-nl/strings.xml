@@ -413,6 +413,8 @@
     <string name="new_widget">Widget toont ongelezen aantallen en volgt de stijl van de app</string>
     <string name="new_build">build %1$d</string>
     <string name="typing">typt…</string>
+    <string name="react_chip">%1$s %2$d</string>
+    <string name="react_chip_mine">%1$s %2$d, jij hebt gereageerd</string>
     <string name="msg_deleted">Bericht verwijderd</string>
     <string name="edited_time">bewerkt · %1$s</string>
     <string name="edit_message">Bericht bewerken</string>

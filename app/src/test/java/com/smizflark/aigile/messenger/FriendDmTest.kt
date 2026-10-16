@@ -4,6 +4,7 @@ import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Contact
 import com.smizflark.aigile.messenger.data.DemoSource
 import com.smizflark.aigile.messenger.data.FriendMsg
+import com.smizflark.aigile.messenger.data.FriendReacts
 import com.smizflark.aigile.messenger.data.FriendReply
 import com.smizflark.aigile.messenger.data.Held
 import com.smizflark.aigile.messenger.data.Kind
@@ -101,6 +102,33 @@ class FriendDmTest {
         assertTrue(b.deleted)
         assertEquals("", b.text)
         assertEquals(2, c.bubbles.size)
+    }
+
+    @Test fun reactsBecomeChipsWithCountsAndMine() {
+        val m = json.decodeFromString<List<FriendMsg>>("""[{"id":"1","dir":"in","text":"hi","at":"2026-10-13T01:00:00Z","reacts":{"mine":["👍"],"theirs":["👍","❤️"]}}]""")
+        val chips = Mapper.friend(ref, "Rich", m).bubbles.single().reacts
+        assertEquals(listOf("👍" to 2, "❤️" to 1), chips.map { it.emoji to it.count })
+        assertEquals(listOf(true, false), chips.map { it.mine })
+    }
+
+    @Test fun anOlderBoardHasNoReacts() {
+        val m = json.decodeFromString<List<FriendMsg>>("""[{"id":"1","dir":"in","text":"hi","at":"2026-10-13T01:00:00Z"}]""")
+        assertTrue(Mapper.friend(ref, "Rich", m).bubbles.single().reacts.isEmpty())
+    }
+
+    @Test fun aDeletedLineHasNoReacts() {
+        val m = listOf(FriendMsg("1", "out", "", "2026-10-13T01:00:00Z", deleted = "2026-10-13T02:00:00Z", reacts = FriendReacts(theirs = listOf("👍"))))
+        assertTrue(Mapper.friend(ref, "Rich", m).bubbles.single().reacts.isEmpty())
+    }
+
+    @Test fun demoReactTogglesMine() = runBlocking {
+        val d = DemoSource()
+        fun d1() = runBlocking { d.conversation(davy(d)).bubbles.first { it.id == "d1" }.reacts.single() }
+        assertEquals(false to 1, d1().mine to d1().count)
+        d.react(davy(d), "d1", "👍")
+        assertEquals(true to 2, d1().mine to d1().count)
+        d.react(davy(d), "d1", "👍")
+        assertEquals(false to 1, d1().mine to d1().count)
     }
 
     @Test fun demoReplyCarriesTheQuotedLine() = runBlocking {

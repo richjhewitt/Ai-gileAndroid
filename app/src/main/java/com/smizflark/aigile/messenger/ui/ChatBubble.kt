@@ -138,7 +138,7 @@ import androidx.compose.ui.platform.LocalView
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
-internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null) {
+internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, cards: Set<String>, onCard: (String) -> Unit, onOption: (String) -> Unit, onRetry: (Pending) -> Unit, onDiscard: (Pending) -> Unit, onQuote: (String) -> Unit = {}, starred: Boolean = false, onStar: (() -> Unit)? = null, onSendNow: (Pending) -> Unit = {}, onEdit: (Pending) -> Unit = {}, onMoveLater: (Pending, java.time.Instant) -> Unit = { _, _ -> }, onRepeat: (Pending, String?) -> Unit = { _, _ -> }, remindAt: Long? = null, onReminded: () -> Unit = {}, onEditMsg: ((Bubble, String) -> Unit)? = null, onDeleteMsg: ((Bubble) -> Unit)? = null, onReact: ((Bubble, String) -> Unit)? = null) {
     val b = r.b
     val cs = MaterialTheme.colorScheme
     val bg = when {
@@ -244,7 +244,8 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
             noteAt?.let { at -> RemindNoteDialog(at, ref, b, shown, repo, noteText, { noteText = it }, onSaved = onReminded) { noteAt = null } }
             HoldMenu(menu, { menu = false }, b, shown, starred, onStar, onReply, onForward, onRemind = { remindMenu = true }, onSelect = { selecting = true },
                 onEdit = if (ownLine && onEditMsg != null) { { editing = true } } else null,
-                onDelete = if (ownLine && onDeleteMsg != null) { { deleting = true } } else null)
+                onDelete = if (ownLine && onDeleteMsg != null) { { deleting = true } } else null,
+                onReact = if (ref.kind == Kind.FRIEND && b.id != null && b.state == SendState.SENT && !b.deleted && !b.unverified && onReact != null) { e -> onReact(b, e) } else null)
             if (editing) EditMessageDialog(Quote.split(b.text).second, onSave = { editing = false; onEditMsg?.invoke(b, it) }, onDismiss = { editing = false })
             if (deleting) DeleteMessageDialog(onConfirm = { deleting = false; onDeleteMsg?.invoke(b) }, onDismiss = { deleting = false })
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {
@@ -276,6 +277,17 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                         onTextLayout = { if (it.hasVisualOverflow) long = true })
                     if (long && mark == 0) TextButton(onClick = { open = !open }, modifier = Modifier.testTag("read-more")) {
                         Text(stringResource(if (open) R.string.show_less else R.string.read_more))
+                    }
+                }
+                // AII-326: reaction chips; tap one to add or take back yours.
+                if (b.reacts.isNotEmpty() && !b.deleted) FlowRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    b.reacts.forEach { c ->
+                        val label = stringResource(if (c.mine) R.string.react_chip_mine else R.string.react_chip, c.emoji, c.count)
+                        Surface(shape = RoundedCornerShape(12.dp), color = if (c.mine) cs.primary.copy(alpha = 0.3f) else fg.copy(alpha = 0.1f),
+                            border = if (c.mine) BorderStroke(1.dp, cs.primary) else null,
+                            modifier = Modifier.testTag("react-chip").clickable(onClickLabel = label) { onReact?.invoke(b, c.emoji) }.semantics { contentDescription = label }) {
+                            Text("${c.emoji} ${c.count}", style = MaterialTheme.typography.labelMedium, color = fg, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
+                        }
                     }
                 }
                 Text(

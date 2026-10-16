@@ -102,6 +102,14 @@ data class Contact(
 @Serializable
 data class FriendReply(val id: String? = null, val text: String = "")
 
+/** The reactions on a friend line (AII-326): the emoji you gave and the ones they gave. */
+@Serializable
+data class FriendReacts(val mine: List<String> = emptyList(), val theirs: List<String> = emptyList())
+
+/** One reaction chip under a bubble (AII-326). */
+@Serializable
+data class ReactChip(val emoji: String, val count: Int, val mine: Boolean)
+
 @Serializable
 data class FriendMsg(
     val id: String? = null,
@@ -116,6 +124,8 @@ data class FriendMsg(
     val deleted: String? = null,
     /** The line this one answers. */
     val reply: FriendReply? = null,
+    /** AII-326: reactions; older boards send none. */
+    val reacts: FriendReacts? = null,
 )
 
 @Serializable
@@ -198,6 +208,8 @@ data class Bubble(
     val edited: String? = null,
     /** Friend lines: it was deleted; the bubble says so. */
     val deleted: Boolean = false,
+    /** Friend lines: reaction chips (AII-326). */
+    val reacts: List<ReactChip> = emptyList(),
 )
 
 /** A picture or file on a message: a board path (/api/...) or, before it is sent or in the demo, a file:// address. */

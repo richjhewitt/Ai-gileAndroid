@@ -381,6 +381,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                 },
                                 onQuote = { q -> jumpToQuote(q, r.id) },
                                 onEditMsg = if (ref.kind == Kind.FRIEND) { { b, t -> scope.launch { runCatching { repo.source.edit(ref, b.id!!, t) }.onFailure { error = it.message }; load() } } } else null,   // AII-324
+                                onReact = if (ref.kind == Kind.FRIEND) { { b, e -> scope.launch { runCatching { repo.source.react(ref, b.id!!, e) }.onFailure { error = it.message }; load() } } } else null,   // AII-326
                                 onDeleteMsg = if (ref.kind == Kind.FRIEND) { { b -> scope.launch { runCatching { repo.source.delete(ref, b.id!!) }.onFailure { error = it.message }; load() } } } else null,
                                 remindAt = com.smizflark.aigile.messenger.data.Remind.forMessage(reminders, ref.key, r.b.key), onReminded = { reminders = repo.store.reminders() },
                                 starred = Stars.has(stars, ref.key, r.b.key),

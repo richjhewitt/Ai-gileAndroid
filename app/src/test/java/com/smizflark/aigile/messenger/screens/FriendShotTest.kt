@@ -41,6 +41,13 @@ class FriendShotTest : ShotBase() {
         rule.onAllNodesWithTag("quote", useUnmergedTree = true).assertCountEquals(1)
     }
 
+    @Test fun davyReactsDark() {
+        runBlocking { repo.source.react(davy(), "d1", "👍"); repo.source.react(davy(), "d1", "❤️") }
+        prime(davy())
+        shot("chat_friend_reacts", true) { ChatScreen(repo, davy(), onBack = {}) }
+        rule.onAllNodesWithTag("react-chip", useUnmergedTree = true).assertCountEquals(2)
+    }
+
     @Test fun davyDetailsSafetyCodeDark() {
         prime(davy()); RuntimeEnvironment.setQualifiers("+night")
         rule.setContent { MessengerTheme { ChatScreen(repo, davy(), onBack = {}) } }

@@ -40,6 +40,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/ScrollPlace.kt: remembers where you left each chat.
 - data/Seal.kt: seals every board call end to end (AES-256-GCM, key from pairing; vectors in docs/SEALED.md).
 - data/DmCrypto.kt: end-to-end sealing for direct messages (P-256 ECDH, AES-GCM, safety number); see docs/DM.md (AII-325).
+- Reactions in friend chats (AII-326): FriendMsg.reacts to Bubble.reacts chips (Mapper.chips); Source.react toggles; quick emoji row in HoldMenu, chips in ui/ChatBubble.kt.
 - Friend DMs (AII-324) use the board's friend DMs: Source edit / delete / typing / setChecked; reply goes by id (Pending.reply, Held.reply); Edit and Delete dialogs in ui/BubbleMenu.kt; safety words and We checked it in ui/ChatDetails.kt; "typing…" polled every 3 s in ui/ChatScreen.kt.
 - data/Search.kt: search results (chats and messages); Pictures / Links / Files (AII-267, `files`, non-picture files as in ChatInfo.isFile; AII-270 snippet = "📎 name" via `fileNames`) / Starred / Last 7 days (AII-258, `last7`) (AII-246, `starred` = the stars) filters list matching messages newest first (AII-192); snippets show markdown as read and carry the found-word ranges to bold (AII-195).
 - data/Share.kt: text shared in from other apps.
