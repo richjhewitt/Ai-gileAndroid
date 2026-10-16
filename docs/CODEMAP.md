@@ -85,6 +85,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - ui/BubbleMenu.kt: the bubble hold menu (Remind me, Reply, Forward, Star, Copy, Copy as quote, Select, links, Share, Read aloud) and the Remind me time menu and note dialog (AII-201, AII-244).
 - data/MessageInfo.kt + MessageInfoDialog in ui/BubbleMenu.kt: hold a message, Info shows the exact sent and edited times (AII-372); the board keeps no per-message read time.
 - ui/ChatComposer.kt: the message input with pictures, reply, dictation and quick replies (AII-179); hold a quick reply to edit them in Settings (AII-255).
+- ui/ChatComposer.kt messageHint: with pictures picked the box says "Add a caption"; its text goes in the same message as the pictures (AII-379).
 - ui/ChatParts.kt: chat Row model, find bar, jump-to-newest, card header, quote bar, forward dialog.
 - ui/ChatsScreen.kt: every chat in one list.
 - ui/TwoPane.kt: wide screens (840dp, or 600dp in landscape) show the chats list (360dp) and the open chat side by side, "Pick a chat" when none (AII-350); MainActivity keeps the selected chat across turning and folding.

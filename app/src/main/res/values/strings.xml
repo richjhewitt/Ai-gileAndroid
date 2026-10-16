@@ -130,6 +130,7 @@
     <string name="pictures_friend_only">Pictures only go in friend chats</string>
     <string name="add_picture">Add a picture</string>
     <string name="message_watchman">Message the Lead Scrum Master</string>
+    <string name="add_caption">Add a caption</string>
     <string name="message">Message</string>
     <string name="pic_read_one">Couldn\'t read one of those pictures.</string>
     <string name="pic_read_copied">Couldn\'t read the copied picture.</string>

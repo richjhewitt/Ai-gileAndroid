@@ -130,6 +130,7 @@
     <string name="pictures_friend_only">Foto\'s kunnen alleen in vriendenchats</string>
     <string name="add_picture">Foto toevoegen</string>
     <string name="message_watchman">Bericht aan de Lead Scrum Master</string>
+    <string name="add_caption">Voeg een bijschrift toe</string>
     <string name="message">Bericht</string>
     <string name="pic_read_one">Een van die foto’s kon niet worden gelezen.</string>
     <string name="pic_read_copied">De gekopieerde foto kon niet worden gelezen.</string>

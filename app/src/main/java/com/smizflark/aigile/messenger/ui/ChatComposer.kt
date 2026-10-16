@@ -192,7 +192,7 @@ internal fun Composer(
                 }
                 MessageField(   // MessageField.kt: text from outside gets the cursor at its end (AII-150); Enter sends (AII-126)
                     text, onText, canSend, onSend, onPictures,
-                    placeholder = { Text(stringResource(if (ref.kind == Kind.WATCHMAN) R.string.message_watchman else R.string.message)) },
+                    placeholder = { Text(stringResource(messageHint(ref.kind == Kind.WATCHMAN, pics.isNotEmpty()))) },
                     onFormatter = { formatter = it },
                     trailingIcon = { MicButton(voice = voice) { onText(Dictate.join(text, it)) } },
                     modifier = Modifier.weight(1f).testTag("input").onPreviewKeyEvent {
@@ -272,3 +272,7 @@ private fun QuickReplies(onPick: (String) -> Unit, onEdit: () -> Unit) {
 
 /** Pictures on one message: plenty for screenshots, and well inside the board's 20 files a comment. */
 internal const val MAX_PICS = 6
+
+/** AII-379: the box placeholder; with pictures picked the text goes along as their caption (one message). */
+internal fun messageHint(watchman: Boolean, hasPics: Boolean): Int =
+    if (hasPics) R.string.add_caption else if (watchman) R.string.message_watchman else R.string.message
