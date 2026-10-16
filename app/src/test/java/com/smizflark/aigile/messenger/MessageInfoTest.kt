@@ -18,11 +18,11 @@ class MessageInfoTest {
         assertEquals(listOf(Kind.SENT, Kind.EDITED), l.map { it.kind })
         assertEquals("Fri 16 Oct 2026, 08:05", l[1].time)
     }
-    @Test fun twelveHour() {
-        assertEquals("Fri 16 Oct 2026, 7:41", MessageInfo.format("2026-10-16T06:41:00Z", z, Locale.UK, false).substringBeforeLast(" "))
+    @Test fun alwaysTwentyFourHourLikeTheBubbles() {
+        assertEquals("Fri 16 Oct 2026, 15:41", MessageInfo.format("2026-10-16T14:41:00Z", z, Locale.UK))
     }
     @Test fun dutch() {
-        assertEquals("vr 16 okt 2026, 07:41", MessageInfo.format("2026-10-16T06:41:00Z", z, Locale("nl", "NL"), true).replace(".", ""))
+        assertEquals("vr 16 okt 2026, 07:41", MessageInfo.format("2026-10-16T06:41:00Z", z, Locale("nl", "NL")).replace(".", ""))
     }
     @Test fun badTimeLeftOut() {
         assertEquals(emptyList<MessageInfo.Line>(), MessageInfo.lines("", "x", z, Locale.UK))

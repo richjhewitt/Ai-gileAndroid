@@ -129,9 +129,7 @@ internal fun DeleteMessageDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
 /** AII-372: Info on a held message: exact sent time, and edited time when it was edited. */
 @Composable
 internal fun MessageInfoDialog(b: Bubble, onDismiss: () -> Unit) {
-    val ctx = LocalContext.current
-    val lines = com.smizflark.aigile.messenger.data.MessageInfo.lines(b.at, b.edited,
-        locale = java.util.Locale.getDefault(), h24 = android.text.format.DateFormat.is24HourFormat(ctx))
+    val lines = com.smizflark.aigile.messenger.data.MessageInfo.lines(b.at, b.edited, locale = java.util.Locale.getDefault())
     androidx.compose.material3.AlertDialog(onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.info_title)) },
         text = { androidx.compose.foundation.layout.Column {

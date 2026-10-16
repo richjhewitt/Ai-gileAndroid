@@ -96,7 +96,8 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
     var to by remember { mutableStateOf(s.quietTo) }
     var morning by remember { mutableStateOf(s.morning) }   // AII-208
     var note by remember { mutableStateOf<String?>(null) }
-    var saved by remember { mutableIntStateOf(0) }   // bumps after a change, so the connection text re-reads the store
+    var backupNote by remember { mutableStateOf<String?>(null) }   // AII-407: the Export / Restore result, shown under those buttons
+    var saved by remember { mutableIntStateOf(0) }  // bumps after a change, so the connection text re-reads the store
     var confirmSignOut by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }          // AII-217
     var backupPass by remember { mutableStateOf<Boolean?>(null) }   // AII-349: true = export, false = restore; null = no dialog
@@ -358,6 +359,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
                 OutlinedButton(onClick = { pickExport.launch("messenger-settings.aigm") }, modifier = Modifier.weight(1f).testTag("exportSettings")) { Text(stringResource(R.string.export_settings)) }
                 OutlinedButton(onClick = { pickRestore.launch(arrayOf("*/*")) }, modifier = Modifier.weight(1f).testTag("restoreSettings")) { Text(stringResource(R.string.restore_settings)) }
             }
+            backupNote?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("backupNote")) }   // right under the buttons
             }
             SettingRow(rReset) { TextButton(onClick = { confirmReset = true }, modifier = Modifier.testTag("resetSettings")) { Text(stringResource(R.string.reset_settings)) } }
             SettingRow(rAbout) {
@@ -386,7 +388,7 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
                 TextButton(enabled = passText.length >= 4, onClick = {
                     val uri = backupUri; val pass = passText.toCharArray(); close()
                     if (uri != null) scope.launch {
-                        note = withContext(Dispatchers.IO) {
+                        backupNote = withContext(Dispatchers.IO) {
                             runCatching {
                                 if (exporting) { ctx.contentResolver.openOutputStream(uri)!!.use { it.write(s.exportSettings(pass)) }; ctx.getString(R.string.export_done) }
                                 else { val n = s.importSettings(ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes() }, pass); ctx.getString(R.string.restore_done, n) }
