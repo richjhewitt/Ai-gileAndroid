@@ -4,7 +4,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 
 ## Root
 - App.kt: Application class; reacts to the phone's language changing.
-- MainActivity.kt: entry point; handles pairing links and chats opened from an alert.
+- MainActivity.kt: entry point (manifest has enableOnBackInvokedCallback = predictive back, AII-399: back is only OnBackPressedDispatcher / BackHandler, never onBackPressed or KEYCODE_BACK); handles pairing links and chats opened from an alert.
 
 ## data/ (pure logic, mostly unit tested)
 - data/ChatInfo.kt: a chat's open cards and pictures, for the chat details sheet.

@@ -32,6 +32,7 @@
     </queries>
 
     <application
+        android:enableOnBackInvokedCallback="true"
         android:name=".App"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
