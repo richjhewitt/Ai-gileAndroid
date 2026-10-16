@@ -184,6 +184,8 @@ internal fun Composer(
             if (Appearance.quickReplies && text.isEmpty() && pics.isEmpty()) QuickReplies(onText, onEditReplies)
             if (voice?.recording == true) RecordingLine(voice)
             val canSend = text.isNotBlank() || pics.isNotEmpty()
+            var formatter by remember { mutableStateOf<((String) -> Unit)?>(null) }   // AII-374: set while words are selected
+            formatter?.let { fmt -> FormatRow(fmt) }
             Row(verticalAlignment = Alignment.Bottom) {
                 IconButton(onClick = onAttach, enabled = pics.size < MAX_PICS, modifier = Modifier.size(52.dp).testTag("attach")) {
                     Icon(Icons.Default.AddPhotoAlternate, stringResource(R.string.add_picture))
@@ -191,6 +193,7 @@ internal fun Composer(
                 MessageField(   // MessageField.kt: text from outside gets the cursor at its end (AII-150); Enter sends (AII-126)
                     text, onText, canSend, onSend, onPictures,
                     placeholder = { Text(stringResource(if (ref.kind == Kind.WATCHMAN) R.string.message_watchman else R.string.message)) },
+                    onFormatter = { formatter = it },
                     trailingIcon = { MicButton(voice = voice) { onText(Dictate.join(text, it)) } },
                     modifier = Modifier.weight(1f).testTag("input").onPreviewKeyEvent {
                         val enter = it.key == Key.Enter || it.key == Key.NumPadEnter

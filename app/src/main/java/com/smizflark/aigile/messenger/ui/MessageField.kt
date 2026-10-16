@@ -23,6 +23,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
+import com.smizflark.aigile.messenger.data.Format
 import com.smizflark.aigile.messenger.data.PasteContent
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +44,7 @@ internal fun MessageField(
     text: String, onText: (String) -> Unit, canSend: Boolean, onSend: () -> Unit,
     onPictures: (List<Uri>, List<String?>) -> Unit,
     modifier: Modifier = Modifier, placeholder: @Composable () -> Unit, trailingIcon: @Composable () -> Unit,
+    onFormatter: (((String) -> Unit)?) -> Unit = {},
 ) {
     // Text put in from outside (a draft, dictation, Edit on Send later: AII-150) gets the cursor at its end, not the start.
     val state = rememberTextFieldState(text, androidx.compose.ui.text.TextRange(text.length))
@@ -56,6 +58,19 @@ internal fun MessageField(
     }
     LaunchedEffect(state) {
         snapshotFlow { state.text.toString() }.collect { if (it != latestText) { sent[0] = it; latestOnText(it) } }
+    }
+    // AII-374: while words are selected, hand the screen a way to wrap them (null when nothing is selected).
+    val latestFormatter by rememberUpdatedState(onFormatter)
+    LaunchedEffect(state) {
+        snapshotFlow { !state.selection.collapsed }.collect { has ->
+            latestFormatter(if (!has) null else { marker ->
+                state.edit {
+                    val r = Format.toggle(toString(), selection.min, selection.max, marker)
+                    if (r.text != toString()) replace(0, length, r.text)
+                    selection = androidx.compose.ui.text.TextRange(r.start, r.end)
+                }
+            })
+        }
     }
     val receiver = remember(onPictures) {
         object : ReceiveContentListener {

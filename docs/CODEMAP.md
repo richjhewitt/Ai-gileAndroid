@@ -17,6 +17,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/LinkPreview.kt: link previews (AII-341): og:title / og:image (or <title>) of a message's first https link, fetched by the phone (4 s, 64 KB, in-memory cache); ui/LinkPreviewCard.kt draws the card under the bubble; Settings > Privacy switch, off by default (Store linkPreviews); shot LinkPreviewShotTest.
 - data/Emoji.kt: bigEmojiCount = how many emoji a message is when it is only 1 to 3 emoji (else 0); ui/ChatBubble.kt shows those big with no bubble (AII-364).
 - data/Drafts.kt: half-typed replies, one per chat.
+- data/Format.kt: B / I / </> buttons on selected words in the message box (AII-374): toggle wraps or unwraps **bold**, _italic_, `code` per line; ui/FormatRow.kt is the row, MessageField hands it a formatter while text is selected; Markdown.kt now shows _italic_.
 - data/GoToDate.kt: Go to date in a chat (AII-193): which day to land on, and the picker's range (dialog: ui/GoToDateDialog.kt, with a First message button that picks the range start, AII-231).
 - data/Filter.kt: the chips above the chats list (Drafts chip while a chat has a non-blank draft, AII-369; `Drafts.chatKeys`).
 - data/HomeShortcut.kt: Add to home screen (AII-368, AII-376): pins a launcher shortcut that opens a chat (same EXTRA_CHAT route as alerts); menu items in ui/ChatTopBar.kt and the ui/ChatRow.kt hold menu.
