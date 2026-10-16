@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.smizflark.aigile.messenger.R
 import com.smizflark.aigile.messenger.data.CardDetail
+import com.smizflark.aigile.messenger.data.ChatSound
 import com.smizflark.aigile.messenger.data.ChatInfo
 import com.smizflark.aigile.messenger.data.ChatRef
 import com.smizflark.aigile.messenger.data.Repo
@@ -134,6 +135,38 @@ fun ChatDetails(ref: ChatRef, repo: Repo, info: ChatInfo, onFind: (() -> Unit)? 
                 SwitchRow(stringResource(R.string.silent_alerts), silent, "details-silent", Modifier.weight(1f)) {
                     repo.store.silent = com.smizflark.aigile.messenger.data.Silent.toggle(repo.store.silent, ref.key); silent = ref.key in repo.store.silent
                 }
+            }
+            // AII-373: this chat's own alert sound, picked in the phone's ringtone picker.
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            var sound by remember { mutableStateOf(ChatSound.of(repo.store.chatSounds, ref.key)) }
+            val pickSound = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { r ->
+                if (r.resultCode != android.app.Activity.RESULT_OK) return@rememberLauncherForActivityResult
+                val picked = r.data?.getParcelableExtra<android.net.Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                val default = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION)
+                sound = when (picked) { null -> ChatSound.NONE; default -> ""; else -> picked.toString() }
+                repo.store.chatSounds = ChatSound.put(repo.store.chatSounds, ref.key, sound)
+                com.smizflark.aigile.messenger.work.ChatNotifier.channelFor(ctx, ref.key, ref.name)   // makes the new channel, deletes the old one
+            }
+            val soundName = when {
+                sound.isEmpty() -> stringResource(R.string.alert_sound_default)
+                ChatSound.isNone(sound) -> stringResource(R.string.alert_sound_none)
+                else -> remember(sound) { runCatching { android.media.RingtoneManager.getRingtone(ctx, android.net.Uri.parse(sound)).getTitle(ctx) }.getOrNull() } ?: stringResource(R.string.alert_sound_default)
+            }
+            Row(Modifier.fillMaxWidth().clickable {
+                pickSound.launch(android.content.Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                    putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_NOTIFICATION)
+                    putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                    putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+                    putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION))
+                    putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, when {
+                        sound.isEmpty() -> android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION)
+                        ChatSound.isNone(sound) -> null
+                        else -> android.net.Uri.parse(sound)
+                    })
+                })
+            }.padding(top = 12.dp, bottom = 4.dp).testTag("details-sound"), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.alert_sound), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp))
+                Text(soundName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             muteEnds?.takeIf { muted }?.let { end ->
                 Text(stringResource(R.string.muted_until, com.smizflark.aigile.messenger.data.Mute.endTime(end)), style = MaterialTheme.typography.bodySmall,

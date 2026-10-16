@@ -100,6 +100,9 @@
     <string name="waiting_on_you">waiting on you</string>
     <string name="mute_alerts">Mute alerts</string>
     <string name="unmute">Unmute</string>
+    <string name="alert_sound">Alert sound</string>
+    <string name="alert_sound_default">Default</string>
+    <string name="alert_sound_none">Silent</string>
     <string name="silent_alerts">Silent alerts</string>
     <string name="silent_alerts_off">Alerts with sound</string>
     <string name="jump_unread">%1$d new</string>

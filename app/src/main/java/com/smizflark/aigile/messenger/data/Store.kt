@@ -197,6 +197,11 @@ class Store(context: Context) : StoreFiles(context) {
         get() = settings.getStringSet("silent", emptySet())?.toSet() ?: emptySet()
         set(v) = settings.edit().putStringSet("silent", v).apply()
 
+    /** Chats with their own alert sound (AII-373), see [ChatSound]. */
+    var chatSounds: Set<String>
+        get() = settings.getStringSet("chatSounds", emptySet())?.toSet() ?: emptySet()
+        set(v) = settings.edit().putStringSet("chatSounds", v).apply()
+
     /* ---------- muted chats: no alerts from them (AII-48) ---------- */
 
     /** Muted now: a mute for a while (AII-157) ends by itself. */
