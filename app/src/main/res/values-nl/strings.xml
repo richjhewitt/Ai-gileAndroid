@@ -442,4 +442,13 @@
     <string name="pin_message">Bericht vastzetten</string>
     <string name="unpin_message">Bericht losmaken</string>
     <string name="pinned_of">%1$d van %2$d</string>
+    <string name="export_settings">Instellingen exporteren</string>
+    <string name="restore_settings">Instellingen terugzetten</string>
+    <string name="export_text">Bewaart je instellingen, vastgezette en gedempte chats in één bestand. Kies een wachtwoordzin; je hebt die nodig om terug te zetten. Je bordsleutel zit er niet in.</string>
+    <string name="restore_text">Typ de wachtwoordzin die je bij het exporteren koos.</string>
+    <string name="passphrase">Wachtwoordzin (minstens 4)</string>
+    <string name="export_done">Instellingen bewaard</string>
+    <string name="restore_done">%1$d instellingen teruggezet</string>
+    <string name="restore_bad">Verkeerde wachtwoordzin, of geen instellingenbestand</string>
+    <string name="backup_failed">Dat lukte niet</string>
 </resources>

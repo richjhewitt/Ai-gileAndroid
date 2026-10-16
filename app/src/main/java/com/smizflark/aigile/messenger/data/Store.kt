@@ -335,6 +335,10 @@ class Store(context: Context) {
         tmp.writeText(json.encodeToString(v)); java.nio.file.Files.move(tmp.toPath(), f.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
     }
 
+    /** Settings in a passphrase-sealed file (AII-349), and back. [importSettings] throws SettingsExport.BadFile on a wrong passphrase. */
+    fun exportSettings(pass: CharArray): ByteArray = SettingsExport.seal(SettingsExport.dump(settings), pass)
+    fun importSettings(file: ByteArray, pass: CharArray): Int = SettingsExport.load(SettingsExport.open(file, pass), settings)
+
     /** Back to defaults for every look/behaviour setting; pins, mutes, board connection and the rest stay. */
     fun resetSettings() { val e = settings.edit(); RESETTABLE.forEach { e.remove(it) }; e.apply() }
 

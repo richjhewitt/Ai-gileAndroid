@@ -1,4 +1,4 @@
-package com.smizflark.aigile.messenger.ui
+﻿package com.smizflark.aigile.messenger.ui
 
 import com.smizflark.aigile.messenger.R
 
@@ -95,6 +95,11 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
     var saved by remember { mutableIntStateOf(0) }   // bumps after a change, so the connection text re-reads the store
     var confirmSignOut by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }          // AII-217
+    var backupPass by remember { mutableStateOf<Boolean?>(null) }   // AII-349: true = export, false = restore; null = no dialog
+    var passText by remember { mutableStateOf("") }
+    var backupUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    val pickExport = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { if (it != null) { backupUri = it; backupPass = true } }
+    val pickRestore = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { if (it != null) { backupUri = it; backupPass = false } }
     var confirmClear by remember { mutableStateOf(false) }          // AII-215
     var savedBytes by remember { mutableStateOf<Long?>(null) }
     LaunchedEffect(Unit) { savedBytes = withContext(Dispatchers.IO) { SavedPictures.size(ctx.cacheDir) } }
@@ -262,12 +267,46 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
             }
             if (s.demo) Text(stringResource(R.string.demo_nothing_leaves), color = MaterialTheme.colorScheme.onSurfaceVariant)
             bugNote?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {   // AII-349
+                OutlinedButton(onClick = { pickExport.launch("messenger-settings.aigm") }, modifier = Modifier.weight(1f).testTag("exportSettings")) { Text(stringResource(R.string.export_settings)) }
+                OutlinedButton(onClick = { pickRestore.launch(arrayOf("*/*")) }, modifier = Modifier.weight(1f).testTag("restoreSettings")) { Text(stringResource(R.string.restore_settings)) }
+            }
             TextButton(onClick = { confirmReset = true }, modifier = Modifier.testTag("resetSettings")) { Text(stringResource(R.string.reset_settings)) }
             androidx.compose.material3.ListItem(headlineContent = { Text(stringResource(R.string.about)) }, supportingContent = { Text(stringResource(R.string.about_sub)) },
                 modifier = Modifier.clickable(onClick = onAbout).testTag("about"))
             Text(stringResource(R.string.version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+
+    backupPass?.let { exporting ->
+        val close = { backupPass = null; passText = ""; backupUri = null }
+        AlertDialog(
+            onDismissRequest = close,
+            title = { Text(stringResource(if (exporting) R.string.export_settings else R.string.restore_settings)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(if (exporting) R.string.export_text else R.string.restore_text))
+                    OutlinedTextField(passText, { passText = it }, singleLine = true, label = { Text(stringResource(R.string.passphrase)) },
+                        visualTransformation = PasswordVisualTransformation(), modifier = Modifier.testTag("backupPass"))
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = passText.length >= 4, onClick = {
+                    val uri = backupUri; val pass = passText.toCharArray(); close()
+                    if (uri != null) scope.launch {
+                        note = withContext(Dispatchers.IO) {
+                            runCatching {
+                                if (exporting) { ctx.contentResolver.openOutputStream(uri)!!.use { it.write(s.exportSettings(pass)) }; ctx.getString(R.string.export_done) }
+                                else { val n = s.importSettings(ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes() }, pass); ctx.getString(R.string.restore_done, n) }
+                            }.getOrElse { ctx.getString(if (it is com.smizflark.aigile.messenger.data.SettingsExport.BadFile) R.string.restore_bad else R.string.backup_failed) }
+                        }
+                        if (!exporting) Appearance.reload(s)
+                    }
+                }) { Text(stringResource(R.string.done)) }
+            },
+            dismissButton = { TextButton(onClick = close) { Text(stringResource(R.string.cancel)) } },
+        )
     }
 
     if (confirmReset) AlertDialog(

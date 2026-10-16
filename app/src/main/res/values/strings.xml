@@ -442,4 +442,13 @@
     <string name="pin_message">Pin message</string>
     <string name="unpin_message">Unpin message</string>
     <string name="pinned_of">%1$d of %2$d</string>
+    <string name="export_settings">Export settings</string>
+    <string name="restore_settings">Restore settings</string>
+    <string name="export_text">Saves your settings, pins and mutes in one file. Pick a passphrase; you need it to restore. Your board key is not included.</string>
+    <string name="restore_text">Type the passphrase you chose when you exported.</string>
+    <string name="passphrase">Passphrase (4 or more)</string>
+    <string name="export_done">Settings saved</string>
+    <string name="restore_done">Restored %1$d settings</string>
+    <string name="restore_bad">Wrong passphrase, or not a settings file</string>
+    <string name="backup_failed">That did not work</string>
 </resources>
