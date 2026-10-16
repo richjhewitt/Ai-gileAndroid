@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onFirst
@@ -142,6 +143,12 @@ class OtherShotTest : ShotBase() {
         rule.waitUntil(5_000) { sentTo != null }
         org.junit.Assert.assertEquals(davy.key, sentTo)
         org.junit.Assert.assertTrue(repo.pendingFor(davy.key).isEmpty())   // sent, not left waiting
+    }
+    /** AII-398: a share from a share-sheet chat target opens New message with that chat already picked. */
+    @Test fun newWithPreselectedChat() {
+        val davy = chats.first { it.kind == com.smizflark.aigile.messenger.data.Kind.FRIEND }
+        show(false) { NewMessageScreen(repo, draft = "hello", preselect = davy.key, onBack = {}, onSent = {}) }
+        rule.onNodeWithTag("to:${davy.key}").assertIsSelected()
     }
     @Test fun emptyChatsLight() = shot("empty_chats", false) { EmptyState("No chats yet", button = "New message") }
     @Test fun emptySearchDark() = shot("empty_search", true) { EmptyState("No results for “zebra”", button = "Clear search") }

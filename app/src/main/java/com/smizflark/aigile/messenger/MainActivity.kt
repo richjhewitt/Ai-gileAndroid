@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Share
+import com.smizflark.aigile.messenger.data.ShareTargets
 import com.smizflark.aigile.messenger.ui.MAX_PICS
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -60,6 +61,8 @@ class MainActivity : FragmentActivity() {
     private var shared by mutableStateOf<String?>(null)
     /** Pictures shared in from another app (AII-338), kept in the outbox folder, sent with the shared text. */
     private var sharedPics by mutableStateOf<List<String>>(emptyList())
+    /** The chat tapped in the share sheet (AII-398, EXTRA_SHORTCUT_ID), already picked in New message. */
+    private var sharedTo by mutableStateOf<String?>(null)
     /** New message from the app icon menu (AII-53). */
     private var openNew by mutableStateOf(false)
     /** App lock (AII-63): covers the app until unlocked; leftAt is when it last went to the background. */
@@ -137,8 +140,8 @@ class MainActivity : FragmentActivity() {
                     }
                     composable("new") {
                         // Leaving New message (sent, back button or gesture) drops the shared text.
-                        DisposableEffect(Unit) { onDispose { shared = null; sharedPics = emptyList() } }
-                        NewMessageScreen(repo, draft = shared ?: "", pics = sharedPics, onBack = { nav.popBackStack() }, onSent = { to ->
+                        DisposableEffect(Unit) { onDispose { shared = null; sharedPics = emptyList(); sharedTo = null } }
+                        NewMessageScreen(repo, draft = shared ?: "", pics = sharedPics, preselect = sharedTo, onBack = { nav.popBackStack() }, onSent = { to ->
                             nav.popBackStack(); nav.openChat(to.key)
                         })
                     }
@@ -186,6 +189,8 @@ class MainActivity : FragmentActivity() {
     private fun read(intent: Intent?) {
         intent?.data?.toString()?.let { Mapper.parsePairing(it) }?.let { pairing = it }
         intent?.getStringExtra(CheckWorker.EXTRA_CHAT)?.let { openChat = it; openMsg = intent.getStringExtra(CheckWorker.EXTRA_MSG) }
+        if (intent?.action == Intent.ACTION_SEND || intent?.action == Intent.ACTION_SEND_MULTIPLE)
+            sharedTo = ShareTargets.chatKey(intent.getStringExtra(Intent.EXTRA_SHORTCUT_ID))
         if (intent?.action == Intent.ACTION_SEND)
             Share.text(intent.getStringExtra(Intent.EXTRA_SUBJECT), intent.getStringExtra(Intent.EXTRA_TEXT))?.let { shared = it }
         // AII-338: pictures shared in open New message at once; the copies follow when they are made.

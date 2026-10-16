@@ -50,9 +50,9 @@ import kotlinx.coroutines.launch
 /** Journey 4: a new 💬 message to any team (or a friend, or the Lead Scrum Master). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewMessageScreen(repo: Repo, draft: String = "", pics: List<String> = emptyList(), onBack: () -> Unit, onSent: (ChatRef) -> Unit) {
+fun NewMessageScreen(repo: Repo, draft: String = "", pics: List<String> = emptyList(), preselect: String? = null, onBack: () -> Unit, onSent: (ChatRef) -> Unit) {
     var chats by remember { mutableStateOf(repo.store.cachedChats() ?: emptyList()) }
-    var pick by rememberSaveable { mutableStateOf<String?>(null) }
+    var pick by rememberSaveable(preselect) { mutableStateOf(preselect) }   // AII-398: the chat tapped in the share sheet
     // Starts from text shared in from another app; a new share replaces it.
     var text by rememberSaveable(draft) { mutableStateOf(draft) }
     var files by remember(pics) { mutableStateOf(pics) }   // AII-338: pictures shared in from another app
