@@ -5,6 +5,7 @@ import com.smizflark.aigile.messenger.data.Conversation
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.News
 import com.smizflark.aigile.messenger.data.Pending
+import com.smizflark.aigile.messenger.data.Voice
 import com.smizflark.aigile.messenger.data.Pic
 import com.smizflark.aigile.messenger.data.Now
 import com.smizflark.aigile.messenger.data.SendState
@@ -42,7 +43,7 @@ internal fun rows(c: Conversation?, pending: List<Pending>, owner: String, focus
         val held = later(p, Now.instant())   // Send later (AII-146): its time shows instead of when it was typed
         out += Row.Msg("p:${p.id}", Bubble("p:${p.id}", owner, p.text, if (held) p.sendAt!! else p.at, true, p.target,
             state = if (held) SendState.LATER else if (p.failed && !p.offline) SendState.FAILED else SendState.SENDING,   // offline ones go by themselves (AII-55)
-            pics = p.files.map { Pic(File(it).toURI().toString(), File(it).name, "image/") }), p)
+            pics = p.files.map { Pic(File(it).toURI().toString(), File(it).name, if (Voice.isAudio("", it)) Voice.TYPE else "image/") }), p)
     }
     return out
 }

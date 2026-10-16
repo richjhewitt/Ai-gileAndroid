@@ -1,5 +1,6 @@
 package com.smizflark.aigile.messenger.ui
 
+import kotlinx.coroutines.launch
 import android.widget.Toast
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.scrollBy
@@ -101,4 +102,34 @@ internal fun shareTranscript(ctx: android.content.Context, name: String, c: Conv
 internal fun saveTranscript(ctx: android.content.Context, name: String, c: Conversation, owner: String) {
     val ok = saveTextFile(ctx, Transcript.fileName(name, com.smizflark.aigile.messenger.data.Now.today()), Transcript.of(c, owner) { fullTime(it) })
     Toast.makeText(ctx, if (ok) R.string.saved_to_downloads else R.string.save_failed, Toast.LENGTH_SHORT).show()
+}
+
+/** AII-193: the Go to date dialog for a chat's [items]; lands on the picked day's row. */
+@androidx.compose.runtime.Composable
+internal fun GoToDateHost(items: List<Row>, list: LazyListState, scope: kotlinx.coroutines.CoroutineScope, onClose: () -> Unit) {
+    val days = items.mapNotNull { (it as? Row.Day)?.id?.removePrefix("day:")?.let { d -> runCatching { java.time.LocalDate.parse(d) }.getOrNull() } }
+    GoToDateDialog(days, onDismiss = onClose, onPick = { picked ->
+        onClose()
+        val to = com.smizflark.aigile.messenger.data.GoToDate.target(days, picked)
+        val i = if (to == null) -1 else items.indexOfFirst { it.id == "day:$to" }
+        scope.launch { scrollToDayRow(list, i) }
+    })
+}
+
+/** AII-105: opened from a search result: scroll to that message and outline it for a moment. */
+@androidx.compose.runtime.Composable
+internal fun OpenAtEffect(openAt: String?, list: LazyListState, items: () -> List<Row>, flash: (String?) -> Unit) {
+    androidx.compose.runtime.LaunchedEffect(openAt) {
+        if (openAt == null) return@LaunchedEffect
+        val i = androidx.compose.runtime.snapshotFlow { items().indexOfFirst { it.id == openAt } }.first { it >= 0 }
+        list.scrollToItem(i + 1); flash(openAt); kotlinx.coroutines.delay(1500); flash(null)   // +1: the spacer at the bottom
+    }
+}
+
+/** AII-282: a card waiting for your test opens at its steps and Accept (the top), unless a saved place or a search result wins. */
+@androidx.compose.runtime.Composable
+internal fun OpenAtTestEffect(toTest: Boolean, list: LazyListState, plain: Boolean) {
+    androidx.compose.runtime.LaunchedEffect(toTest) {
+        if (toTest && plain) { androidx.compose.runtime.snapshotFlow { list.layoutInfo.totalItemsCount }.first { it > 0 }; list.scrollToItem(list.layoutInfo.totalItemsCount - 1) }
+    }
 }

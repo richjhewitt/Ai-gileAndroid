@@ -101,7 +101,7 @@ class FriendDmTest {
         val b = c.bubbles.first { it.id == "d2" }
         assertTrue(b.deleted)
         assertEquals("", b.text)
-        assertEquals(2, c.bubbles.size)
+        assertEquals(3, c.bubbles.size)
     }
 
     @Test fun reactsBecomeChipsWithCountsAndMine() {

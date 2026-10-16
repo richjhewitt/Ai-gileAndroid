@@ -278,3 +278,19 @@ internal fun ForwardDialog(repo: Repo, onDismiss: () -> Unit, onPick: (ChatRef) 
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }
+
+/** AII-71: forwards [body] to the chosen chat by the normal send path: queued first, so it waits and retries if the phone is offline. */
+@Composable
+internal fun ForwardHost(scope: kotlinx.coroutines.CoroutineScope, repo: Repo, ref: ChatRef, body: String, onDismiss: () -> Unit, refreshPending: () -> Unit, reload: suspend () -> Boolean) {
+    val ctx = LocalContext.current
+    ForwardDialog(repo, onDismiss = onDismiss) { to ->
+        onDismiss()
+        val p = repo.queue(to, Forward.text(body), null)
+        if (to.key == ref.key) refreshPending()
+        scope.launch {
+            val r = repo.deliver(to, p)
+            if (to.key == ref.key) { reload(); refreshPending() }
+            Toast.makeText(ctx, ctx.getString(if (r.isSuccess) R.string.forwarded_to else R.string.forward_queued, to.name), Toast.LENGTH_SHORT).show()
+        }
+    }
+}

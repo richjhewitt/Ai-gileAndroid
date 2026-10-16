@@ -1,6 +1,7 @@
 package com.smizflark.aigile.messenger.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -58,5 +59,25 @@ class FriendShotTest : ShotBase() {
         rule.onNodeWithTag("we-checked-it").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("safety-checked").assertIsDisplayed()
+    }
+
+    /** AII-331: Davy's voice note (play button, thin bar, length); the demo's file is missing, so Play says so. */
+    @Test fun davyVoiceNoteDark() {
+        val note = "file:///demo/voice-1760000000000.m4a"
+        com.smizflark.aigile.messenger.ui.VoicePlayer.lengths[note] = 7_000
+        prime(davy())
+        shot("chat_friend_voice", true) { ChatScreen(repo, davy(), onBack = {}) }
+        rule.onNodeWithTag("voice-note", useUnmergedTree = true).assertIsDisplayed()
+        rule.onNodeWithTag("voice-play", useUnmergedTree = true).assertContentDescriptionEquals("Play voice note, 0:07")
+    }
+
+    /** AII-331: the line above the box while the mic is held (no recorder behind it). */
+    @Test fun recordingLineDark() {
+        shot("chat_friend_recording", true) {
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            val voice = com.smizflark.aigile.messenger.ui.VoiceController.preview(ctx, kotlinx.coroutines.MainScope(), 7_000)
+            com.smizflark.aigile.messenger.ui.Composer(davy(), "", {}, emptyList(), null, {}, voice = voice) {}
+        }
+        rule.onNodeWithTag("recording").assertIsDisplayed()
     }
 }

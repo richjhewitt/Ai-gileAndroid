@@ -147,7 +147,8 @@ fun MessagePictures(pics: List<Pic>, repo: Repo, onOpened: () -> Unit = {}) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.share_picture)) }, leadingIcon = { Icon(Icons.Default.Share, null) },
                         onClick = { held = null; actions.share(req, p.name) }, modifier = Modifier.testTag("pic-share"))
                 }
-            } else FileLine(p, repo)
+            } else if (com.smizflark.aigile.messenger.data.Voice.isAudio(p)) VoiceNote(p, repo)   // AII-331
+            else FileLine(p, repo)
         }
     }
 }

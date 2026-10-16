@@ -49,10 +49,9 @@ suspend fun openFile(ctx: Context, p: Pic, repo: Repo) {
     if (runCatching { ctx.startActivity(view) }.isFailure) Toast.makeText(ctx, ctx.getString(R.string.file_no_app), Toast.LENGTH_LONG).show()
 }
 
-private fun fetch(ctx: Context, p: Pic, repo: Repo): File? {
-    val dir = File(ctx.cacheDir, "files").apply { mkdirs(); listFiles()?.forEach { it.delete() } }   // only the last file is kept
-    val safe = p.name.ifEmpty { "file" }.replace(Regex("[\\\\/:*?\"<>|]"), "_")
-    val out = File(dir, safe)
+internal fun fetch(ctx: Context, p: Pic, repo: Repo, dir: File = File(ctx.cacheDir, "files").apply { mkdirs(); listFiles()?.forEach { it.delete() } }, prefix: String = ""): File? {   // default: only the last file is kept
+    val safe = p.name.ifEmpty { "file" }.replace(Regex("[\\/:*?\"<>|]"), "_")
+    val out = File(dir, prefix + safe)
     if (p.local) {
         (ctx.contentResolver.openInputStream(Uri.parse(p.path)) ?: return null).use { i -> out.outputStream().use { i.copyTo(it) } }
         return out

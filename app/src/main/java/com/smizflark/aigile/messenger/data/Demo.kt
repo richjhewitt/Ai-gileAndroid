@@ -49,6 +49,8 @@ class DemoSource : ChatSource {
         "davy" to mutableListOf(
             FriendMsg("d1", "in", "Fancy a game later?", ago(50), reacts = FriendReacts(theirs = listOf("👍"))),
             FriendMsg("d2", "out", "After the barbers, yeah", ago(45)),
+            // AII-331: a voice note from Davy; the file isn't there, so Play says it can't (no sound in the demo).
+            FriendMsg("d3", "in", null, ago(40), attachments = listOf(Attachment("file:///demo/voice-1760000000000.m4a", "voice-1760000000000.m4a", Voice.TYPE, 52_000))),
         ),
     )
     /** AII-324: you and Davy have not checked the safety words yet, so the button shows. */

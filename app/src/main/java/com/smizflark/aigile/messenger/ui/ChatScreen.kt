@@ -30,15 +30,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -52,7 +51,6 @@ import com.smizflark.aigile.messenger.data.Outbox
 import com.smizflark.aigile.messenger.data.Kind
 import com.smizflark.aigile.messenger.data.Pace
 import com.smizflark.aigile.messenger.data.Pending
-import com.smizflark.aigile.messenger.data.Forward
 import com.smizflark.aigile.messenger.data.Quote
 import com.smizflark.aigile.messenger.data.Repo
 import com.smizflark.aigile.messenger.data.Stars
@@ -112,7 +110,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     LaunchedEffect(text) { delay(400); repo.store.saveDraft(ref.key, text) }
     val latest by rememberUpdatedState(text)
     DisposableEffect(ref.key) { onDispose { repo.store.saveDraft(ref.key, latest) } }
-    DisposableEffect(ref.key) { onDispose { ReadAloud.stop() } }   // AII-185: leaving the chat stops Read aloud
+    DisposableEffect(ref.key) { onDispose { ReadAloud.stop(); VoicePlayer.stop() } }   // AII-331: and a playing voice note   // AII-185: leaving the chat stops Read aloud
 
     val pace = remember { Pace(fast = 3_000, slow = 30_000) }
 
@@ -150,6 +148,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         tick()
         deliver(repo.queue(ref, t, to, files, reply = reply))
     }
+
+    val voice = if (ref.kind == Kind.FRIEND) rememberVoiceController { send("", null, listOf(it)) } else null   // AII-331 (VoiceRecord.kt)
 
     /* ---------- undo send ---------- */
     // Undo send (AII-202): the message waits here for 5 or 10 seconds; leaving the chat sends it at once.
@@ -193,20 +193,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     val copied = rememberCopiedPicture()
     fun pasteCopied() = pasteCopiedPicture(copied, repo, scope, res, { pics }, { pics = it }, { picNote = it })
 
-    forwarding?.let { body ->
-        val ctx = LocalContext.current
-        ForwardDialog(repo, onDismiss = { forwarding = null }) { to ->
-            forwarding = null
-            // The normal send path: queued first, so it waits and retries if the phone is offline.
-            val p = repo.queue(to, Forward.text(body), null)
-            if (to.key == ref.key) pending = repo.pendingFor(ref.key)
-            scope.launch {
-                val r = repo.deliver(to, p)
-                if (to.key == ref.key) { load(); pending = repo.pendingFor(ref.key) }
-                Toast.makeText(ctx, ctx.getString(if (r.isSuccess) R.string.forwarded_to else R.string.forward_queued, to.name), Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+    forwarding?.let { body -> ForwardHost(scope, repo, ref, body, { forwarding = null }, { pending = repo.pendingFor(ref.key) }, ::load) }   // ChatParts.kt
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(ref.key) {
@@ -231,18 +218,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { while (true) { repo.fresh(ref)?.let { working = it.working; workingOn = it.workingOn }; delay(20_000) } }
     }
 
-    // AII-324: a friend chat asks the board every 3 s who is typing and whether the safety code is checked; and tells them when I type (at most every 4 s).
-    var live by remember(ref.key) { mutableStateOf(ref) }
-    if (ref.kind == Kind.FRIEND) LaunchedEffect(ref.key) {
-        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { while (true) { repo.fresh(ref)?.let { live = it }; delay(3_000) } }
-    }
-    val typedAtOpen = remember(ref.key) { text }
-    var lastTyping by remember(ref.key) { mutableStateOf(0L) }
-    if (ref.kind == Kind.FRIEND) LaunchedEffect(text) {
-        val now = System.currentTimeMillis()
-        if (text.isNotBlank() && text != typedAtOpen && now - lastTyping >= TYPING_EVERY_MS) { lastTyping = now; runCatching { repo.source.typing(ref) } }
-    }
-
+    val live = rememberLiveRef(repo, ref, text)   // AII-324 (ChatFriend.kt)
     val items = remember(convo, pending, owner, focus) { rows(convo, pending, owner, focus, seenAtOpen).asReversed() }
     val hits = remember(items, query, finding) { if (finding) Find.matches(items.map { (it as? Row.Msg)?.b?.text.orEmpty() }, query) else emptyList() }
     val hitIds = remember(hits, items) { hits.map { items[it].id } }
@@ -273,11 +249,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
     LaunchedEffect(atBottom, newest, restoring) { if (atBottom && !restoring) seenNewest = newest }
     val latestItems by rememberUpdatedState(items)
     RestoreScroll(list, items, placeKey, place, openAt, seenNewest) { restoring = false }   // AII-72, AII-102 (ChatScroll.kt)
-    // AII-282: a card waiting for your test opens at its steps and Accept (the top), unless a saved place or a search result wins.
-    val toTest = detail?.status == "verify"
-    LaunchedEffect(toTest) {
-        if (toTest && place == null && openAt == null) { snapshotFlow { list.layoutInfo.totalItemsCount }.first { it > 0 }; list.scrollToItem(list.layoutInfo.totalItemsCount - 1) }
-    }
+    OpenAtTestEffect(toTest = detail?.status == "verify", list = list, plain = place == null && openAt == null)   // AII-282 (ChatScroll.kt)
     val unread = if (atBottom) 0 else unreadBelow(convo?.bubbles.orEmpty(), seenNewest)
     // AII-204: the next unread chat in chats-list order, worked out as the chats list does it; looked at again whenever you reach the bottom.
     val nextChat = remember(atBottom, convo, Appearance.nextUnread) {
@@ -291,12 +263,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         val id = items[i].id
         scope.launch { list.animateScrollToItem(i + 1); flash = id; delay(1500); if (flash == id) flash = null }   // +1: the spacer at the bottom
     }
-    // AII-105: opened from a search result: scroll to that message and outline it.
-    LaunchedEffect(openAt) {
-        if (openAt == null) return@LaunchedEffect
-        val i = snapshotFlow { latestItems.indexOfFirst { it.id == openAt } }.first { it >= 0 }
-        list.scrollToItem(i + 1); flash = openAt; delay(1500); if (flash == openAt) flash = null   // +1: the spacer at the bottom
-    }
+    OpenAtEffect(openAt, list, { latestItems }) { flash = it }   // AII-105 (ChatScroll.kt)
 
     /* ---------- jumps ---------- */
     // AII-138: tap a starred message in the details, the chat scrolls to it and outlines it.
@@ -322,15 +289,7 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
         onDismiss = { muteAsk = false })
     // AII-193: Go to date lands on that day's day row, else the next later day with messages, else the newest.
     var goToDate by remember { mutableStateOf(false) }
-    if (goToDate) {
-        val days = items.mapNotNull { (it as? Row.Day)?.id?.removePrefix("day:")?.let { d -> runCatching { java.time.LocalDate.parse(d) }.getOrNull() } }
-        GoToDateDialog(days, onDismiss = { goToDate = false }, onPick = { picked ->
-            goToDate = false
-            val to = com.smizflark.aigile.messenger.data.GoToDate.target(days, picked)
-            val i = if (to == null) -1 else items.indexOfFirst { it.id == "day:$to" }
-            scope.launch { scrollToDayRow(list, i) }   // ChatScroll.kt
-        })
-    }
+    if (goToDate) GoToDateHost(items, list, scope) { goToDate = false }   // ChatScroll.kt
     Scaffold(
         snackbarHost = { SnackbarHost(snack, Modifier.testTag("snack")) },
         topBar = {
@@ -380,9 +339,9 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                                     if (p.target != null && targets.any { it.id == p.target }) { target = p.target; picked = true }
                                 },
                                 onQuote = { q -> jumpToQuote(q, r.id) },
-                                onEditMsg = if (ref.kind == Kind.FRIEND) { { b, t -> scope.launch { runCatching { repo.source.edit(ref, b.id!!, t) }.onFailure { error = it.message }; load() } } } else null,   // AII-324
-                                onReact = if (ref.kind == Kind.FRIEND) { { b, e -> scope.launch { runCatching { repo.source.react(ref, b.id!!, e) }.onFailure { error = it.message }; load() } } } else null,   // AII-326
-                                onDeleteMsg = if (ref.kind == Kind.FRIEND) { { b -> scope.launch { runCatching { repo.source.delete(ref, b.id!!) }.onFailure { error = it.message }; load() } } } else null,
+                                onEditMsg = if (ref.kind == Kind.FRIEND) { { b, t -> friendEdit(scope, repo, ref, b, t, { error = it }, ::load) } } else null,   // AII-324
+                                onReact = if (ref.kind == Kind.FRIEND) { { b, e -> friendReact(scope, repo, ref, b, e, { error = it }, ::load) } } else null,   // AII-326
+                                onDeleteMsg = if (ref.kind == Kind.FRIEND) { { b -> friendDelete(scope, repo, ref, b, { error = it }, ::load) } } else null,
                                 remindAt = com.smizflark.aigile.messenger.data.Remind.forMessage(reminders, ref.key, r.b.key), onReminded = { reminders = repo.store.reminders() },
                                 starred = Stars.has(stars, ref.key, r.b.key),
                                 onStar = if (r.pending == null) { {
@@ -408,11 +367,8 @@ fun ChatScreen(repo: Repo, ref: ChatRef, onBack: () -> Unit, focus: String? = nu
                 onRemovePic = { f -> pics = pics - f; File(f).delete() },
                 onPasteCopied = if (copied.available && pics.size < MAX_PICS) ::pasteCopied else null,
                 quote = quoting, onClearQuote = { quoting = null; replyId = null },
-                onSendLater = { at -> sendTyped(at) }, onEditReplies = onEditReplies,
+                onSendLater = { at -> sendTyped(at) }, onEditReplies = onEditReplies, voice = voice,
             ) { sendTyped() }
         }
     }
 }
-
-/** AII-324: how often a friend chat tells the friend that I am typing. */
-internal const val TYPING_EVERY_MS = 4_000L

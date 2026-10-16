@@ -197,6 +197,15 @@
     <string name="dictate">Dictate a message</string>
     <string name="dictate_prompt">Say your message</string>
     <string name="no_voice">This phone has no voice typing.</string>
+    <string name="voice_recording">Recording… %1$s · slide away to cancel</string>
+    <string name="voice_hold_label">Hold to record a voice note</string>
+    <string name="voice_denied">Allow the microphone to record voice notes.</string>
+    <string name="voice_failed">Couldn\'t record.</string>
+    <string name="voice_too_short">Hold the mic to record, let go to send.</string>
+    <string name="voice_play_len">Play voice note, %1$s</string>
+    <string name="voice_play">Play voice note</string>
+    <string name="voice_pause">Pause</string>
+    <string name="voice_cant_play">Can\'t play this</string>
     <string name="search_all">Search all chats</string>
     <string name="clear">Clear</string>
     <string name="status_backlog">Backlog</string>

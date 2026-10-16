@@ -125,7 +125,7 @@ object Mapper {
 
     fun mimeOf(name: String): String = when (name.substringAfterLast('.', "").lowercase()) {
         "jpg", "jpeg" -> "image/jpeg"; "png" -> "image/png"; "gif" -> "image/gif"; "webp" -> "image/webp"
-        "heic" -> "image/heic"; "bmp" -> "image/bmp"; "pdf" -> "application/pdf"; "txt" -> "text/plain"
+        "m4a" -> "audio/mp4"; "mp3" -> "audio/mpeg"; "heic" -> "image/heic"; "bmp" -> "image/bmp"; "pdf" -> "application/pdf"; "txt" -> "text/plain"
         else -> "application/octet-stream"
     }
 

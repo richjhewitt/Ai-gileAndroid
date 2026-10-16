@@ -146,6 +146,7 @@ internal fun Composer(
     quote: String? = null, onClearQuote: () -> Unit = {},
     onSendLater: ((Instant) -> Unit)? = null,
     onEditReplies: () -> Unit = {},
+    voice: VoiceController? = null,   // AII-331: friend chats only
     onSend: () -> Unit,
 ) {
     Surface(tonalElevation = 2.dp) {
@@ -180,6 +181,7 @@ internal fun Composer(
             if (pics.isNotEmpty()) PickedPictures(pics, onRemovePic)
             // AII-179: ready-made replies while the box is empty; a tap puts one in the box, Send still sends it.
             if (Appearance.quickReplies && text.isEmpty() && pics.isEmpty()) QuickReplies(onText, onEditReplies)
+            if (voice?.recording == true) RecordingLine(voice)
             val canSend = text.isNotBlank() || pics.isNotEmpty()
             Row(verticalAlignment = Alignment.Bottom) {
                 IconButton(onClick = onAttach, enabled = pics.size < MAX_PICS, modifier = Modifier.size(52.dp).testTag("attach")) {
@@ -191,7 +193,7 @@ internal fun Composer(
                 OutlinedTextField(
                     value = field, onValueChange = { field = it; onText(it.text) }, maxLines = 6,
                     placeholder = { Text(stringResource(if (ref.kind == Kind.WATCHMAN) R.string.message_watchman else R.string.message)) },
-                    trailingIcon = { MicButton { onText(Dictate.join(text, it)) } },
+                    trailingIcon = { MicButton(voice = voice) { onText(Dictate.join(text, it)) } },
                     shape = RoundedCornerShape(24.dp),
                     // Enter sends (AII-126): the keyboard shows a Send key, and a hardware Enter sends too (Shift+Enter still makes a new line).
                     keyboardOptions = if (Appearance.enterSends) KeyboardOptions(imeAction = ImeAction.Send) else KeyboardOptions.Default,

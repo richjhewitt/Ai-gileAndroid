@@ -197,6 +197,15 @@
     <string name="dictate">Een bericht inspreken</string>
     <string name="dictate_prompt">Zeg je bericht</string>
     <string name="no_voice">Deze telefoon heeft geen spraakinvoer.</string>
+    <string name="voice_recording">Opnemen… %1$s · veeg weg om te annuleren</string>
+    <string name="voice_hold_label">Houd ingedrukt om een spraakbericht op te nemen</string>
+    <string name="voice_denied">Geef toegang tot de microfoon om spraakberichten op te nemen.</string>
+    <string name="voice_failed">Opnemen lukte niet.</string>
+    <string name="voice_too_short">Houd de microfoon ingedrukt om op te nemen, laat los om te versturen.</string>
+    <string name="voice_play_len">Spraakbericht afspelen, %1$s</string>
+    <string name="voice_play">Spraakbericht afspelen</string>
+    <string name="voice_pause">Pauzeren</string>
+    <string name="voice_cant_play">Kan dit niet afspelen</string>
     <string name="search_all">Zoek in alle chats</string>
     <string name="clear">Wissen</string>
     <string name="status_backlog">Backlog</string>
