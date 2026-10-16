@@ -135,7 +135,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
     }
     /** Mark as unread (AII-119), from a chat's menu. */
     fun markUnread(c: ChatRef) = scope.launch { repo.markUnread(c); seen = repo.store.seen(); unread = counts() }
-    val total = com.smizflark.aigile.messenger.data.unreadChatCount(chats, { News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0 }, { it.key in muted })
+    val total = com.smizflark.aigile.messenger.data.unreadChatCount(chats, { News.fresh(it, seen[it.key]) }, { it.key in muted })   // AII-50: a dot counts too, like a number
     muteAsk?.let { c ->
         MuteFor(onPick = { f ->
             repo.store.setMuted(c.key, true, Mute.until(Now.millis(), f)); muted = repo.store.muted(); muteAsk = null
@@ -287,7 +287,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                         Text(stringResource(R.string.waiting_all))
                     }
                 }
-                val all = chats.filter { filter.keep(it, News.fresh(it, seen[it.key]) && (unread[it.key] ?: 0) > 0, it.key in scheduled, it.key in reminded) }
+                val all = chats.filter { filter.keep(it, News.fresh(it, seen[it.key]), it.key in scheduled, it.key in reminded) }
                 // Closed chats (AII-131) wait under a link at the bottom until a newer message brings them back.
                 val shut = all.filter { Closed.hidden(it, closed[it.key]) }
                 val shown = all - shut.toSet()
