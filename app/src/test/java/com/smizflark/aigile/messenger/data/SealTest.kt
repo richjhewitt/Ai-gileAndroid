@@ -127,6 +127,33 @@ class SealTest {
         assertTrue(apk.contentEquals(src.fileBytes("/api/messenger/apk")))
     }
 
+    /** AII-316: a build in 3 pieces comes back whole, with progress after each piece. */
+    @Test fun updateComesInPiecesWithProgress() = runTest {
+        val apk = ByteArray(2500) { (it * 5).toByte() }
+        val pieces = listOf(apk.copyOfRange(0, 1000), apk.copyOfRange(1000, 2000), apk.copyOfRange(2000, 2500))
+        val asked = mutableListOf<String>()
+        val board = Interceptor { chain ->
+            val r = chain.request()
+            val inner = json.parseToJsonElement(link.openRequest(Buffer().also { r.body!!.writeTo(it) }.readUtf8())) as JsonObject
+            val p = inner["p"]!!.jsonPrimitive.content
+            val answer = when {
+                p == "/api/meta" -> link.sealResponse(200, json.parseToJsonElement("""{"owner":"Rich","sealed":1}"""))
+                p.startsWith("/api/messenger/apk?part=") -> { asked += p
+                    val b64 = java.util.Base64.getEncoder().encodeToString(pieces[p.substringAfter("=").toInt()])
+                    link.sealResponse(200, json.parseToJsonElement("""{"ct":"application/octet-stream","data":"$b64"}""")) }
+                else -> link.sealResponse(404, json.parseToJsonElement("""{"error":"nope"}"""))
+            }
+            Response.Builder().request(r).protocol(Protocol.HTTP_1_1).code(200).message("OK")
+                .body(answer.toResponseBody("application/json".toMediaType())).build()
+        }
+        val src = BoardSource("https://pc.ts.net", kB64, OkHttpClient.Builder().addInterceptor(board).build(), deviceId = d)
+        val seen = mutableListOf<Int>()
+        val got = Update.download(src, Release(7, "/api/messenger/apk", board = true, parts = 3)) { seen += it }
+        assertTrue(apk.contentEquals(got))
+        assertEquals(listOf(33, 66, 100), seen)
+        assertEquals(3, asked.size)
+    }
+
     /** AII-314: an older board (no route, 404) has no latest build; a plain link gets the APK bytes as they are. */
     @Test fun updateOverAPlainLink() = runTest {
         val apk = ByteArray(2000) { (it * 3).toByte() }

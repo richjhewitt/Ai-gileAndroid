@@ -223,8 +223,8 @@ class Store(context: Context) {
         set(v) = prefs.edit().putInt("updateTold", v).apply()
 
     var release: Release?
-        get() = prefs.getString("releaseUrl", null)?.let { Release(prefs.getInt("releaseBuild", 0), it, prefs.getBoolean("releaseBoard", false), prefs.getString("releaseSha", "") ?: "") }
-        set(v) = prefs.edit().putInt("releaseBuild", v?.build ?: 0).putString("releaseUrl", v?.url).putBoolean("releaseBoard", v?.board == true).putString("releaseSha", v?.sha256 ?: "").apply()
+        get() = prefs.getString("releaseUrl", null)?.let { Release(prefs.getInt("releaseBuild", 0), it, prefs.getBoolean("releaseBoard", false), prefs.getString("releaseSha", "") ?: "", prefs.getInt("releaseParts", 1)) }
+        set(v) = prefs.edit().putInt("releaseBuild", v?.build ?: 0).putString("releaseUrl", v?.url).putBoolean("releaseBoard", v?.board == true).putString("releaseSha", v?.sha256 ?: "").putInt("releaseParts", v?.parts ?: 1).apply()
 
     fun signOut() {
         prefs.edit().clear().apply()

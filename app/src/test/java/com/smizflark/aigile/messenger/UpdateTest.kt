@@ -52,6 +52,7 @@ class UpdateTest {
         assertNull(Update.parseBoard("""{"error":"no Messenger build on this board yet"}"""))
         assertNull(Update.parseBoard("""{"build":330,"url":"https://elsewhere/x.apk"}"""))
         assertNull(Update.parseBoard("not json"))
+        assertEquals(14, Update.parseBoard("""{"build":330,"url":"/api/messenger/apk","parts":14}""")!!.parts)   // AII-316
     }
 
     @Test fun theBoardsFingerprintIsKeptAndChecked() {

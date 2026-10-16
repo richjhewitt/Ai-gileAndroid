@@ -14,11 +14,11 @@ import java.io.File
 /* ---------- Install an update (AII-314): a board build comes over the board link, a GitHub one opens in the browser ---------- */
 
 /** Downloads a board build into the cache and opens Android's installer; any failure falls back to the GitHub release page. */
-suspend fun installUpdate(context: Context, repo: Repo, r: Release) {
+suspend fun installUpdate(context: Context, repo: Repo, r: Release, progress: (Int) -> Unit = {}) {
     if (!r.board) return view(context, r.url)
     val file = repo.boardSource?.let { b ->
         runCatching {
-            val bytes = b.fileBytes(r.url)
+            val bytes = Update.download(b, r, progress)
             check(Update.matches(bytes, r.sha256)) { "the download doesn't match the board's fingerprint" }   // AII-315
             withContext(Dispatchers.IO) {
                 File(context.cacheDir, "files").apply { mkdirs() }.resolve("update.apk").apply { writeBytes(bytes) }

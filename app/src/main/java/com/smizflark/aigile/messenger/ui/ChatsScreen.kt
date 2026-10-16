@@ -158,7 +158,7 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
 
     // AII-132: ask for the latest build at most once a day (the board first, then GitHub, AII-314); the bar shows while it is newer than this app.
     var release by remember { mutableStateOf(repo.store.release) }
-    var downloading by remember { mutableStateOf(false) }
+    var downloading by remember { mutableStateOf<Int?>(null) }   // AII-316: how far, 0..100
     LaunchedEffect(Unit) {
         val now = Now.millis()
         if (Update.due(now, repo.store.updateChecked)) {
@@ -252,9 +252,9 @@ fun ChatsScreen(repo: Repo, onOpen: (ChatRef) -> Unit, onNew: () -> Unit, onSett
                 }
                 release?.takeIf { Update.newer(it, BuildConfig.VERSION_CODE) }?.let { r ->
                     item {
-                        Text(stringResource(if (downloading) R.string.update_downloading else R.string.new_version), Modifier.fillMaxWidth()
+                        Text(downloading?.let { stringResource(R.string.update_downloading, it) } ?: stringResource(R.string.new_version), Modifier.fillMaxWidth()
                             .background(MaterialTheme.colorScheme.primaryContainer)
-                            .clickable(enabled = !downloading) { scope.launch { downloading = true; installUpdate(context, repo, r); downloading = false } }
+                            .clickable(enabled = downloading == null) { scope.launch { downloading = 0; installUpdate(context, repo, r) { downloading = it }; downloading = null } }
                             .padding(horizontal = 16.dp, vertical = 12.dp).testTag("newVersion"),
                             color = MaterialTheme.colorScheme.onPrimaryContainer, style = MaterialTheme.typography.bodyMedium)
                     }
