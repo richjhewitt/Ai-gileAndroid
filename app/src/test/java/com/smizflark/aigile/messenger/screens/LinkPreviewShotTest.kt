@@ -1,6 +1,6 @@
 package com.smizflark.aigile.messenger.screens
 
-import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.smizflark.aigile.messenger.data.Bubble
@@ -37,8 +37,8 @@ class LinkPreviewShotTest : ShotBase() {
                     onOption = {}, onRetry = {}, onDiscard = {})
             }
         }
-        rule.waitForIdle()
-        rule.onNodeWithTag("link-preview").assertExists()
+        // the card loads off the main thread, so wait for it rather than for idle (flaky in the full suite)
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("link-preview").fetchSemanticsNodes().isNotEmpty() }
         rule.onRoot().captureRoboImage("../docs/shots/chat_link_preview_light.png")
     }
 }
