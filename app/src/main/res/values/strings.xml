@@ -90,6 +90,10 @@
     <string name="every_day">Every day</string>
     <string name="every_week">Every week</string>
     <string name="edit">Edit</string>
+    <string name="info">Info</string>
+    <string name="info_title">Message info</string>
+    <string name="info_sent">Sent</string>
+    <string name="info_edited">Edited</string>
     <string name="retry">Retry</string>
     <string name="delete">Delete</string>
     <string name="chat_empty">No messages yet. Say hello below.</string>

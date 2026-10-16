@@ -365,6 +365,17 @@ class ChatShotTest : ShotBase() {
         org.junit.Assert.assertEquals("text/plain", send.type)
         org.junit.Assert.assertTrue(send.getStringExtra(android.content.Intent.EXTRA_TEXT).orEmpty().isNotBlank())
     }
+    /** AII-372: hold a message, Info: the exact sent time. */
+    @Test fun messageInfoLight() {
+        prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")
+        rule.setContent { MessengerTheme { ChatScreen(repo, lead(), onBack = {}) } }
+        rule.onAllNodesWithTag("theirs").onLast().performTouchInput { longClick() }
+        rule.waitForIdle()
+        rule.onNodeWithTag("info").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("info-sent").assertIsDisplayed()
+        com.github.takahirom.roborazzi.captureScreenRoboImage("../docs/shots/chat_message_info_light.png")
+    }
     /** AII-113: with "working on AIG-2" showing, tapping the chat name still opens the details. */
     @Test fun workingOnKeepsTheNameTap() {
         prime(lead())
