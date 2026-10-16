@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +57,9 @@ import java.util.UUID
 /* ---------- crop and rotate a picked picture (AII-385) ---------- */
 
 private const val EDIT_SIDE = 3072
+
+/** Keeps the crop handles clear of the screen edges, where Android's back swipe lives (AII-406). With the 12dp outer padding they sit 36dp in. */
+internal val PIC_EDGE_INSET = 24.dp
 
 /** Decodes the picture, big ones sampled down, turned upright by its EXIF orientation. The file itself is never changed. */
 internal fun loadForEdit(path: String): Bitmap? = runCatching {
@@ -116,7 +120,7 @@ internal fun PicEditor(path: String, onCancel: () -> Unit, onDone: (String) -> U
     val shown = remember(base, quarters) { base?.let { turned(it, quarters) } }
     Surface(Modifier.fillMaxSize().testTag("pic-editor"), color = Color.Black) {
         Column(Modifier.fillMaxSize().padding(12.dp)) {
-            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = PIC_EDGE_INSET), contentAlignment = Alignment.Center) {
                 if (shown != null) CropArea(shown, crop) { crop = it }
                 else Text(if (failed) stringResource(R.string.pic_edit_failed) else "", color = Color.White)
             }
@@ -155,7 +159,7 @@ private fun CropArea(bmp: Bitmap, crop: PicEdit.Crop, onCrop: (PicEdit.Crop) -> 
     val left = (box.width - w) / 2f; val top = (box.height - h) / 2f
     val latest = androidx.compose.runtime.rememberUpdatedState(crop)
     Canvas(
-        Modifier.fillMaxSize().testTag("pic-crop")
+        Modifier.fillMaxSize().testTag("pic-crop").systemGestureExclusion()
             .onSizeChanged { box = it }
             .pointerInput(bmp, box) {
                 var corner: PicEdit.Corner? = null
