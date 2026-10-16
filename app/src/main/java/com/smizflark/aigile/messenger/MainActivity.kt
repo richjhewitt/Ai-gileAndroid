@@ -11,7 +11,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -22,7 +24,9 @@ import androidx.navigation.navArgument
 import com.smizflark.aigile.messenger.data.Mapper
 import com.smizflark.aigile.messenger.data.Share
 import com.smizflark.aigile.messenger.ui.ChatScreen
+import com.smizflark.aigile.messenger.ui.ChatsPanes
 import com.smizflark.aigile.messenger.ui.ChatsScreen
+import com.smizflark.aigile.messenger.ui.isWide
 import com.smizflark.aigile.messenger.ui.ConnectScreen
 import com.smizflark.aigile.messenger.ui.Lock
 import com.smizflark.aigile.messenger.ui.LockedScreen
@@ -69,6 +73,7 @@ class MainActivity : FragmentActivity() {
         setContent {
             MessengerTheme(repo.store) {
                 val nav = rememberNavController()
+                var selected by rememberSaveable { mutableStateOf<String?>(null) }   // AII-350: the chat open in the right pane
                 val start = if (repo.store.connected) "chats" else CONNECT
                 PictureHost { NavHost(nav, startDestination = start) {
                     composable(CONNECT, arguments = listOf(navArgument("out") { defaultValue = false; type = NavType.BoolType })) { e ->
@@ -80,9 +85,19 @@ class MainActivity : FragmentActivity() {
                         }
                     }
                     composable("chats") {
-                        ChatsScreen(repo, onOpen = { nav.openChat(it.key) }, onNew = { nav.navigate("new") },
-                            onSettings = { nav.navigate("settings") }, onSearch = { nav.navigate("search") }, onStarred = { nav.navigate("starred") },
-                            onWaiting = { nav.navigate("waiting") }, onWhatsNew = { nav.navigate("about") })
+                        // AII-350: tablets and unfolded foldables show the open chat beside the list; a phone (or a fold closed again) opens it full screen as before.
+                        ChatsPanes(repo, selected, onSelect = { selected = it }, onWide = { wide ->
+                            if (!wide) selected?.let { nav.openChat(it); selected = null }
+                        }, list = { open ->
+                            ChatsScreen(repo, onOpen = open, onNew = { nav.navigate("new") },
+                                onSettings = { nav.navigate("settings") }, onSearch = { nav.navigate("search") }, onStarred = { nav.navigate("starred") },
+                                onWaiting = { nav.navigate("waiting") }, onWhatsNew = { nav.navigate("about") })
+                        }, chat = { ref ->
+                            ChatScreen(repo, ref, onBack = { selected = null },
+                                onEditReplies = { nav.navigate("settings?replies=true") },
+                                onOpenChat = { next -> selected = next.key },
+                                onOpenCard = { id -> nav.navigate("chat/" + Uri.encode(ref.key) + "?card=" + Uri.encode(id)) })
+                        })
                     }
                     composable("waiting") {   // AII-166: every Send later message; tap one, its chat opens at it
                         WaitingScreen(repo, onOpen = { ref, msg -> nav.openChat(ref.key, msg) }, onBack = { nav.popBackStack() })
@@ -103,7 +118,11 @@ class MainActivity : FragmentActivity() {
                         val card = e.arguments?.getString("card")
                         val msg = e.arguments?.getString("msg")   // AII-105: a search result opens the chat at its message
                         val ref = repo.store.cachedChats()?.firstOrNull { it.key == key }
+                        val wide = isWide(LocalConfiguration.current.screenWidthDp.toFloat(), LocalConfiguration.current.screenHeightDp.toFloat())
                         if (ref == null) LaunchedEffect(Unit) { nav.popBackStack() }
+                        else if (wide && card == null && msg == null && nav.previousBackStackEntry?.destination?.route == "chats") {   // AII-350: turned or unfolded while reading: back to the two panes
+                            LaunchedEffect(key) { selected = key; nav.popBackStack() }
+                        }
                         else ChatScreen(repo, ref, onBack = { nav.popBackStack() }, focus = card, openAt = msg,
                             onEditReplies = { nav.navigate("settings?replies=true") },   // AII-255
                             onOpenChat = { next -> nav.popBackStack(); nav.openChat(next.key) },   // AII-204: as if tapped in the chats list

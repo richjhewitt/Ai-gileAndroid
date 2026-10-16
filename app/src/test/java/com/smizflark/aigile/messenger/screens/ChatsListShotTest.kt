@@ -59,6 +59,19 @@ import org.robolectric.annotation.GraphicsMode
 @Config(sdk = [34], qualifiers = "w411dp-h891dp-xxhdpi")
 class ChatsListShotTest : ShotBase() {
     @Test fun chatsLight() = shot("chats", false) { ChatsScreen(repo, {}, {}, {}) }
+    @Test fun tabletLight() {   // AII-350: chats list and the open chat side by side
+        RuntimeEnvironment.setQualifiers("w1280dp-h800dp-mdpi")
+        prime(lead())
+        shot("chats_tablet", false) {
+            com.smizflark.aigile.messenger.ui.ChatsPanes(repo, lead().key, {}, {}, list = { ChatsScreen(repo, it, {}, {}) },
+                chat = { ChatScreen(repo, it, onBack = {}) })
+        }
+    }
+    @Test fun tabletEmptyLight() {   // AII-350: nothing picked yet
+        RuntimeEnvironment.setQualifiers("w1280dp-h800dp-mdpi")
+        show(false) { com.smizflark.aigile.messenger.ui.ChatsPanes(repo, null, {}, {}, list = { ChatsScreen(repo, it, {}, {}) }, chat = {}) }
+        rule.onNodeWithText("Pick a chat").assertExists()
+    }
     @Test fun compactLight() {   // AII-212
         com.smizflark.aigile.messenger.ui.Appearance.compact = true
         try { shot("chats_compact", false) { ChatsScreen(repo, {}, {}, {}) } } finally { com.smizflark.aigile.messenger.ui.Appearance.compact = false }

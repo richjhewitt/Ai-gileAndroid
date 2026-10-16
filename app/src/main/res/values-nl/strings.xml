@@ -435,4 +435,5 @@
     <string name="safety_checked">✓ Gecontroleerd</string>
     <string name="friend_private">🔒 Privé</string>
     <string name="friend_checked">🔒 Privé, veiligheidscode gecontroleerd</string>
+    <string name="pick_a_chat">Kies een chat</string>
 </resources>

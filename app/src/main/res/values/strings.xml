@@ -435,4 +435,5 @@
     <string name="safety_checked">✓ Checked</string>
     <string name="friend_private">🔒 Private</string>
     <string name="friend_checked">🔒 Private, safety code checked</string>
+    <string name="pick_a_chat">Pick a chat</string>
 </resources>
