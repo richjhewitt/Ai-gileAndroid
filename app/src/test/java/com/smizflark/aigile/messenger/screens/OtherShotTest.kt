@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.longClick
@@ -61,6 +62,14 @@ class OtherShotTest : ShotBase() {
     @Test fun connectLight() = shot("connect", false) { ConnectScreen(repo, null) {} }
     @Test fun connectDark() = shot("connect", true) { ConnectScreen(repo, null) {} }
     @Test fun connectAfterSignOut() = shot("connect-signed-out", false) { ConnectScreen(repo, null, scanFirst = true) {} }   // AII-289
+    /** AII-318: a pairing link tapped while Connect is already open fills in the address and key. */
+    @Test fun connectLinkWhileOpen() {
+        var link by androidx.compose.runtime.mutableStateOf<Pair<String, String>?>(null)
+        rule.setContent { MessengerTheme { ConnectScreen(repo, link) {} } }
+        link = "https://board.example.ts.net" to "abc123:secretkey"
+        rule.waitForIdle()
+        rule.onNodeWithTag("url").assertTextContains("https://board.example.ts.net")
+    }
     /** AII-138: hold a message, Star: a ★ by its time, and it shows under Starred in the details; tapping it closes the sheet. */
     @Test fun starredLight() {
         prime(lead()); RuntimeEnvironment.setQualifiers("+notnight")

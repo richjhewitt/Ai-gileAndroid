@@ -105,8 +105,9 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - work/SendWorker.kt: sends queued messages from the outbox, and Send later ones at their time (AII-146).
 
 ## Other
-- tools/: release.ps1 (release build script) and emulator/ (smoke.ps1 emulator helpers).
-- tools/testboard/testboard.mjs: throwaway test board with demo chats (start, check, phone over Tailscale with a pairing QR, stop).
+- tools/: release.ps1 (release build script) and emulator/ (emu.ps1 shared helpers and boot; smoke.ps1 demo smoke; smoke-board.ps1 real test board smoke, AII-318).
+- tools/testboard/testboard.mjs: throwaway test board with demo chats (start, check, phone over Tailscale with a pairing QR, emulator = pairing link plus a Host-rewriting proxy for 10.0.2.2, stop; AIGILE_TESTBOARD_STATE runs a second one).
+- app/src/debug: debug build only, plain http to 10.0.2.2 for the board smoke (AII-318).
 - docs/shots: reference screenshots (Roborazzi) for each screen and theme.
 - test/.../screens: ShotBase.kt (demo data, fixed clock, shot helpers); ChatsListShotTest (chats list), ChatShotTest (one chat), OtherShotTest (Connect, Starred, New message, Settings, black, Dutch); LongMessageShotTest (Read more, AII-184); ReadAloudShotTest (AII-185); LinksShotTest (named links, AII-187).
 

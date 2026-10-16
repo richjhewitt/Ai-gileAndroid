@@ -29,6 +29,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,6 +55,8 @@ import kotlinx.coroutines.launch
 fun ConnectScreen(repo: Repo, prefill: Pair<String, String>?, scanFirst: Boolean = false, onDone: () -> Unit) {
     var url by rememberSaveable { mutableStateOf(prefill?.first ?: repo.store.url) }
     var key by rememberSaveable { mutableStateOf(prefill?.second ?: "") }
+    // AII-318: a pairing link tapped while this screen is already open fills it in too, not only on the first draw.
+    LaunchedEffect(prefill) { prefill?.let { url = it.first; key = it.second } }
     var busy by rememberSaveable { mutableStateOf(false) }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()

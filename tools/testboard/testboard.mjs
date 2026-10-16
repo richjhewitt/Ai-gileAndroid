@@ -4,18 +4,21 @@
 //   node tools/testboard/testboard.mjs check    calls every API the app uses, one line each
 //   node tools/testboard/testboard.mjs phone [--host test.aigile.lol] [--server Smizflark]   serves it to Rich's phone at
 //     https://test.aigile.lol through an ssh tunnel to the server and shows a QR to pair the app (--tailscale [--https 8443]: the old way)
+//   node tools/testboard/testboard.mjs emulator [--port N]   pairs an emulator app (AII-318): prints its pairing link
 //   node tools/testboard/testboard.mjs stop     stops it and deletes its data
 import { execFileSync, spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import http from 'node:http';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const STATE = path.join(os.tmpdir(), 'aigile-testboard.json');
+// AIGILE_TESTBOARD_STATE: a second board alongside the phone's one (the emulator smoke uses its own, AII-318).
+const STATE = process.env.AIGILE_TESTBOARD_STATE || path.join(os.tmpdir(), 'aigile-testboard.json');
 const args = process.argv.slice(2), cmd = args[0];
 const flag = name => { const i = args.indexOf('--' + name); return i > 0 ? args[i + 1] : undefined; };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -179,12 +182,48 @@ function qrSvg(board, text) {
   return `<svg viewBox="0 0 ${n} ${n}" width="320" height="320"><rect width="${n}" height="${n}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
 }
 
+/* ---------- emulator ---------- */
+// The test board for the emulator smoke (AII-318, tools/emulator/smoke-board.ps1). The board lets a phone in only on the
+// exact host it was paired for (lib/phone.js hostOf: no port but 443), and the emulator reaches this PC as 10.0.2.2:<port>.
+// So a small proxy on that port hands each call on with Host: emulator.test, the host the app is paired for.
+// The link says http://10.0.2.2:<port>: the debug build alone allows plain http to 10.0.2.2 (src/debug network config).
+const EMU_HOST = 'emulator.test';
+async function emulator() {
+  const s = readState();
+  if (!s) throw new Error('no test board: run start first');
+  if (s.proxy) try { process.kill(s.proxy); } catch {}
+  const port = Number(flag('port')) || await freePort();
+  const proxy = spawn(process.execPath, [fileURLToPath(import.meta.url), 'proxy', String(port), new URL(s.url).port],
+    { detached: true, stdio: 'ignore', windowsHide: true });
+  proxy.unref();
+  s.proxy = proxy.pid; fs.writeFileSync(STATE, JSON.stringify(s, null, 2));
+  let up = false;
+  for (let i = 0; i < 50 && !up; i++) {
+    try { up = (await fetch(`http://127.0.0.1:${port}/api/meta`)).status === 403; } catch {}   // 403: the board saw the phone host
+    if (!up) await sleep(100);
+  }
+  if (!up) throw new Error(`the emulator proxy did not come up on port ${port}`);
+  const { qr } = await call(s.url, 'POST', '/api/phone/app', { host: EMU_HOST });
+  console.log(qr.replace(`url=https://${EMU_HOST}`, `url=http://10.0.2.2:${port}`));
+}
+function proxy() {
+  const [listen, target] = args.slice(1).map(Number);
+  http.createServer((req, res) => {
+    const up = http.request({ host: '127.0.0.1', port: target, method: req.method, path: req.url, headers: { ...req.headers, host: EMU_HOST } }, r => {
+      res.writeHead(r.statusCode, r.headers); r.pipe(res);
+    });
+    up.on('error', () => { res.writeHead(502); res.end(); });
+    req.pipe(up);
+  }).listen(listen, '127.0.0.1');
+}
+
 /* ---------- stop ---------- */
 function stop() {
   const s = readState();
   if (!s) { console.log('not running'); return; }
   if (s.https) try { tailscale('serve', `--https=${s.https}`, 'off'); } catch {}
   if (s.tunnel) try { process.kill(s.tunnel); } catch {}
+  if (s.proxy) try { process.kill(s.proxy); } catch {}
   try { process.kill(s.pid); } catch {}
   // The server may hold files a moment after it dies (Windows): retry the delete.
   try { fs.rmSync(s.dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }); } catch {}
@@ -192,6 +231,6 @@ function stop() {
   console.log('stopped');
 }
 
-const cmds = { start, check, phone, stop };
-if (!cmds[cmd]) { console.log('usage: node tools/testboard/testboard.mjs start|check|phone|stop'); process.exit(2); }
+const cmds = { start, check, phone, emulator, proxy, stop };
+if (!cmds[cmd]) { console.log('usage: node tools/testboard/testboard.mjs start|check|phone|emulator|stop'); process.exit(2); }
 try { await cmds[cmd](); } catch (e) { console.error(e.message); process.exit(1); }
