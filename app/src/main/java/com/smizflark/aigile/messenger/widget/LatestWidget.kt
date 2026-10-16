@@ -89,6 +89,7 @@ class LatestWidget : AppWidgetProvider() {
 
         /** Redraws every widget on the home screen. Called when the chat list is fetched or you sign out. */
         fun refresh(context: Context) {
+            ChatWidget.refresh(context)   // the One chat widget refreshes with this one (AII-380)
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, LatestWidget::class.java))
             if (ids.isEmpty()) return
