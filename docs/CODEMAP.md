@@ -16,6 +16,7 @@ Kotlin under `app/src/main/java/com/smizflark/aigile/messenger/` (paths below ar
 - data/Gif.kt: GIF links in a message (giphy, tenor, .gif) shown as moving pictures in the bubble, like the board (AII-188).
 - data/LinkPreview.kt: link previews (AII-341): og:title / og:image (or <title>) of a message's first https link, fetched by the phone (4 s, 64 KB, in-memory cache); ui/LinkPreviewCard.kt draws the card under the bubble; Settings > Privacy switch, off by default (Store linkPreviews); shot LinkPreviewShotTest.
 - data/Typing.kt: sendTyping, the one guard for telling a friend I am typing (AII-390); Settings > Privacy switch Show when I'm typing, on by default (Store showTyping); ui/ChatFriend.kt calls it.
+- data/PicLoad.kt: Load pictures Always / Wi-Fi only (AII-391, Store loadPictures, backed up): shouldLoad(setting, metered, cached, mine, tapped); ui/Pictures.kt shows a "Tap to load" box (tag pic-blocked) instead of fetching; picker LoadPicturesPick in ui/SettingsSections.kt; shot chat_tap_to_load_light.
 - data/Emoji.kt: bigEmojiCount = how many emoji a message is when it is only 1 to 3 emoji (else 0); ui/ChatBubble.kt shows those big with no bubble (AII-364).
 - data/Drafts.kt: half-typed replies, one per chat.
 - data/Format.kt: B / I / </> buttons on selected words in the message box (AII-374): toggle wraps or unwraps **bold**, *italic*, `code` per line; ui/FormatRow.kt is the row, MessageField hands it a formatter while text is selected; Markdown.kt now shows *italic*.

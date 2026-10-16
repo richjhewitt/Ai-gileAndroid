@@ -295,6 +295,10 @@
     <string name="link_previews_sub">Je telefoon haalt de pagina zelf op om de titel en afbeelding onder een link te tonen</string>
     <string name="link_preview_open">%1$s openen</string>
     <string name="compact_list">Compacte lijst</string>
+    <string name="load_pictures">Afbeeldingen laden</string>
+    <string name="load_pics_always">Altijd</string>
+    <string name="load_pics_wifi">Alleen via wifi</string>
+    <string name="tap_to_load">Tik om te laden</string>
     <string name="sort_chats">Gesprekken sorteren</string>
     <string name="sort_newest">Nieuwste eerst</string>
     <string name="sort_az">A tot Z</string>

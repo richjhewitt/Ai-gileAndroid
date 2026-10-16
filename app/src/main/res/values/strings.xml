@@ -295,6 +295,10 @@
     <string name="link_previews_sub">Your phone fetches the page itself to show its title and picture under a link</string>
     <string name="link_preview_open">Open %1$s</string>
     <string name="compact_list">Compact list</string>
+    <string name="load_pictures">Load pictures</string>
+    <string name="load_pics_always">Always</string>
+    <string name="load_pics_wifi">Wi-Fi only</string>
+    <string name="tap_to_load">Tap to load</string>
     <string name="sort_chats">Sort chats</string>
     <string name="sort_newest">Newest first</string>
     <string name="sort_az">A to Z</string>
