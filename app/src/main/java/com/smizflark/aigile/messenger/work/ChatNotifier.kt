@@ -37,6 +37,13 @@ object ChatNotifier {
         .setAutoCancel(true)
         .setOnlyAlertOnce(true)
 
+    /** AII-401: with Hide message text on the lock screen on, the lock screen shows only [title] and "New message". */
+    private fun NotificationCompat.Builder.lockSafe(context: Context, title: String): NotificationCompat.Builder {
+        if (!Store(context).hideOnLock) return this
+        setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+        return setPublicVersion(base(context).setContentTitle(title).setContentText(context.getString(R.string.new_message)).build())
+    }
+
     fun openChat(context: Context, chat: String?, code: Int, msg: String? = null): PendingIntent {
         val open = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -122,7 +129,7 @@ object ChatNotifier {
             b.addAction(NotificationCompat.Action.Builder(R.drawable.ic_notify, context.getString(R.string.remind_in_hour), remindPi).setShowsUserInterface(false).build())
             b.addExtras(Bundle().apply { putString(RemindReceiver.EXTRA_MSG_KEY, msg); putString(RemindReceiver.EXTRA_TEXT, text) })
         }
-        return b
+        return b.lockSafe(context, name)
     }
 
     private fun newStyle(context: Context, name: String) = NotificationCompat.MessagingStyle(Person.Builder().setName(context.getString(R.string.notify_me)).build())
@@ -220,6 +227,7 @@ object ChatNotifier {
         nm.notify(SUMMARY, base(context).setContentTitle(context.getString(R.string.notify_many, n))
             .addAction(allAction)
             .setStyle(NotificationCompat.InboxStyle().setSummaryText(context.getString(R.string.notify_chats, n)))
-            .setContentIntent(openChat(context, null, 0)).setGroup(GROUP).setGroupSummary(true).build())
+            .setContentIntent(openChat(context, null, 0)).setGroup(GROUP).setGroupSummary(true)
+            .lockSafe(context, context.getString(R.string.notify_many, n)).build())
     }
 }

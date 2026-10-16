@@ -231,6 +231,9 @@ fun SettingsScreen(repo: Repo, onBack: () -> Unit, onSignedOut: (wasDemo: Boolea
             Toggle(stringResource(R.string.show_typing), stringResource(R.string.show_typing_sub), Appearance.showTyping, Modifier.testTag("showTyping")) {
                 Appearance.showTyping = it; s.showTyping = it
             }
+            Toggle(stringResource(R.string.hide_on_lock), stringResource(R.string.hide_on_lock_sub), Appearance.hideOnLock, Modifier.testTag("hideOnLock")) {
+                Appearance.hideOnLock = it; s.hideOnLock = it
+            }
             Toggle(stringResource(R.string.lock), stringResource(R.string.lock_sub), lockOn) {
                 if (it && !Lock.available(ctx)) note = ctx.getString(R.string.lock_unavailable)
                 else { lockOn = it; s.lock = it }
