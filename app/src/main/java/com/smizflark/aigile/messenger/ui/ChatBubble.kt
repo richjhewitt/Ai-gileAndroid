@@ -164,6 +164,7 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
     // AII-324: Edit and Delete on my own friend lines, once the board has given the line an id.
     val ownLine = ref.kind == Kind.FRIEND && b.mine && b.id != null && b.state == SendState.SENT && !b.deleted && !b.unverified
     var editing by remember { mutableStateOf(false) }
+    var info by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
     val view = LocalView.current
     val reach = with(LocalDensity.current) { SWIPE_REPLY.toPx() }
@@ -248,7 +249,8 @@ internal fun MessageBubble(r: Row.Msg, ref: ChatRef, repo: Repo, mark: Int, onRe
                 onEdit = if (ownLine && onEditMsg != null) { { editing = true } } else null,
                 onDelete = if (ownLine && onDeleteMsg != null) { { deleting = true } } else null,
                 onReact = if (ref.kind == Kind.FRIEND && b.id != null && b.state == SendState.SENT && !b.deleted && !b.unverified && onReact != null) { e -> onReact(b, e) } else null,
-                pinned = pinned, onPin = onPin)
+                pinned = pinned, onPin = onPin, onInfo = { info = true })
+            if (info) MessageInfoDialog(b) { info = false }
             if (editing) EditMessageDialog(Quote.split(b.text).second, onSave = { editing = false; onEditMsg?.invoke(b, it) }, onDismiss = { editing = false })
             if (deleting) DeleteMessageDialog(onConfirm = { deleting = false; onDeleteMsg?.invoke(b) }, onDismiss = { deleting = false })
             Column(Modifier.padding(horizontal = 14.dp, vertical = 9.dp)) {

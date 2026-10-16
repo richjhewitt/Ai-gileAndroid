@@ -111,13 +111,31 @@ internal fun DeleteMessageDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         dismissButton = { androidx.compose.material3.TextButton(onClick = onDismiss, modifier = Modifier.testTag("delete-cancel")) { Text(stringResource(R.string.cancel)) } })
 }
 
+/** AII-372: Info on a held message: exact sent time, and edited time when it was edited. */
+@Composable
+internal fun MessageInfoDialog(b: Bubble, onDismiss: () -> Unit) {
+    val ctx = LocalContext.current
+    val lines = com.smizflark.aigile.messenger.data.MessageInfo.lines(b.at, b.edited,
+        locale = java.util.Locale.getDefault(), h24 = android.text.format.DateFormat.is24HourFormat(ctx))
+    androidx.compose.material3.AlertDialog(onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.info_title)) },
+        text = { androidx.compose.foundation.layout.Column {
+            lines.forEach { l ->
+                Text(stringResource(if (l.kind == com.smizflark.aigile.messenger.data.MessageInfo.Kind.SENT) R.string.info_sent else R.string.info_edited),
+                    style = androidx.compose.material3.MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+                Text(l.time, modifier = Modifier.testTag("info-" + l.kind.name.lowercase()))
+            }
+        } },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = onDismiss, modifier = Modifier.testTag("info-close")) { Text(stringResource(R.string.done)) } })
+}
+
 /* ---------- hold menu ---------- */
 
 // AII-43: long-press a bubble for Remind me, Reply, Forward, Star, Copy, Copy as quote, Select, links, Share, Read aloud.
 @Composable
 internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown: AnnotatedString, starred: Boolean, onStar: (() -> Unit)?,
                       onReply: (Bubble) -> Unit, onForward: (Bubble) -> Unit, onRemind: () -> Unit, onSelect: () -> Unit, onEdit: (() -> Unit)? = null, onDelete: (() -> Unit)? = null, onReact: ((String) -> Unit)? = null,
-                      pinned: Boolean = false, onPin: (() -> Unit)? = null) {
+                      pinned: Boolean = false, onPin: (() -> Unit)? = null, onInfo: (() -> Unit)? = null) {
     val ctx = LocalContext.current
     val clipboard = LocalClipboardManager.current
     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
@@ -143,6 +161,8 @@ internal fun HoldMenu(expanded: Boolean, onDismiss: () -> Unit, b: Bubble, shown
         // AII-339: pin it to the bar at the top of the chat.
         if (onPin != null && b.state == SendState.SENT && !b.unverified) DropdownMenuItem(text = { Text(stringResource(if (pinned) R.string.unpin_message else R.string.pin_message)) },
             modifier = Modifier.testTag("pin"), onClick = { onDismiss(); onPin() })
+        // AII-372: when it was sent and edited.
+        if (onInfo != null && b.at.isNotBlank()) DropdownMenuItem(text = { Text(stringResource(R.string.info)) }, modifier = Modifier.testTag("info"), onClick = { onDismiss(); onInfo() })
         DropdownMenuItem(text = { Text(stringResource(R.string.copy)) }, modifier = Modifier.testTag("copy"), onClick = {
             onDismiss()
             clipboard.setText(AnnotatedString(Markdown.plain(shown)))
